@@ -1,0 +1,16 @@
+{
+    "system": {
+        "voteProxy": "",
+        "cvxFxs": "",
+        "fxsDepositor": ""
+    },
+    "frax":{
+        "fxs":"0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0",
+        "vefxs":"0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0",
+        "gaugeController":"0x44ade9AA409B0C29463fF7fcf07c9d3c939166ce",
+        "vefxsRewardDistro":"0xed2647Bbf875b2936AAF95a3F5bbc82819e3d3FE",
+        "walletChecker":"0x53c13BA8834a1567474b19822aAD85c6F90D9f9F"
+    },
+    "pools": [
+    ]
+}

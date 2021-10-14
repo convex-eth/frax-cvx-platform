@@ -81,8 +81,8 @@ contract FxsDepositor{
         uint256 unlockAt = block.timestamp + MAXTIME;
         uint256 unlockInWeeks = (unlockAt/WEEK)*WEEK;
 
-        //increase time too if over 2 week buffer
-        if( unlockInWeeks - unlockTime > 2){
+        //increase time too if over 1 week buffer
+        if( unlockInWeeks - unlockTime > 1){
             IStaker(staker).increaseTime(unlockAt);
             unlockTime = unlockInWeeks;
         }
