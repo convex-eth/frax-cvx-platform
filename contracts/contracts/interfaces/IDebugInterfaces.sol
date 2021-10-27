@@ -158,9 +158,6 @@ interface MulticallerView{
     function aggregate(Call[] memory calls) external view returns (uint256 blockNumber, bytes[] memory returnData);
 }
 
-interface IBaseRewards{
-    function getReward(address,bool) external;
-}
 
 interface SushiChefV2{
     function deposit(uint256 pid, uint256 amount, address to) external;

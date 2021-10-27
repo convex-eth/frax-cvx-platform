@@ -70,8 +70,8 @@ contract Booster{
         voteDelegate = msg.sender;
         feeManager = msg.sender;
         poolManager = msg.sender;
-        feeDistro = address(0); //address(0xA464e6DCda8AC41e03616F95f4BC98a13b8922Dc);
-        feeToken = address(0); //address(0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490);
+        feeDistro = address(0); //address(0xed2647Bbf875b2936AAF95a3F5bbc82819e3d3FE);
+        feeToken = address(0); //address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
         treasury = address(0);
         minter = _minter;
     }
@@ -97,16 +97,13 @@ contract Booster{
     function setFactories(address _rfactory, address _sfactory, address _tfactory) external {
         require(msg.sender == owner, "!auth");
         
-        //reward factory only allow this to be called once even if owner
-        //removes ability to inject malicious staking contracts
-        //token factory can also be immutable
+        //reward and token factory can be immutable
         if(rewardFactory == address(0)){
             rewardFactory = _rfactory;
             tokenFactory = _tfactory;
         }
 
-        //stash factory should be considered more safe to change
-        //updating may be required to handle new types of gauges
+        //updating stashFactory may be required to handle new types of gauges
         stashFactory = _sfactory;
     }
 
