@@ -161,6 +161,11 @@ contract FraxVoterProxy {
         return true;
     }
 
+    function checkpointFeeRewards(address _distroContract) external{
+        require(msg.sender == depositor || msg.sender == operator, "!auth");
+        IFeeDistro(_distroContract).checkpoint();
+    }
+
     function claimFees(address _distroContract, address _token) external returns (uint256){
         require(msg.sender == operator, "!auth");
         IFeeDistro(_distroContract).getYield();
