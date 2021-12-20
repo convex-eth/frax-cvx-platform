@@ -19,6 +19,7 @@ contract BoosterPlaceholder{
     address public immutable proxy;
     address public owner;
     bool public isShutdown;
+    address public feeQueue;
 
     event Recovered(address _token, uint256 _amount);
 
@@ -28,38 +29,48 @@ contract BoosterPlaceholder{
         owner = msg.sender;
     }
 
-    function setOwner(address _owner) external {
-        require(msg.sender == owner, "!auth");
+    modifier onlyOwner() {
+        require(owner == msg.sender, "!auth");
+        _;
+    }
+
+    //set owner
+    function setOwner(address _owner) external onlyOwner{
         owner = _owner;
+    }
+
+    //set fee queue, a contract fees are moved to when claiming
+    function setFeeQueue(address _queue) external onlyOwner{
+        feeQueue = _queue;
     }
     
     //shutdown this contract.
-    function shutdownSystem() external{
-        require(msg.sender == owner, "!auth");
+    function shutdownSystem() external onlyOwner{
         isShutdown = true;
     }
 
-    function claimFees(address _distroContract, address _token) external{
-        require(msg.sender == owner, "!auth");
-
-        IStaker(proxy).claimFees(_distroContract, _token);
+    //claim fees - if set, move to a fee queue that rewards can pull from
+    function claimFees(address _distroContract, address _token) external onlyOwner{
+        if(feeQueue != address(0)){
+            IStaker(proxy).claimFees(_distroContract, _token, feeQueue);
+        }else{
+            IStaker(proxy).claimFees(_distroContract, _token, address(this));
+        }
     }
 
-    function checkpointFeeRewards(address _distroContract) external{
-        require(msg.sender == owner, "!auth");
-
+    //call vefxs checkpoint
+    function checkpointFeeRewards(address _distroContract) external onlyOwner{
         IStaker(proxy).checkpointFeeRewards(_distroContract);
     }
 
-    function recoverERC20(address _tokenAddress, uint256 _tokenAmount, address _withdrawTo) external {
-        require(msg.sender == owner, "!auth");
-
+    //recover tokens on this contract
+    function recoverERC20(address _tokenAddress, uint256 _tokenAmount, address _withdrawTo) external onlyOwner{
         IERC20(_tokenAddress).safeTransfer(_withdrawTo, _tokenAmount);
         emit Recovered(_tokenAddress, _tokenAmount);
     }
 
-    function recoverERC20FromProxy(address _tokenAddress, uint256 _tokenAmount, address _withdrawTo) external {
-        require(msg.sender == owner, "!auth");
+    //recover tokens on the proxy
+    function recoverERC20FromProxy(address _tokenAddress, uint256 _tokenAmount, address _withdrawTo) external onlyOwner{
 
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("transfer(address,uint256)")), _withdrawTo, _tokenAmount);
         IStaker(proxy).execute(_tokenAddress,uint256(0),data);
