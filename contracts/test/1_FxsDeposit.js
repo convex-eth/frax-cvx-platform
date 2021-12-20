@@ -101,12 +101,11 @@ contract("FXS Deposits", async accounts => {
     console.log("is whitelist? " +isWhitelist);
 
 
-    //exchange for fxs
     let starttime = await time.latest();
     console.log("current block time: " +starttime)
     await time.latestBlock().then(a=>console.log("current block: " +a));
 
-    //exchange for crv
+    //exchange for fxs
     await weth.sendTransaction({value:web3.utils.toWei("10.0", "ether"),from:userA});
     var wethbal = await weth.balanceOf(userA);
     await weth.approve(exchange.address, 0,{from:userA});
