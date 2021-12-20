@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 
 import "./interfaces/IStaker.sol";
 import "./interfaces/ITokenMinter.sol";
-import "./interfaces/IRewards.sol";
+import "./interfaces/IVoteEscrow.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
@@ -16,7 +16,7 @@ contract FxsDepositor{
     uint256 private constant MAXTIME = 4 * 364 * 86400;
     uint256 private constant WEEK = 7 * 86400;
 
-    uint256 public lockIncentive = 10; //incentive to users who spend gas to lock
+    uint256 public lockIncentive = 0; //incentive to users who spend gas to lock
     uint256 public constant FEE_DENOMINATOR = 10000;
 
     address public feeManager;
@@ -48,7 +48,8 @@ contract FxsDepositor{
         require(msg.sender==feeManager, "!auth");
 
         uint256 vefxs = IERC20(escrow).balanceOf(staker);
-        if(vefxs == 0){
+        uint256 locked = IVoteEscrow(escrow).locked(staker);
+        if(vefxs == 0 || vefxs == locked){
             uint256 unlockAt = block.timestamp + MAXTIME;
             uint256 unlockInWeeks = (unlockAt/WEEK)*WEEK;
 
@@ -82,7 +83,7 @@ contract FxsDepositor{
         uint256 unlockInWeeks = (unlockAt/WEEK)*WEEK;
 
         //increase time too if over 1 week buffer
-        if( unlockInWeeks - unlockTime > 1){
+        if( unlockInWeeks - unlockTime >= 1){
             IStaker(staker).increaseTime(unlockAt);
             unlockTime = unlockInWeeks;
         }
@@ -100,7 +101,7 @@ contract FxsDepositor{
 
     //deposit fxs for cvxFxs
     //can locking immediately or defer locking to someone else by paying a fee.
-    function deposit(uint256 _amount, bool _lock, address _stakeAddress) public {
+    function deposit(uint256 _amount, bool _lock) public {
         require(_amount > 0,"!>0");
         
         if(_lock){
@@ -116,33 +117,21 @@ contract FxsDepositor{
             //move tokens here
             IERC20(fxs).safeTransferFrom(msg.sender, address(this), _amount);
             //defer lock cost to another user
-            uint256 callIncentive = _amount * lockIncentive / FEE_DENOMINATOR;
-            _amount = _amount - callIncentive;
+            if(lockIncentive > 0){
+                uint256 callIncentive = _amount * lockIncentive / FEE_DENOMINATOR;
+                _amount = _amount - callIncentive;
 
-            //add to a pool for lock caller
-            incentiveFxs = incentiveFxs + callIncentive;
+                //add to a pool for lock caller
+                incentiveFxs = incentiveFxs + callIncentive;
+            }
         }
 
-        bool depositOnly = _stakeAddress == address(0);
-        if(depositOnly){
-            //mint for msg.sender
-            ITokenMinter(minter).mint(msg.sender,_amount);
-        }else{
-            //mint here 
-            ITokenMinter(minter).mint(address(this),_amount);
-            //stake for msg.sender
-            IERC20(minter).safeApprove(_stakeAddress,0);
-            IERC20(minter).safeApprove(_stakeAddress,_amount);
-            IRewards(_stakeAddress).stakeFor(msg.sender,_amount);
-        }
+        //mint for msg.sender
+        ITokenMinter(minter).mint(msg.sender,_amount);
     }
 
-    function deposit(uint256 _amount, bool _lock) external {
-        deposit(_amount,_lock,address(0));
-    }
-
-    function depositAll(bool _lock, address _stakeAddress) external{
+    function depositAll(bool _lock) external{
         uint256 fxsBal = IERC20(fxs).balanceOf(msg.sender);
-        deposit(fxsBal,_lock,_stakeAddress);
+        deposit(fxsBal,_lock);
     }
 }
