@@ -176,6 +176,11 @@ contract("FXS Deposits", async accounts => {
     var bal = await fxs.balanceOf(operator.address);
     console.log("fxs of operator: " +bal)
     
+    //move fxs back to proxy and test rescue
+    await operator.recoverERC20(fxs.address,bal,voteproxy.address,{from:deployer});
+    await fxs.balanceOf(voteproxy.address).then(a=>console.log("fxs moved to voteproxy: " +a));
+    await operator.recoverERC20FromProxy(fxs.address,bal,operator.address,{from:deployer})
+    await fxs.balanceOf(operator.address).then(a=>console.log("fxs moved back to operator: " +a));
 
     //let vefxs decay a bit
     await escrow.locked__end(voteproxy.address).then(a=>console.log("lock end: " +a));

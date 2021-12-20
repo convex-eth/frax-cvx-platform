@@ -58,4 +58,13 @@ contract BoosterPlaceholder{
         emit Recovered(_tokenAddress, _tokenAmount);
     }
 
+    function recoverERC20FromProxy(address _tokenAddress, uint256 _tokenAmount, address _withdrawTo) external {
+        require(msg.sender == owner, "!auth");
+
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("transfer(address,uint256)")), _withdrawTo, _tokenAmount);
+        IStaker(proxy).execute(_tokenAddress,uint256(0),data);
+
+        emit Recovered(_tokenAddress, _tokenAmount);
+    }
+
 }
