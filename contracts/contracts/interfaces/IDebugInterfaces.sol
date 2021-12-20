@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
-// pragma experimental ABIEncoderV2;
+pragma solidity 0.8.10;
 
-// import '@openzeppelin/contracts/math/SafeMath.sol';
+// import '@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol';
+// import '@openzeppelin/contracts/token/ER721/IERC721.sol';
+// import '@openzeppelin/contracts/token/ER721/extensions/IERC721Enumerable.sol';
+// import '@openzeppelin/contracts/token/ER721/extensions/IERC721Metadata.sol';
 
 interface IExchange {
     function swapExactTokensForTokens(
@@ -95,10 +97,6 @@ interface IBurner{
 
 interface IClaim{
     function claim(address) external;
-}
-
-interface IEscro{
-    function locked__end(address) external view returns(uint256);
 }
 
 interface ISnxRewards{

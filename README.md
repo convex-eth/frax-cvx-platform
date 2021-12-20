@@ -1,19 +1,36 @@
 # frax-cvx-platform
 Frax-Convex Platform
 
+## Minimal Deploy
+Will first launch with just cvxFxs deposits while the staking platform is being made.
 
-## todo Changes from Convex-Curve version
-- update to solidity 0.8.9
-- reward pools are minimal proxy
-- combine base and virtual into one multi reward contract
-- reduce token transfers on operations. for example mint directly to the stake contract and manually increase balance.
-- cheaper force new cycle on rewards
-- auto force new reward cycles during claims (and maybe deposits/withdraws too)
-- harvest fee modifier per pool?
-- remove minting cvx flow
-- whitelist harvesters (if none, anyone can)
-- remove cvx staking, funnel all cvx fees straight to lockers only
+Required functionality/tests:
+
+Deposits
+- deposit fxs for cvxFxs
+- Lock for vefxs
+- increase lock amount/time
+
+Proxy
+- set owner
+- set operator
+- set depositor
+- operator isShutdown condition checks
+- operator can call arbitrary calls
+- a few helper functions for locking and claiming
+
+Placeholder Operator
+- call get fees and withdraw
+- isShutdown and shutdownSystem
+- able to be replaced
 
 
-## Things that would be great but not sure if doable on eth L1
-- remove harvesters.  always claim and pull rewards when depositing/withdrawing/claiming
+## Changes from Convex-Curve version
+- update to solidity 0.8.10
+- minimalize main contracts (booster)
+- use individual user proxy vaults for staking
+- pool creation with implementation contract for user vault
+- changes to fee flow
+- registry for user to user-vault lookup
+- aggregate tracking for total value
+- extra reward layer for convex users
