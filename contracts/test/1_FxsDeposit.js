@@ -160,16 +160,36 @@ contract("FXS Deposits", async accounts => {
     await vefxs.balanceOf(voteproxy.address).then(a=>console.log("vefxs: " +a));
     await cvxfxs.balanceOf(userB).then(a=>console.log("cvxfxs of userB: " +a));
 
+    await operator.setFeeQueue(multisig,{from:deployer});
+    console.log("set fee queue, fxs should accrue on " +multisig);
 
     await feeDistro.earned(voteproxy.address).then(a=>console.log("earned: " +a));
     await advanceTime(day);
     await feeDistro.earned(voteproxy.address).then(a=>console.log("earned: " +a));
+    await operator.claimFees(feeDistro.address, fxs.address,{from:userB}).catch(a=>console.log("non claimer claimed: " +a));
     await operator.claimFees(feeDistro.address, fxs.address,{from:deployer});
     await fxs.balanceOf(operator.address).then(a=>console.log("fxs of operator: " +a));
+    await fxs.balanceOf(multisig).then(a=>console.log("fxs of feeclaim: " +a));
+
     await advanceTime(day);
     await feeDistro.earned(voteproxy.address).then(a=>console.log("earned: " +a));
+    await operator.claimFees(feeDistro.address, fxs.address,{from:userB}).catch(a=>console.log("non claimer claimed: " +a));
     await operator.claimFees(feeDistro.address, fxs.address,{from:deployer});
     await fxs.balanceOf(operator.address).then(a=>console.log("fxs of operator: " +a));
+    await fxs.balanceOf(multisig).then(a=>console.log("fxs of feeclaim: " +a));
+
+    await operator.setFeeQueue(addressZero,{from:deployer});
+    console.log("remove fee queue, fxs should accrue on operator");
+
+    await operator.setFeeClaimer(addressZero,{from:deployer});
+    console.log("remove fee claimer");
+
+    await advanceTime(day);
+    await feeDistro.earned(voteproxy.address).then(a=>console.log("earned: " +a));
+    console.log("claim with ungaurded call")
+    await operator.claimFees(feeDistro.address, fxs.address,{from:userB});
+    await fxs.balanceOf(operator.address).then(a=>console.log("fxs of operator: " +a));
+    await fxs.balanceOf(multisig).then(a=>console.log("fxs of feeclaim: " +a));
     await advanceTime(day);
     await feeDistro.earned(voteproxy.address).then(a=>console.log("earned: " +a));
     await operator.claimFees(feeDistro.address, fxs.address,{from:deployer});

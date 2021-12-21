@@ -18,6 +18,7 @@ contract BoosterPlaceholder{
 
     address public immutable proxy;
     address public owner;
+    address public feeclaimer;
     bool public isShutdown;
     address public feeQueue;
 
@@ -27,6 +28,7 @@ contract BoosterPlaceholder{
         proxy = _proxy;
         isShutdown = false;
         owner = msg.sender;
+        feeclaimer = msg.sender;
     }
 
     modifier onlyOwner() {
@@ -43,6 +45,11 @@ contract BoosterPlaceholder{
     function setFeeQueue(address _queue) external onlyOwner{
         feeQueue = _queue;
     }
+
+    //set who can call claim fees, 0x0 address will allow anyone to call
+    function setFeeClaimer(address _claimer) external onlyOwner{
+        feeclaimer = _claimer;
+    }
     
     //shutdown this contract.
     function shutdownSystem() external onlyOwner{
@@ -50,7 +57,9 @@ contract BoosterPlaceholder{
     }
 
     //claim fees - if set, move to a fee queue that rewards can pull from
-    function claimFees(address _distroContract, address _token) external onlyOwner{
+    function claimFees(address _distroContract, address _token) external {
+        require(feeclaimer == address(0) || feeclaimer == msg.sender, "!auth");
+
         if(feeQueue != address(0)){
             IStaker(proxy).claimFees(_distroContract, _token, feeQueue);
         }else{
@@ -59,7 +68,9 @@ contract BoosterPlaceholder{
     }
 
     //call vefxs checkpoint
-    function checkpointFeeRewards(address _distroContract) external onlyOwner{
+    function checkpointFeeRewards(address _distroContract) external {
+        require(feeclaimer == address(0) || feeclaimer == msg.sender, "!auth");
+
         IStaker(proxy).checkpointFeeRewards(_distroContract);
     }
 
