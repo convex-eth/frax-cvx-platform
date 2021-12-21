@@ -1,6 +1,6 @@
 {
     "system": {
-        "voteProxy": "",
+        "voteProxy": "0x59CFCD384746ec3035299D90782Be065e466800B",
         "booster": "",
         "cvxFxs": "",
         "fxsDepositor": ""
