@@ -30,22 +30,37 @@ contract("deploy contracts", async accounts => {
     let fxsdeposit = await FxsDepositor.new(voteproxy.address, cvxfxs.address, {from:deployer});
     let operator = await BoosterPlaceholder.new(voteproxy.address,{from:deployer});
 
+    //set operators
     await voteproxy.setDepositor(fxsdeposit.address,{from:deployer});
     await voteproxy.setOperator(operator.address,{from:deployer});
     await cvxfxs.setOperator(fxsdeposit.address,{from:deployer});
-    await fxsdeposit.setFeeManager(multisig,{from:deployer});
     await voteproxy.setOwner(multisig,{from:deployer});
 
+    //initial lock
+    var fxsAmount = await fxs.balanceOf(deployer);
+    await fxs.transfer(voteproxy.address, fxsAmount, {from:deployer});
+    console.log("sent initial fxs");
+    await fxsdeposit.initialLock({from:deployer});
+    console.log("locked");
+
+    //set fee manager to multi after initial lock
+    await fxsdeposit.setFeeManager(multisig,{from:deployer});
+
+    //set delegation
     let delegation = await IDelegation.at("0x469788fE6E9E9681C6ebF3bF78e7Fd26Fc015446");
     var spaceHex = "0x"+Buffer.from('frax.eth', 'utf8').toString('hex');
     console.log("space(hex): " +spaceHex);
     await operator.setDelegate(delegation.address, deployer, spaceHex, {from:deployer});
     await delegation.delegation(voteproxy.address,spaceHex).then(a=>console.log("delegated to: " +a));
 
+    //set owner to multisig after delegation
     await operator.setOwner(multisig,{from:deployer});
+
+
     console.log("deployed");
     
 
+    console.log("contract addresses:");
     contractList.system.cvxFxs = cvxfxs.address;
     contractList.system.fxsDepositor = fxsdeposit.address;
     contractList.system.booster = operator.address;
