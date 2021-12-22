@@ -15,6 +15,7 @@ const IVoting = artifacts.require("IVoting");
 const IVoteStarter = artifacts.require("IVoteStarter");
 const IWalletCheckerDebug = artifacts.require("IWalletCheckerDebug");
 const IVoteEscrow = artifacts.require("IVoteEscrow");
+const IDelegation = artifacts.require("IDelegation");
 
 
 const unlockAccount = async (address) => {
@@ -75,7 +76,8 @@ contract("FXS Deposits", async accounts => {
     const day = 86400;
 
     //deploy
-    let voteproxy = await FraxVoterProxy.new({from:deployer});
+    // let voteproxy = await FraxVoterProxy.new({from:deployer});
+    let voteproxy = await FraxVoterProxy.at(contractList.system.voteProxy);
     let cvxfxs = await cvxFxsToken.new({from:deployer});
     let fxsdeposit = await FxsDepositor.new(voteproxy.address, cvxfxs.address, {from:deployer});
     let operator = await BoosterPlaceholder.new(voteproxy.address,{from:deployer});
@@ -95,11 +97,18 @@ contract("FXS Deposits", async accounts => {
     console.log("switched to new operator");
 
      // //add to whitelist
-    await walletChecker.approveWallet(voteproxy.address,{from:checkerAdmin,gasPrice:0});
-    console.log("approved wallet");
+    // await walletChecker.approveWallet(voteproxy.address,{from:checkerAdmin,gasPrice:0});
+    // console.log("approved wallet");
     let isWhitelist = await walletChecker.check(voteproxy.address);
     console.log("is whitelist? " +isWhitelist);
 
+
+    //set delegation
+    let delegation = await IDelegation.at("0x469788fE6E9E9681C6ebF3bF78e7Fd26Fc015446");
+    var spaceHex = "0x"+Buffer.from('frax.eth', 'utf8').toString('hex');
+    console.log("space(hex): " +spaceHex);
+    await operator.setDelegate(delegation.address, deployer, spaceHex, {from:deployer});
+    await delegation.delegation(voteproxy.address,spaceHex).then(a=>console.log("delegated to: " +a));
 
     let starttime = await time.latest();
     console.log("current block time: " +starttime)
@@ -216,10 +225,15 @@ contract("FXS Deposits", async accounts => {
     console.log("fxs of owner: " +bal)
     await fxs.approve(fxsdeposit.address,0,{from:deployer});
     await fxs.approve(fxsdeposit.address,bal,{from:deployer});
-    await fxsdeposit.deposit(bal,true,{from:deployer});
-    console.log("re deposited");
-    await vefxs.balanceOf(voteproxy.address).then(a=>console.log("vefxs: " +a));
-    await escrow.locked__end(voteproxy.address).then(a=>console.log("lock end: " +a));
+
+    //advance time a day and relock for over 2 weeks to watch end time increase
+    for(var i = 0; i < 22; i++){
+      await fxsdeposit.deposit(1000,true,{from:deployer});
+      console.log("re deposited");
+      await vefxs.balanceOf(voteproxy.address).then(a=>console.log("vefxs: " +a));
+      await escrow.locked__end(voteproxy.address).then(a=>console.log("lock end: " +a));
+      await advanceTime(day);
+    }
 
     //decay all the way down
     for(var i = 0; i < 15; i++){

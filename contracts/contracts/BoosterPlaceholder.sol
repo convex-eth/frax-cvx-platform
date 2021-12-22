@@ -22,7 +22,9 @@ contract BoosterPlaceholder{
     bool public isShutdown;
     address public feeQueue;
 
-    event Recovered(address _token, uint256 _amount);
+    event DelegateSet(address indexed _address);
+    event FeesClaimed(uint256 _amount);
+    event Recovered(address indexed _token, uint256 _amount);
 
     constructor(address _proxy) {
         proxy = _proxy;
@@ -56,15 +58,24 @@ contract BoosterPlaceholder{
         isShutdown = true;
     }
 
+    //set voting delegate
+    function setDelegate(address _delegateContract, address _delegate, bytes32 _space) external onlyOwner{
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setDelegate(bytes32,address)")), _space, _delegate);
+        IStaker(proxy).execute(_delegateContract,uint256(0),data);
+        emit DelegateSet(_delegate);
+    }
+
     //claim fees - if set, move to a fee queue that rewards can pull from
     function claimFees(address _distroContract, address _token) external {
         require(feeclaimer == address(0) || feeclaimer == msg.sender, "!auth");
 
+        uint256 bal;
         if(feeQueue != address(0)){
-            IStaker(proxy).claimFees(_distroContract, _token, feeQueue);
+            bal = IStaker(proxy).claimFees(_distroContract, _token, feeQueue);
         }else{
-            IStaker(proxy).claimFees(_distroContract, _token, address(this));
+            bal = IStaker(proxy).claimFees(_distroContract, _token, address(this));
         }
+        emit FeesClaimed(bal);
     }
 
     //call vefxs checkpoint
