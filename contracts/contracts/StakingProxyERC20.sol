@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-// import "./interfaces/IDeposit.sol";
-// import "./interfaces/IProxyFactory.sol";
-// import "./interfaces/IVirtualBalanceRewardPool.sol";
+import "./interfaces/IFeeRegistry.sol";
 import "./interfaces/IFraxFarmERC20.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
@@ -12,21 +10,24 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 contract StakingProxyERC20 {
     using SafeERC20 for IERC20;
 
+    address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
     address public constant vefxsProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
 
     address public owner;
-    address public booster; //could probably be const and redeploy pool implementation if booster updated
+    address public feeRegistry; //todo: can convert to const
     address public stakingAddress;
     address public stakingToken;
-    bool public isInit;
+
+    uint256 public constant FEE_DENOMINATOR = 10000;
 
 
-    function initialize(address _owner, address _booster, address _stakingAddress, address _stakingToken) external{
-        require(!isInit,"already init");
+    //initialize vault
+    function initialize(address _owner, address _feeRegistry, address _stakingAddress, address _stakingToken) external{
+        require(owner == address(0),"already init");
 
         //set variables
         owner = _owner;
-        booster = _booster;
+        feeRegistry = _feeRegistry;
         stakingAddress = _stakingAddress;
         stakingToken = _stakingToken;
 
@@ -41,6 +42,7 @@ contract StakingProxyERC20 {
         require(owner == msg.sender, "!auth");
         _;
     }
+
 
     //create a new locked state of _secs timelength
     function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner{
@@ -65,12 +67,72 @@ contract StakingProxyERC20 {
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
     }
 
-    function getReward() external onlyOwner{
-        //getReward first goes to booster to extract fees
-        //by going to booster first, we can reduce erc20 transfers from 3 to 2
-        IFraxFarmERC20(stakingAddress).getReward(booster);
+    /*
+    claim flow:
+        claim rewards directly to the vault
+        calculate fees to send to fee deposit
+        send fxs to booster for fees
+        get reward list of tokens that were received
+        send all remaining tokens to owner
 
-        //TODO: booster hold fees and forward rest to user
-        //TODO: handle non-fxs rewards
+    A slightly less gas intensive approach could be to send rewards directly to booster and have it sort everything out.
+    However that makes the logic a bit more complex as well as runs a few future proofing risks
+    */
+    function getReward() external onlyOwner{
+
+        //claim
+        IFraxFarmERC20(stakingAddress).getReward(address(this));
+
+        //process fxs fees
+        _processFxs();
+
+        //get list of reward tokens
+        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
+
+        //transfer
+        _transferTokens(rewardTokens);
+    }
+
+    //auxiliary function to supply token list(same a bit of gas + dont have to claim everything)
+    //_claim bool is for the off chance that rewardCollectionPause is true so getReward() fails but
+    //there are tokens on this vault for cases such as withdraw() also calling claim.
+    //can also be used to rescue tokens on the vault
+    function getReward(bool _claim, address[] calldata _rewardTokenList) external onlyOwner{
+
+        //claim
+        if(_claim){
+            IFraxFarmERC20(stakingAddress).getReward(address(this));
+        }
+
+        //process fxs fees
+        _processFxs();
+
+        //transfer
+        _transferTokens(_rewardTokenList);
+    }
+
+    //apply fees to fxs and send remaining to owner
+    function _processFxs() internal{
+
+        //get fee rate from booster
+        uint256 totalFees = IFeeRegistry(feeRegistry).totalFees();
+
+        //send fxs fees to fee deposit
+        uint256 fxsBalance = IERC20(fxs).balanceOf(address(this));
+        uint256 feesToSend = fxsBalance * totalFees / FEE_DENOMINATOR;
+        IERC20(fxs).transfer(IFeeRegistry(feeRegistry).feeDeposit(), feesToSend);
+
+        //transfer remaining fxs to owner
+        IERC20(fxs).transfer(msg.sender, IERC20(fxs).balanceOf(address(this)));
+    }
+
+    //transfer other reward tokens besides fxs(which needs to have fees applied)
+    function _transferTokens(address[] memory _tokens) internal{
+        //transfer all tokens
+        for(uint256 i = 0; i < _tokens.length; i++){
+            if(_tokens[i] != fxs){
+                IERC20(_tokens[i]).transfer(msg.sender, IERC20(_tokens[i]).balanceOf(address(this)));
+            }
+        }
     }
 }
