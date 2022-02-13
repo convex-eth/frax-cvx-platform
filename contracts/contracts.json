@@ -3,7 +3,8 @@
         "voteProxy": "0x59CFCD384746ec3035299D90782Be065e466800B",
         "booster": "0xA2cF21b157b2f203e37b616b619f438B5aa86Ee5",
         "cvxFxs": "0xFEEf77d3f69374f66429C91d732A244f074bdf74",
-        "fxsDepositor": "0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e"
+        "fxsDepositor": "0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e",
+        "proxyFactory": "0x66807B5598A848602734B82E432dD88DBE13fC8f"
     },
     "frax": {
         "frax": "0x853d955aCEf822Db058eb8505911ED77F175b99e",

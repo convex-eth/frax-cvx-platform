@@ -74,7 +74,9 @@ contract("Voting Tests", async accounts => {
     console.log("placeholder shutdown");
 
     //deply new booster
-    let booster = await Booster.new(voteproxy.address);
+    let feeReg = await FeeRegistry.new();
+    let poolReg = await PoolRegistry.new();
+    let booster = await Booster.new(voteproxy.address, poolReg.address, feeReg.address);
     await booster.setOwner(multisig);
     console.log("new booster deployed: " +booster.address);
 

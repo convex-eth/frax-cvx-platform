@@ -8,6 +8,8 @@ const FxsDepositor = artifacts.require("FxsDepositor");
 const FraxVoterProxy = artifacts.require("FraxVoterProxy");
 const cvxFxsToken = artifacts.require("cvxFxsToken");
 const IFeeDistro = artifacts.require("IFeeDistro");
+const PoolRegistry = artifacts.require("PoolRegistry");
+const FeeRegistry = artifacts.require("FeeRegistry");
 
 const IExchange = artifacts.require("IExchange");
 const IERC20 = artifacts.require("IERC20");
@@ -75,7 +77,9 @@ contract("Voting Tests", async accounts => {
 
 
     //deply new booster
-    let booster = await Booster.new(voteproxy.address);
+    let feeReg = await FeeRegistry.new();
+    let poolReg = await PoolRegistry.new();
+    let booster = await Booster.new(voteproxy.address, poolReg.address, feeReg.address);
     await booster.setOwner(multisig);
     console.log("new booster deployed: " +booster.address);
 

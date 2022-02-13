@@ -3,6 +3,8 @@ pragma solidity 0.8.10;
 
 
 import "./interfaces/IStaker.sol";
+import "./interfaces/IPoolRegistry.sol";
+import "./interfaces/IProxyVault.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
@@ -16,6 +18,8 @@ contract Booster{
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
 
     address public immutable proxy;
+    address public immutable poolRegistry;
+    address public immutable feeRegistry;
     address public owner;
     address public feeclaimer;
     bool public isShutdown;
@@ -25,8 +29,10 @@ contract Booster{
     event FeesClaimed(uint256 _amount);
     event Recovered(address indexed _token, uint256 _amount);
 
-    constructor(address _proxy) {
+    constructor(address _proxy, address _poolReg, address _feeReg) {
         proxy = _proxy;
+        poolRegistry = _poolReg;
+        feeRegistry = _feeReg;
         isShutdown = false;
         owner = msg.sender;
         feeclaimer = msg.sender;
@@ -57,6 +63,14 @@ contract Booster{
     //shutdown this contract.
     function shutdownSystem() external onlyOwner{
         isShutdown = true;
+    }
+
+    function claimOperatorRoles() external onlyOwner{
+        require(!isShutdown,"shutdown");
+
+        //claim pool reg
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setOperator(address)")), address(this));
+        IStaker(proxy).execute(poolRegistry,uint256(0),data);
     }
 
     //vote for gauge weights
@@ -91,17 +105,15 @@ contract Booster{
 
 
     function createVault(uint256 _pid) external{
-    	//get pool info from pool registry
-
-    	//check if the user already has a vault for the pool
-
-    	//create minimal proxy vault
+    	//create minimal proxy vault for specified pool
+        (address vault, address stakeAddress, address stakeToken) = IPoolRegistry(poolRegistry).addUserVault(_pid, msg.sender);
 
     	//make voterProxy call proxyToggleStaker(vault) on the pool's stakingAddress to set it as a proxied child
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("proxyToggleStaker(address)")), vault);
+        IStaker(proxy).execute(stakeAddress,uint256(0),data);
 
     	//call proxy initialize
-
-    	//register proxy on active proxy list
+        IProxyVault(vault).initialize(msg.sender, feeRegistry, stakeAddress, stakeToken);
     }
 
 
