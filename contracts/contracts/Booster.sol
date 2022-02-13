@@ -73,6 +73,17 @@ contract Booster{
         IStaker(proxy).execute(poolRegistry,uint256(0),data);
     }
 
+    function addPool(address _implementation, address _stakingAddress, address _stakingToken) external onlyOwner{
+        //TODO: add require valid_vefxs_proxies check
+
+        //memo: could get stakingToken from stakingAddress directly to avoid mistakes
+        IPoolRegistry(poolRegistry).addPool(_implementation, _stakingAddress, _stakingToken);
+    }
+
+    function deactivatePool(uint256 _pid) external onlyOwner{
+        IPoolRegistry(poolRegistry).deactivatePool(_pid);
+    }
+
     //vote for gauge weights
     function voteGaugeWeight(address _controller, address _gauge, uint256 _weight) external onlyOwner{
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("vote_for_gauge_weights(address,uint256)")), _gauge, _weight);

@@ -11,6 +11,7 @@ interface IFraxFarmERC20 {
         uint256 lock_multiplier; // 6 decimals of precision. 1x = 1000000
     }
 
+    function owner() external view returns (address);
     function stakingToken() external view returns (address);
     function fraxPerLPToken() external view returns (uint256);
     function calcCurCombinedWeight(address account) external view
@@ -43,6 +44,7 @@ interface IFraxFarmERC20 {
     function minVeFXSForMaxBoostProxy(address proxy_address) external view returns (uint256);
     function veFXSMultiplier(address account) external view returns (uint256 vefxs_multiplier);
 
+    function toggleValidVeFXSProxy(address proxy_address) external;
     function proxyToggleStaker(address staker_address) external;
     function stakerSetVeFXSProxy(address proxy_address) external;
     function getReward(address destination_address) external returns (uint256[] memory);
