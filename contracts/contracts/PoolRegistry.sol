@@ -2,6 +2,7 @@
 pragma solidity 0.8.10;
 
 import "./interfaces/IProxyFactory.sol";
+import "./interfaces/IRewards.sol";
 
 contract PoolRegistry {
 
@@ -9,13 +10,16 @@ contract PoolRegistry {
     address public constant proxyFactory = address(0x66807B5598A848602734B82E432dD88DBE13fC8f);
 
     address public operator;
+    address public rewardImplementation;
     PoolInfo[] public poolInfo;
     mapping(uint256 => mapping(address => address)) public vaultMap; //pool -> user -> vault
+    mapping(uint256 => address[]) public poolVaultList; //pool -> vault array
     
     struct PoolInfo {
         address implementation;
         address stakingAddress;
         address stakingToken;
+        address rewardsAddress;
         uint8 active;
     }
 
@@ -39,6 +43,10 @@ contract PoolRegistry {
         operator = _op;
     }
 
+    function setRewardImplementation(address _imp) external onlyOwner{
+        rewardImplementation = _imp;
+    }
+
     function poolLength() external view returns (uint256) {
         return poolInfo.length;
     }
@@ -49,11 +57,18 @@ contract PoolRegistry {
         require(_stakingAddress != address(0), "!stkAdd");
         require(_stakingToken != address(0), "!stkTok");
 
+        address rewards;
+        if(rewardImplementation != address(0)){
+           rewards = IProxyFactory(proxyFactory).clone(rewardImplementation);
+           IRewards(rewards).initialize(poolInfo.length, address(this));
+        }
+
         poolInfo.push(
             PoolInfo({
                 implementation: _implementation,
                 stakingAddress: _stakingAddress,
                 stakingToken: _stakingToken,
+                rewardsAddress: rewards,
                 active: 1
             })
         );
@@ -68,16 +83,23 @@ contract PoolRegistry {
     }
 
     //clone a new user vault
-    function addUserVault(uint256 _pid, address _user) external onlyOperator returns(address vault, address stakingAddress, address stakingToken){
+    function addUserVault(uint256 _pid, address _user) external onlyOperator returns(address vault, address stakingAddress, address stakingToken, address rewards){
         require(vaultMap[_pid][_user] == address(0), "already exists");
 
         PoolInfo storage pool = poolInfo[_pid];
         require(pool.active > 0, "!active");
 
+        //create
         vault = IProxyFactory(proxyFactory).clone(pool.implementation);
+        //add to user map
         vaultMap[_pid][_user] = vault;
+        //add to pool vault list
+        poolVaultList[_pid].push(vault);
+
+        //return values
         stakingAddress = pool.stakingAddress;
         stakingToken = pool.stakingToken;
+        rewards = pool.rewardsAddress;
 
         emit AddUserVault(_user, _pid);
     }

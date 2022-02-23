@@ -2,15 +2,24 @@
 pragma solidity 0.8.10;
 
 interface IRewards{
-    function stake(address, uint256) external;
-    function stakeFor(address, uint256) external;
-    function withdraw(address, uint256) external;
-    function exit(address) external;
-    function getReward(address) external;
-    function queueNewRewards(uint256) external;
-    function notifyRewardAmount(uint256) external;
-    function addExtraReward(address) external;
-    function stakingToken() external view returns (address);
-    function rewardToken() external view returns(address);
-    function earned(address account) external view returns (uint256);
+    struct EarnedData {
+        address token;
+        uint256 amount;
+    }
+    
+    function initialize(uint256 _pid, address _poolRegistry) external;
+    function addReward(address _rewardsToken, address _distributor) external;
+    function approveRewardDistributor(
+        address _rewardsToken,
+        address _distributor,
+        bool _approved
+    ) external;
+    function deposit(address _owner, uint256 _amount) external;
+    function withdraw(address _owner, uint256 _amount) external;
+    function getReward(address _forward) external;
+    function notifyRewardAmount(address _rewardsToken, uint256 _reward) external;
+    function balanceOf(address account) external view returns (uint256);
+    function claimableRewards(address _account) external view returns(EarnedData[] memory userRewards);
+    function rewardTokens(uint256 _rid) external view returns (address);
+    function rewardTokenLength() external view returns(uint256);
 }

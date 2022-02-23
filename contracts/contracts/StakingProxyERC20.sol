@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "./interfaces/IProxyVault.sol";
 import "./interfaces/IFeeRegistry.sol";
 import "./interfaces/IFraxFarmERC20.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 
-contract StakingProxyERC20 {
+contract StakingProxyERC20 is IProxyVault{
     using SafeERC20 for IERC20;
 
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
@@ -17,12 +18,13 @@ contract StakingProxyERC20 {
     address public feeRegistry; //todo: can convert to const
     address public stakingAddress;
     address public stakingToken;
+    address public rewards;
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
 
     //initialize vault
-    function initialize(address _owner, address _feeRegistry, address _stakingAddress, address _stakingToken) external{
+    function initialize(address _owner, address _feeRegistry, address _stakingAddress, address _stakingToken, address _rewardsAddress) external{
         require(owner == address(0),"already init");
 
         //set variables
@@ -30,6 +32,7 @@ contract StakingProxyERC20 {
         feeRegistry = _feeRegistry;
         stakingAddress = _stakingAddress;
         stakingToken = _stakingToken;
+        rewards = _rewardsAddress;
 
         //set proxy address on staking contract
         IFraxFarmERC20(stakingAddress).stakerSetVeFXSProxy(vefxsProxy);
@@ -42,7 +45,6 @@ contract StakingProxyERC20 {
         require(owner == msg.sender, "!auth");
         _;
     }
-
 
     //create a new locked state of _secs timelength
     function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner{
@@ -62,9 +64,56 @@ contract StakingProxyERC20 {
         IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, _addl_liq);
     }
 
+    //withdraw a staked position
     function withdrawLocked(bytes32 _kek_id) external onlyOwner{
         //withdraw directly to owner(msg.sender)
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
+    }
+
+    //helper function to combine earned tokens on staking contract and any tokens that are on this vault
+    function earned() external view returns (uint256[] memory new_earned) {
+        //get list of reward tokens
+        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
+        new_earned = IFraxFarmERC20(stakingAddress).earned(address(this));
+
+        //add any tokens that happen to be already claimed but sitting on the vault
+        //(ex. withdraw claiming rewards)
+        for(uint256 i = 0; i < rewardTokens.length; i++){
+            new_earned[i] += IERC20(rewardTokens[i]).balanceOf(address(this));
+        }
+    }
+
+    //helper function to get weighted reward rates (rate per weight unit)
+    function weightedRewardRates() public view returns (uint256[] memory weightedRates) {
+        //get list of reward tokens
+        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
+        //get total weight of all stakers
+        uint256 totalWeight = IFraxFarmERC20(stakingAddress).totalCombinedWeight();
+
+        //calc weighted reward rates
+        weightedRates = new uint256[](rewardTokens.length);
+        for (uint256 i = 0; i < rewardTokens.length; i++){ 
+            weightedRates[i] = IFraxFarmERC20(stakingAddress).rewardRates(i) * 1e18 / totalWeight;
+        }
+    }
+
+    //helper function to get boosted reward rate of user.
+    //returns amount user receives per reward duration based on weight/liq ratio
+    //to get %return of a rewardsDuration(7 days),
+    //multiply this value by the ratio of (price of reward / price of lp token)
+    function userBoostedRewardRates() external view returns (uint256[] memory boostedRates) {
+        //get list of reward tokens
+        uint256[] memory wrr = weightedRewardRates();
+
+        //get user liquidity and weight
+        uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
+        uint256 userWeight = IFraxFarmERC20(stakingAddress).combinedWeightOf(address(this));
+
+        //calc boosted rates
+        boostedRates = new uint256[](wrr.length);
+        for (uint256 i = 0; i < wrr.length; i++){ 
+            boostedRates[i] = wrr[i] * userWeight / userLiq;
+        }
     }
 
     /*
@@ -91,6 +140,8 @@ contract StakingProxyERC20 {
 
         //transfer
         _transferTokens(rewardTokens);
+
+        //todo: extra rewards
     }
 
     //auxiliary function to supply token list(same a bit of gas + dont have to claim everything)
@@ -109,6 +160,8 @@ contract StakingProxyERC20 {
 
         //transfer
         _transferTokens(_rewardTokenList);
+
+        //todo: extra rewards
     }
 
     //apply fees to fxs and send remaining to owner

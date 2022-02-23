@@ -36,6 +36,7 @@ interface IFraxFarmERC20 {
     function totalCombinedWeight() external view returns (uint256);
     function combinedWeightOf(address account) external view returns (uint256);
     function lockMultiplier(uint256 secs) external view returns (uint256);
+    function rewardRates(uint256 token_idx) external view returns (uint256 rwd_rate);
 
     function userStakedFrax(address account) external view returns (uint256);
     function proxyStakedFrax(address proxy_address) external view returns (uint256);

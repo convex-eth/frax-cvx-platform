@@ -21,6 +21,7 @@ contract Booster{
     address public immutable poolRegistry;
     address public immutable feeRegistry;
     address public owner;
+    address public rewardManager;
     address public feeclaimer;
     bool public isShutdown;
     address public feeQueue;
@@ -35,6 +36,7 @@ contract Booster{
         feeRegistry = _feeReg;
         isShutdown = false;
         owner = msg.sender;
+        rewardManager = msg.sender;
         feeclaimer = msg.sender;
     }
 
@@ -58,6 +60,10 @@ contract Booster{
     //set who can call claim fees, 0x0 address will allow anyone to call
     function setFeeClaimer(address _claimer) external onlyOwner{
         feeclaimer = _claimer;
+    }
+
+    function setRewardManager(address _rmanager) external onlyOwner{
+        rewardManager = _rmanager;
     }
     
     //shutdown this contract.
@@ -117,14 +123,14 @@ contract Booster{
 
     function createVault(uint256 _pid) external{
     	//create minimal proxy vault for specified pool
-        (address vault, address stakeAddress, address stakeToken) = IPoolRegistry(poolRegistry).addUserVault(_pid, msg.sender);
+        (address vault, address stakeAddress, address stakeToken, address rewards) = IPoolRegistry(poolRegistry).addUserVault(_pid, msg.sender);
 
     	//make voterProxy call proxyToggleStaker(vault) on the pool's stakingAddress to set it as a proxied child
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("proxyToggleStaker(address)")), vault);
         IStaker(proxy).execute(stakeAddress,uint256(0),data);
 
     	//call proxy initialize
-        IProxyVault(vault).initialize(msg.sender, feeRegistry, stakeAddress, stakeToken);
+        IProxyVault(vault).initialize(msg.sender, feeRegistry, stakeAddress, stakeToken, rewards);
     }
 
 
