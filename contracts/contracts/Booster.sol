@@ -79,6 +79,14 @@ contract Booster{
         IStaker(proxy).execute(poolRegistry,uint256(0),data);
     }
 
+    function setPoolRewardImplementation(address _impl) external onlyOwner{
+        require(!isShutdown,"shutdown");
+
+        //claim pool reg
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setRewardImplementation(address)")), _impl);
+        IStaker(proxy).execute(poolRegistry,uint256(0),data);
+    }
+
     function addPool(address _implementation, address _stakingAddress, address _stakingToken) external onlyOwner{
         //TODO: add require valid_vefxs_proxies check
 

@@ -12,6 +12,7 @@ const StakingProxyERC20 = artifacts.require("StakingProxyERC20");
 const IFraxFarmERC20 = artifacts.require("IFraxFarmERC20");
 const PoolRegistry = artifacts.require("PoolRegistry");
 const FeeRegistry = artifacts.require("FeeRegistry");
+const MultiRewards = artifacts.require("MultiRewards");
 
 const IVPool = artifacts.require("IVPool");
 const IExchange = artifacts.require("IExchange");
@@ -88,6 +89,8 @@ contract("Vault Tests", async accounts => {
     let feeReg = await FeeRegistry.new();
     let poolReg = await PoolRegistry.new();
     let booster = await Booster.new(voteproxy.address, poolReg.address, feeReg.address);
+    let rewardMaster = await MultiRewards.new(booster.address, poolReg.address);
+    // await rewardMaster.setbooster(booster.address);
     console.log("new booster deployed: " +booster.address);
 
     await voteproxy.setOperator(booster.address,{from:multisig, gasPrice:0});
@@ -95,6 +98,8 @@ contract("Vault Tests", async accounts => {
 
     await booster.claimOperatorRoles();
     await booster.setOwner(multisig);
+    await booster.setRewardManager(multisig,{from:multisig,gasPrice:0});
+    await booster.setPoolRewardImplementation(rewardMaster.address,{from:multisig,gasPrice:0});
     console.log("booster init");
 
     //create new pool and vault
@@ -106,6 +111,13 @@ contract("Vault Tests", async accounts => {
     let impl = await StakingProxyERC20.new();
     var tx = await booster.addPool(impl.address, stakingAddress.address, stakingToken.address,{from:multisig,gasPrice:0});
     console.log("pool added, gas: " +tx.receipt.gasUsed);
+
+    var poolinfo = await poolReg.poolInfo(0);
+    console.log(poolinfo);
+    var poolRewards = await MultiRewards.at(poolinfo.rewardsAddress);
+    console.log("rewards at " +poolRewards.address);
+    // await poolRewards.setbooster(booster.address);
+    await poolRewards.setActive({from:multisig,gasPrice:0});
 
     var tx = await booster.createVault(0);
     let vaultAddress = await poolReg.vaultMap(0,userA);
@@ -122,8 +134,11 @@ contract("Vault Tests", async accounts => {
 
     //stake
     await stakingToken.approve(vault.address, web3.utils.toWei("100000.0","ether"));
-    await vault.stakeLocked(web3.utils.toWei("100000.0","ether"), day*30);
-    console.log("staked");
+    var tx = await vault.stakeLocked(web3.utils.toWei("100000.0","ether"), day*30);
+    console.log("staked, gas: " +tx.receipt.gasUsed);
+
+    //todo: compare gas to vanila staking
+    //todo: compare gas when rewards contract is active
 
     var stakeInfo = await stakingAddress.lockedStakesOf(vault.address);
     console.log("stake info: " +stakeInfo);

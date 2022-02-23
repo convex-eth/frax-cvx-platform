@@ -60,7 +60,7 @@ contract PoolRegistry {
         address rewards;
         if(rewardImplementation != address(0)){
            rewards = IProxyFactory(proxyFactory).clone(rewardImplementation);
-           IRewards(rewards).initialize(poolInfo.length, address(this));
+           IRewards(rewards).initialize(poolInfo.length);
         }
 
         poolInfo.push(

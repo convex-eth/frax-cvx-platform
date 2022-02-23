@@ -45,32 +45,42 @@ contract MultiRewards is IRewards{
     mapping(address => uint256) public balances;
     uint256 public totalSupply;
  
-    address public constant convexBooster = address(0x0); //todo fill address
-    address public poolRegistry; //todo: make constant
+    address public immutable convexBooster;
+    address public immutable poolRegistry;
     uint256 public poolId;
+    bool public active;
+    bool public init;
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor() {
-    }
-
-    function initialize(uint256 _pid, address _poolRegistry) external{
-        require(poolRegistry == address(0),"already init");
-
-        //set variables
-        poolId = _pid;
+    constructor(address _booster, address _poolRegistry) {
+        convexBooster = _booster;
         poolRegistry = _poolRegistry;
     }
 
+    function initialize(uint256 _pid) external{
+        require(!init,"already init");
+
+        //set variables
+        poolId = _pid;
+        init = true;
+    }
+
     /* ========== ADMIN CONFIGURATION ========== */
+
+    //turn on rewards contract
+    function setActive() external onlyOwner{
+        active = true;
+    }
 
     // Add a new reward token to be distributed to stakers
     function addReward(
         address _rewardsToken,
         address _distributor
     ) public onlyOwner {
+        require(active, "!active");
         require(rewardData[_rewardsToken].lastUpdateTime == 0);
-        // require(_rewardsToken != address(stakingToken));
+
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].lastUpdateTime = block.timestamp;
         rewardData[_rewardsToken].periodFinish = block.timestamp;
@@ -89,7 +99,7 @@ contract MultiRewards is IRewards{
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function deposit(address _owner, uint256 _amount) external{
+    function deposit(address _owner, uint256 _amount) external updateReward(msg.sender){
         //only allow registered vaults to call
         require(IPoolRegistry(poolRegistry).vaultMap(poolId,_owner) == msg.sender, "!auth");
 
@@ -98,7 +108,7 @@ contract MultiRewards is IRewards{
         emit Deposited(msg.sender, _amount);
     }
 
-    function withdraw(address _owner, uint256 _amount) external{
+    function withdraw(address _owner, uint256 _amount) external updateReward(msg.sender){
         //only allow registered vaults to call
         require(IPoolRegistry(poolRegistry).vaultMap(poolId,_owner) == msg.sender, "!auth");
 
@@ -106,6 +116,7 @@ contract MultiRewards is IRewards{
         totalSupply -= _amount;
         emit Withdrawn(msg.sender, _amount);
     }
+
 
     /* ========== VIEWS ========== */
 

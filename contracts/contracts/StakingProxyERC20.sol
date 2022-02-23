@@ -4,6 +4,7 @@ pragma solidity 0.8.10;
 import "./interfaces/IProxyVault.sol";
 import "./interfaces/IFeeRegistry.sol";
 import "./interfaces/IFraxFarmERC20.sol";
+import "./interfaces/IRewards.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
@@ -48,38 +49,69 @@ contract StakingProxyERC20 is IProxyVault{
 
     //create a new locked state of _secs timelength
     function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner{
-        //pull tokens from user
-        IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
+        if(_liquidity > 0){
+            //pull tokens from user
+            IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
-        //stake
-        IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
+            //stake
+            IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
+        }
+        //if rewards are active, checkpoint
+        if(IRewards(rewards).active()){
+            IRewards(rewards).deposit(owner,_liquidity);
+        }
     }
 
     //add to a current lock
     function lockAdditional(bytes32 _kek_id, uint256 _addl_liq) external onlyOwner{
-        //pull tokens from user
-        IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
+        if(_addl_liq > 0){
+            //pull tokens from user
+            IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
 
-        //add stake
-        IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, _addl_liq);
+            //add stake
+            IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, _addl_liq);
+        }
+        //if rewards are active, checkpoint
+        if(IRewards(rewards).active()){
+            IRewards(rewards).deposit(owner,_addl_liq);
+        }
     }
 
     //withdraw a staked position
     function withdrawLocked(bytes32 _kek_id) external onlyOwner{
+        //take note of amount liquidity staked
+        uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
+
         //withdraw directly to owner(msg.sender)
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
+
+        //if rewards are active, checkpoint
+        if(IRewards(rewards).active()){
+            //get difference of liquidity after withdrawn
+            userLiq -= IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
+            IRewards(rewards).withdraw(owner,userLiq);
+        }
     }
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
-    function earned() external view returns (uint256[] memory new_earned) {
+    function earned() external view returns (address[] memory token_addresses, uint256[] memory total_earned) {
         //get list of reward tokens
         address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
-        new_earned = IFraxFarmERC20(stakingAddress).earned(address(this));
-
+        uint256[] memory stakedearned = IFraxFarmERC20(stakingAddress).earned(address(this));
+        
+        token_addresses = new address[](rewardTokens.length + IRewards(rewards).rewardTokenLength());
+        total_earned = new uint256[](rewardTokens.length + IRewards(rewards).rewardTokenLength());
         //add any tokens that happen to be already claimed but sitting on the vault
         //(ex. withdraw claiming rewards)
         for(uint256 i = 0; i < rewardTokens.length; i++){
-            new_earned[i] += IERC20(rewardTokens[i]).balanceOf(address(this));
+            token_addresses[i] = rewardTokens[i];
+            total_earned[i] = stakedearned[i] + IERC20(rewardTokens[i]).balanceOf(address(this));
+        }
+
+        IRewards.EarnedData[] memory extraRewards = IRewards(rewards).claimableRewards(address(this));
+        for(uint256 i = 0; i < extraRewards.length; i++){
+            token_addresses[i+rewardTokens.length] = extraRewards[i].token;
+            total_earned[i+rewardTokens.length] = extraRewards[i].amount;
         }
     }
 
@@ -141,7 +173,17 @@ contract StakingProxyERC20 is IProxyVault{
         //transfer
         _transferTokens(rewardTokens);
 
-        //todo: extra rewards
+        //get extra rewards
+        if(IRewards(rewards).active()){
+            //check if there is a balance because the reward contract could have be activated later
+            uint256 bal = IRewards(rewards).balanceOf(address(this));
+            if(bal == 0){
+                //bal == 0 and liq > 0 can only happen if rewards were turned on after staking
+                uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
+                IRewards(rewards).deposit(owner,userLiq);
+            }
+            IRewards(rewards).getReward(owner);
+        }
     }
 
     //auxiliary function to supply token list(same a bit of gas + dont have to claim everything)

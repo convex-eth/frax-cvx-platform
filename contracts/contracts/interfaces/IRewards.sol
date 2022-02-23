@@ -7,7 +7,7 @@ interface IRewards{
         uint256 amount;
     }
     
-    function initialize(uint256 _pid, address _poolRegistry) external;
+    function initialize(uint256 _pid) external;
     function addReward(address _rewardsToken, address _distributor) external;
     function approveRewardDistributor(
         address _rewardsToken,
@@ -22,4 +22,5 @@ interface IRewards{
     function claimableRewards(address _account) external view returns(EarnedData[] memory userRewards);
     function rewardTokens(uint256 _rid) external view returns (address);
     function rewardTokenLength() external view returns(uint256);
+    function active() external view returns(bool);
 }
