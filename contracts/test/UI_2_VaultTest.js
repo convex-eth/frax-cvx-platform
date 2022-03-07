@@ -65,6 +65,8 @@ contract("Vault Tests", async accounts => {
     userNames[userD] = "D";
     userNames[userZ] = "Z";
 
+    await unlockAccount(multisig);
+    await unlockAccount(deployer);
 
     const advanceTime = async (secondsElaspse) => {
       await time.increase(secondsElaspse);
@@ -93,7 +95,6 @@ contract("Vault Tests", async accounts => {
     let poolReg = await PoolRegistry.new();
     let booster = await Booster.new(voteproxy.address, poolReg.address, feeReg.address);
     let rewardMaster = await MultiRewards.new(booster.address, poolReg.address);
-    // await rewardMaster.setbooster(booster.address);
     console.log("new booster deployed: " +booster.address);
 
     await voteproxy.setOperator(booster.address,{from:multisig, gasPrice:0});
@@ -121,50 +122,34 @@ contract("Vault Tests", async accounts => {
     console.log("rewards at " +poolRewards.address);
     // await poolRewards.setbooster(booster.address);
 
-    //compare gas when rewards contract is active by toggling this
+    //Uncomment to add rewards
     await poolRewards.setActive({from:multisig,gasPrice:0});
-
-    var tx = await booster.createVault(0);
-    let vaultAddress = await poolReg.vaultMap(0,userA);
-    let vault = await StakingProxyERC20.at(vaultAddress)
-    console.log("vault created " +vault.address +", gas: " +tx.receipt.gasUsed);
+    await poolRewards.addReward(contractList.system.cvx, deployer, {from:multisig,gasPrice:0});
+    let cvx = await IERC20.at(contractList.system.cvx);
+    await cvx.approve(poolRewards.address,web3.utils.toWei("100000.0", "ether"),{from:deployer});
+    await poolRewards.notifyRewardAmount(contractList.system.cvx,web3.utils.toWei("1000.0", "ether"),{from:deployer});
+    let rdata = await poolRewards.rewardData(contractList.system.cvx);
+    console.log("reward data: \n" +JSON.stringify(rdata));
 
 
     //get vesper token
     let tokenholder = "0x698137c473bc1f0ea9b85ade45caf64ef2df48d6";
     await unlockAccount(tokenholder);
-    await stakingToken.transfer(userB,web3.utils.toWei("100000.0", "ether"),{from:tokenholder,gasPrice:0});
-
-    //vanilla staking gas check
-    await stakingToken.approve(stakingAddress.address, web3.utils.toWei("100000.0", "ether"), {from:userB} );
-    var tx = await stakingAddress.stakeLocked(web3.utils.toWei("100000.0", "ether"), day*20,{from:userB});
-    console.log("vanilla staked, gas: " +tx.receipt.gasUsed);
-
     await stakingToken.transfer(userA,web3.utils.toWei("200000.0", "ether"),{from:tokenholder,gasPrice:0});
     var tokenBalance = await stakingToken.balanceOf(userA);
     console.log("tokenBalance: " +tokenBalance);
 
+    //creating user vault
+    // var tx = await booster.createVault(0);
+    // let vaultAddress = await poolReg.vaultMap(0,userA);
+    // let vault = await StakingProxyERC20.at(vaultAddress)
+    // console.log("vault created " +vault.address +", gas: " +tx.receipt.gasUsed);
+
     //stake
-    await stakingToken.approve(vault.address, web3.utils.toWei("100000.0","ether"));
-    var tx = await vault.stakeLocked(web3.utils.toWei("100000.0","ether"), day*30);
-    console.log("staked, gas: " +tx.receipt.gasUsed);
+    // await stakingToken.approve(vault.address, web3.utils.toWei("100000.0","ether"));
+    // var tx = await vault.stakeLocked(web3.utils.toWei("100000.0","ether"), day*30);
+    // console.log("staked, gas: " +tx.receipt.gasUsed);
 
-    
-
-    var stakeInfo = await stakingAddress.lockedStakesOf(vault.address);
-    console.log("stake info: " +stakeInfo);
-    console.log("kek id: " +stakeInfo[0][0]);
-    console.log("stake info: " +JSON.stringify(stakeInfo));
-    await stakingAddress.userStakedFrax(vault.address).then(a=>console.log("userStakedFrax: " +a));
-
-
-    //stake again with additional
-    await stakingToken.approve(vault.address, web3.utils.toWei("100000.0","ether"));
-    var tx = await vault.lockAdditional(stakeInfo[0][0],web3.utils.toWei("100000.0","ether"));
-    console.log("staked additional, gas: " +tx.receipt.gasUsed);
-    var stakeInfo = await stakingAddress.lockedStakesOf(vault.address);
-    console.log("stake info: " +stakeInfo);
-    await stakingAddress.userStakedFrax(vault.address).then(a=>console.log("userStakedFrax: " +a));
   });
 });
 

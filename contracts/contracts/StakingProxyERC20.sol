@@ -130,9 +130,8 @@ contract StakingProxyERC20 is IProxyVault{
     }
 
     //helper function to get boosted reward rate of user.
-    //returns amount user receives per reward duration based on weight/liq ratio
-    //to get %return of a rewardsDuration(7 days),
-    //multiply this value by the ratio of (price of reward / price of lp token)
+    //returns amount user receives per second based on weight/liq ratio
+    //to get %return, multiply this value by the ratio of (price of reward / price of lp token)
     function userBoostedRewardRates() external view returns (uint256[] memory boostedRates) {
         //get list of reward tokens
         uint256[] memory wrr = weightedRewardRates();

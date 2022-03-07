@@ -11,8 +11,8 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 
 contract MultiRewards is IRewards{
-
     using SafeERC20 for IERC20;
+
 
     /* ========== STATE VARIABLES ========== */
 
@@ -22,10 +22,7 @@ contract MultiRewards is IRewards{
         uint256 lastUpdateTime;
         uint256 rewardPerTokenStored;
     }
-    // struct EarnedData {
-    //     address token;
-    //     uint256 amount;
-    // }
+
     //rewards
     address[] public rewardTokens;
     mapping(address => Reward) public rewardData;
@@ -223,7 +220,6 @@ contract MultiRewards is IRewards{
 
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
     function recoverERC20(address _tokenAddress, uint256 _tokenAmount) external onlyOwner {
-        // require(_tokenAddress != address(stakingToken), "Cannot withdraw staking token");
         require(rewardData[_tokenAddress].lastUpdateTime == 0, "Cannot withdraw reward token");
         IERC20(_tokenAddress).safeTransfer(IBooster(convexBooster).rewardManager(), _tokenAmount);
         emit Recovered(_tokenAddress, _tokenAmount);
@@ -237,18 +233,16 @@ contract MultiRewards is IRewards{
     }
 
     modifier updateReward(address _account) {
-        //{//stack too deep
-            uint256 userBal = balances[_account];
-            for (uint i = 0; i < rewardTokens.length; i++) {
-                address token = rewardTokens[i];
-                rewardData[token].rewardPerTokenStored = _rewardPerToken(token);
-                rewardData[token].lastUpdateTime = _lastTimeRewardApplicable(rewardData[token].periodFinish);
-                if (_account != address(0)) {
-                    rewards[_account][token] = _earned(_account, token, userBal );
-                    userRewardPerTokenPaid[_account][token] = rewardData[token].rewardPerTokenStored;
-                }
+        uint256 userBal = balances[_account];
+        for (uint i = 0; i < rewardTokens.length; i++) {
+            address token = rewardTokens[i];
+            rewardData[token].rewardPerTokenStored = _rewardPerToken(token);
+            rewardData[token].lastUpdateTime = _lastTimeRewardApplicable(rewardData[token].periodFinish);
+            if (_account != address(0)) {
+                rewards[_account][token] = _earned(_account, token, userBal );
+                userRewardPerTokenPaid[_account][token] = rewardData[token].rewardPerTokenStored;
             }
-        //}
+        }
         _;
     }
 
