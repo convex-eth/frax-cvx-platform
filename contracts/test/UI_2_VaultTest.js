@@ -92,7 +92,9 @@ contract("Vault Tests", async accounts => {
 
     //deply new booster
     let feeReg = await FeeRegistry.new();
+    console.log("fee Registry: " +feeReg.address);
     let poolReg = await PoolRegistry.new();
+    console.log("pool Registry: " +poolReg.address);
     let booster = await Booster.new(voteproxy.address, poolReg.address, feeReg.address);
     let rewardMaster = await MultiRewards.new(booster.address, poolReg.address);
     console.log("new booster deployed: " +booster.address);
