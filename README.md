@@ -1,36 +1,39 @@
 # frax-cvx-platform
-Frax-Convex Platform
+Frax staking platform that allows users to trustlessly stake positions on the Frax Finance Gauge system while borrowing Convex's boosting power via veFXS to increase yield.
 
-## Minimal Deploy
-Will first launch with just cvxFxs deposits while the staking platform is being made.
+## Pool Creation Flow
 
-Required functionality/tests:
+#### Convex Creates Vault Implementation Contracts
+This implmentation contract is a proxy staking interface to the Frax gauge. Allowing various implementations allows Convex to adapt to different products and staking contracts. For example, erc20 staking and uniswap v3 nft staking.
+(Reference: StakingProxyERC20.sol)
 
-Deposits
-- deposit fxs for cvxFxs
-- Lock for vefxs
-- increase lock amount/time
+#### Convex Create A Pool And Assigns An Implementation
+A pool is created with an implementation address and other important information like frax staking address.  A reward contract is also created to allow additional rewards outside of the gauge system.
+(Reference: PoolRegistry.sol, MultiRewards.sol, Booster.sol)
 
-Proxy
-- set owner
-- set operator
-- set depositor
-- operator isShutdown condition checks
-- operator can call arbitrary calls
-- a few helper functions for locking and claiming
+#### Pools Can Be Marked Inactive To Stop Vault Creation
+User vaults created from pools are immutable and can not be removed. However Convex can halt future product of vaults.  This will allow things like migrations if required.
+(Reference: PoolRegistry.sol, Booster.sol)
 
-Placeholder Operator
-- call get fees and withdraw
-- isShutdown and shutdownSystem
-- able to be replaced
+## General User Flow
 
+#### User Creates A Personal Vault
+A user first clones a pool's implementation contract and assigns themselves as the owner. Only the owner can interact with this proxy vault.
+(Reference: Booster.sol, PoolRegistry.sol)
 
-## Changes from Convex-Curve version
-- update to solidity 0.8.10
-- minimalize main contracts (booster)
-- use individual user proxy vaults for staking
-- pool creation with implementation contract for user vault
-- changes to fee flow
-- registry for user to user-vault lookup
-- aggregate tracking for total value
-- extra reward layer for convex users
+#### Convex Enables User Vault To Use Its veFXS Boosting Power
+At time of creation, Convex tells the Frax staking contract that the user vault can share in Convex's boosting power via veFXS.
+(Reference: Booster.sol)
+
+#### User Interacts with Vault As A Proxy To Stake On Frax Finance
+Users interact with the proxy vault in the same way they would interact with the main Frax staking contract.
+(Reference: StakingProxyERC20.sol)
+
+#### User Determines Their Own Lock Timing
+Since vaults are unique to each user, each user can decide how long their staking position should be locked for to increase yield. (This is a Frax staking option, not a Convex one)
+(Reference: StakingProxyERC20.sol)
+
+#### When User Rewards Are Claimed, A Fee Is Applied To FXS Tokens
+Users can claim rewards as they see fit.  Any FXS tokens claimed will have a fee applied and sent to the Convex system to be dispersed to various token holders.
+(Reference: StakingProxyERC20.sol, FeeRegistry.sol )
+
