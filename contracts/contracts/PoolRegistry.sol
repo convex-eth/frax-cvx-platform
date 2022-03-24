@@ -51,6 +51,10 @@ contract PoolRegistry {
         return poolInfo.length;
     }
 
+    function poolVaultLength(uint256 _pid) external view returns (uint256) {
+        return poolVaultList[_pid].length;
+    }
+
     //add a new pool and implementation
     function addPool(address _implementation, address _stakingAddress, address _stakingToken) external onlyOperator{
         require(_implementation != address(0), "!imp");
