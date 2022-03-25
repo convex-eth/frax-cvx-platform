@@ -103,6 +103,7 @@ contract("Vault Tests", async accounts => {
     await booster.setOwner(multisig);
     await booster.setRewardManager(multisig,{from:multisig,gasPrice:0});
     await booster.setPoolRewardImplementation(rewardMaster.address,{from:multisig,gasPrice:0});
+    await booster.setPoolFeeDeposit(booster.address,{from:multisig,gasPrice:0});
     console.log("booster init");
 
     //create new pool and vault
@@ -122,7 +123,14 @@ contract("Vault Tests", async accounts => {
     // await poolRewards.setbooster(booster.address);
 
     //compare gas when rewards contract is active by toggling this
-    await poolRewards.setActive({from:multisig,gasPrice:0});
+    // await poolRewards.setActive({from:multisig,gasPrice:0});
+    //Uncomment to add rewards
+    // await poolRewards.addReward(contractList.system.cvx, deployer, {from:multisig,gasPrice:0});
+    // let cvx = await IERC20.at(contractList.system.cvx);
+    // await cvx.approve(poolRewards.address,web3.utils.toWei("100000.0", "ether"),{from:deployer});
+    // await poolRewards.notifyRewardAmount(contractList.system.cvx,web3.utils.toWei("1000.0", "ether"),{from:deployer});
+    // let rdata = await poolRewards.rewardData(contractList.system.cvx);
+    // console.log("reward data: \n" +JSON.stringify(rdata));
 
     var tx = await booster.createVault(0);
     let vaultAddress = await poolReg.vaultMap(0,userA);
@@ -136,17 +144,18 @@ contract("Vault Tests", async accounts => {
     await stakingToken.transfer(userB,web3.utils.toWei("100000.0", "ether"),{from:tokenholder,gasPrice:0});
 
     //vanilla staking gas check
-    await stakingToken.approve(stakingAddress.address, web3.utils.toWei("100000.0", "ether"), {from:userB} );
-    var tx = await stakingAddress.stakeLocked(web3.utils.toWei("100000.0", "ether"), day*20,{from:userB});
-    console.log("vanilla staked, gas: " +tx.receipt.gasUsed);
+    // await stakingToken.approve(stakingAddress.address, web3.utils.toWei("100000.0", "ether"), {from:userB} );
+    // var tx = await stakingAddress.stakeLocked(web3.utils.toWei("100000.0", "ether"), day*20,{from:userB});
+    // console.log("vanilla staked, gas: " +tx.receipt.gasUsed);
 
     await stakingToken.transfer(userA,web3.utils.toWei("200000.0", "ether"),{from:tokenholder,gasPrice:0});
     var tokenBalance = await stakingToken.balanceOf(userA);
     console.log("tokenBalance: " +tokenBalance);
 
+    var lockDuration = day*30;
     //stake
     await stakingToken.approve(vault.address, web3.utils.toWei("100000.0","ether"));
-    var tx = await vault.stakeLocked(web3.utils.toWei("100000.0","ether"), day*30);
+    var tx = await vault.stakeLocked(web3.utils.toWei("100000.0","ether"), lockDuration);
     console.log("staked, gas: " +tx.receipt.gasUsed);
 
     
@@ -156,7 +165,12 @@ contract("Vault Tests", async accounts => {
     console.log("kek id: " +stakeInfo[0][0]);
     console.log("stake info: " +JSON.stringify(stakeInfo));
     await stakingAddress.userStakedFrax(vault.address).then(a=>console.log("userStakedFrax: " +a));
-
+    await stakingAddress.getAllRewardTokens().then(a=>console.log("getAllRewardTokens: " +a))
+    await stakingAddress.lockedLiquidityOf(vault.address).then(a=>console.log("lockedLiquidityOf: " +a))
+    await stakingAddress.combinedWeightOf(vault.address).then(a=>console.log("combinedWeightOf: " +a))
+    await stakingAddress.veFXSMultiplier(vault.address).then(a=>console.log("veFXSMultiplier: " +a))
+    await vault.weightedRewardRates().then(a=>console.log("weightedRewardRates: " +a))
+    await vault.userBoostedRewardRates().then(a=>console.log("userBoostedRewardRates: " +a))
 
     //stake again with additional
     await stakingToken.approve(vault.address, web3.utils.toWei("100000.0","ether"));
@@ -165,6 +179,25 @@ contract("Vault Tests", async accounts => {
     var stakeInfo = await stakingAddress.lockedStakesOf(vault.address);
     console.log("stake info: " +stakeInfo);
     await stakingAddress.userStakedFrax(vault.address).then(a=>console.log("userStakedFrax: " +a));
+
+    await advanceTime(day);
+
+    await fxs.balanceOf(userA).then(a=>console.log("user A fxs: " +a));
+    await fxs.balanceOf(booster.address).then(a=>console.log("booster fxs: " +a));
+    await stakingAddress.earned(vault.address).then(a=>console.log("earned: " +a));
+    await vault.getReward();
+    console.log("-> get reward");
+    await fxs.balanceOf(userA).then(a=>console.log("user A fxs: " +a));
+    await fxs.balanceOf(booster.address).then(a=>console.log("booster fxs: " +a));
+
+
+
+    //withdraw
+    await advanceTime(lockDuration + day);
+    await stakingToken.balanceOf(userA).then(a=>console.log("staking token userA: " +a));
+    await vault.withdrawLocked(stakeInfo[0][0]);
+    console.log("-> withdrawn");
+    await stakingToken.balanceOf(userA).then(a=>console.log("staking token userA: " +a));
   });
 });
 

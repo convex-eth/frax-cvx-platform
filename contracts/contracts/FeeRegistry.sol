@@ -14,7 +14,7 @@ contract FeeRegistry{
     uint256 public cvxfxsIncentive = 1000;
     uint256 public cvxIncentive = 700;
     uint256 public platformIncentive = 0;
-    uint256 public totalFees = 0;
+    uint256 public totalFees = 1700;
     address public feeDeposit;
     uint256 public constant maxFees = 2000;
     uint256 public constant FEE_DENOMINATOR = 10000;

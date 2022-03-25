@@ -106,6 +106,7 @@ contract("Vault Tests", async accounts => {
     await booster.setOwner(multisig);
     await booster.setRewardManager(multisig,{from:multisig,gasPrice:0});
     await booster.setPoolRewardImplementation(rewardMaster.address,{from:multisig,gasPrice:0});
+    await booster.setPoolFeeDeposit(booster.address,{from:multisig,gasPrice:0});
     console.log("booster init");
 
     //create new pool and vault
@@ -125,13 +126,13 @@ contract("Vault Tests", async accounts => {
     // await poolRewards.setbooster(booster.address);
 
     //Uncomment to add rewards
-    await poolRewards.setActive({from:multisig,gasPrice:0});
-    await poolRewards.addReward(contractList.system.cvx, deployer, {from:multisig,gasPrice:0});
-    let cvx = await IERC20.at(contractList.system.cvx);
-    await cvx.approve(poolRewards.address,web3.utils.toWei("100000.0", "ether"),{from:deployer});
-    await poolRewards.notifyRewardAmount(contractList.system.cvx,web3.utils.toWei("1000.0", "ether"),{from:deployer});
-    let rdata = await poolRewards.rewardData(contractList.system.cvx);
-    console.log("reward data: \n" +JSON.stringify(rdata));
+    // await poolRewards.setActive({from:multisig,gasPrice:0});
+    // await poolRewards.addReward(contractList.system.cvx, deployer, {from:multisig,gasPrice:0});
+    // let cvx = await IERC20.at(contractList.system.cvx);
+    // await cvx.approve(poolRewards.address,web3.utils.toWei("100000.0", "ether"),{from:deployer});
+    // await poolRewards.notifyRewardAmount(contractList.system.cvx,web3.utils.toWei("1000.0", "ether"),{from:deployer});
+    // let rdata = await poolRewards.rewardData(contractList.system.cvx);
+    // console.log("reward data: \n" +JSON.stringify(rdata));
 
 
     //get vesper token

@@ -87,6 +87,20 @@ contract Booster{
         IStaker(proxy).execute(poolRegistry,uint256(0),data);
     }
 
+    function setPoolFees(uint256 _cvxfxs, uint256 _cvx, uint256 _platform) external onlyOwner{
+        require(!isShutdown,"shutdown");
+
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setFees(uint256,uint256,uint256)")), _cvxfxs, _cvx, _platform);
+        IStaker(proxy).execute(feeRegistry,uint256(0),data);
+    }
+
+    function setPoolFeeDeposit(address _deposit) external onlyOwner{
+        require(!isShutdown,"shutdown");
+
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setDepositAddress(address)")), _deposit);
+        IStaker(proxy).execute(feeRegistry,uint256(0),data);
+    }
+
     function addPool(address _implementation, address _stakingAddress, address _stakingToken) external onlyOwner{
         //TODO: add require valid_vefxs_proxies check
 

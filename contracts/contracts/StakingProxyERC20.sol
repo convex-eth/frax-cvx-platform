@@ -137,13 +137,12 @@ contract StakingProxyERC20 is IProxyVault{
         uint256[] memory wrr = weightedRewardRates();
 
         //get user liquidity and weight
-        uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
         uint256 userWeight = IFraxFarmERC20(stakingAddress).combinedWeightOf(address(this));
 
         //calc boosted rates
         boostedRates = new uint256[](wrr.length);
         for (uint256 i = 0; i < wrr.length; i++){ 
-            boostedRates[i] = wrr[i] * userWeight / userLiq;
+            boostedRates[i] = wrr[i] * userWeight / 1e18;
         }
     }
 
