@@ -55,11 +55,14 @@ contract MultiRewards is IRewards{
         poolRegistry = _poolRegistry;
     }
 
-    function initialize(uint256 _pid) external{
+    function initialize(uint256 _pid, bool _startActive) external{
         require(!init,"already init");
 
         //set variables
         poolId = _pid;
+        if(_startActive){
+            active = true;
+        }
         init = true;
     }
 

@@ -15,11 +15,11 @@ contract StakingProxyERC20 is IProxyVault{
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
     address public constant vefxsProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
 
-    address public owner;
-    address public feeRegistry; //todo: can convert to const
-    address public stakingAddress;
-    address public stakingToken;
-    address public rewards;
+    address public owner; //owner of the vault
+    address public feeRegistry; //fee registry  todo: can convert to const once deployed to save gas when initialize()
+    address public stakingAddress; //farming contract
+    address public stakingToken; //farming token
+    address public rewards; //extra rewards on convex
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
@@ -56,7 +56,8 @@ contract StakingProxyERC20 is IProxyVault{
             //stake
             IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
         }
-        //if rewards are active, checkpoint
+        //if rewards are active, checkpoint (can call with _liquidity as 0 if rewards were turned on
+        // after initial deposit and just need to checkpoint)
         if(IRewards(rewards).active()){
             IRewards(rewards).deposit(owner,_liquidity);
         }
@@ -159,9 +160,19 @@ contract StakingProxyERC20 is IProxyVault{
     However that makes the logic a bit more complex as well as runs a few future proofing risks
     */
     function getReward() external onlyOwner{
+        getReward(true);
+    }
+
+    //get reward with claim option.
+    //_claim bool is for the off chance that rewardCollectionPause is true so getReward() fails but
+    //there are tokens on this vault for cases such as withdraw() also calling claim.
+    //can also be used to rescue tokens on the vault
+    function getReward(bool _claim) public onlyOwner{
 
         //claim
-        IFraxFarmERC20(stakingAddress).getReward(address(this));
+        if(_claim){
+            IFraxFarmERC20(stakingAddress).getReward(address(this));
+        }
 
         //process fxs fees
         _processFxs();
@@ -172,20 +183,11 @@ contract StakingProxyERC20 is IProxyVault{
         //transfer
         _transferTokens(rewardTokens);
 
-        //get extra rewards
-        if(IRewards(rewards).active()){
-            //check if there is a balance because the reward contract could have be activated later
-            uint256 bal = IRewards(rewards).balanceOf(address(this));
-            if(bal == 0){
-                //bal == 0 and liq > 0 can only happen if rewards were turned on after staking
-                uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
-                IRewards(rewards).deposit(owner,userLiq);
-            }
-            IRewards(rewards).getReward(owner);
-        }
+        //extra rewards
+        _processExtraRewards();
     }
 
-    //auxiliary function to supply token list(same a bit of gas + dont have to claim everything)
+    //auxiliary function to supply token list(save a bit of gas + dont have to claim everything)
     //_claim bool is for the off chance that rewardCollectionPause is true so getReward() fails but
     //there are tokens on this vault for cases such as withdraw() also calling claim.
     //can also be used to rescue tokens on the vault
@@ -202,7 +204,22 @@ contract StakingProxyERC20 is IProxyVault{
         //transfer
         _transferTokens(_rewardTokenList);
 
-        //todo: extra rewards
+        //extra rewards
+        _processExtraRewards();
+    }
+
+    //get extra rewards
+    function _processExtraRewards() internal{
+        if(IRewards(rewards).active()){
+            //check if there is a balance because the reward contract could have be activated later
+            uint256 bal = IRewards(rewards).balanceOf(address(this));
+            if(bal == 0){
+                //bal == 0 and liq > 0 can only happen if rewards were turned on after staking
+                uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
+                IRewards(rewards).deposit(owner,userLiq);
+            }
+            IRewards(rewards).getReward(owner);
+        }
     }
 
     //apply fees to fxs and send remaining to owner
@@ -213,11 +230,16 @@ contract StakingProxyERC20 is IProxyVault{
 
         //send fxs fees to fee deposit
         uint256 fxsBalance = IERC20(fxs).balanceOf(address(this));
-        uint256 feesToSend = fxsBalance * totalFees / FEE_DENOMINATOR;
-        IERC20(fxs).transfer(IFeeRegistry(feeRegistry).feeDeposit(), feesToSend);
+        uint256 sendAmount = fxsBalance * totalFees / FEE_DENOMINATOR;
+        if(sendAmount > 0){
+            IERC20(fxs).transfer(IFeeRegistry(feeRegistry).feeDeposit(), sendAmount);
+        }
 
         //transfer remaining fxs to owner
-        IERC20(fxs).transfer(msg.sender, IERC20(fxs).balanceOf(address(this)));
+        sendAmount = IERC20(fxs).balanceOf(address(this));
+        if(sendAmount > 0){
+            IERC20(fxs).transfer(msg.sender, sendAmount);
+        }
     }
 
     //transfer other reward tokens besides fxs(which needs to have fees applied)
@@ -225,7 +247,10 @@ contract StakingProxyERC20 is IProxyVault{
         //transfer all tokens
         for(uint256 i = 0; i < _tokens.length; i++){
             if(_tokens[i] != fxs){
-                IERC20(_tokens[i]).transfer(msg.sender, IERC20(_tokens[i]).balanceOf(address(this)));
+                uint256 bal = IERC20(_tokens[i]).balanceOf(address(this));
+                if(bal > 0){
+                    IERC20(_tokens[i]).transfer(msg.sender, bal);
+                }
             }
         }
     }

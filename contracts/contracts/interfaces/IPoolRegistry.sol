@@ -8,4 +8,6 @@ interface IPoolRegistry {
     function addUserVault(uint256 _pid, address _user) external returns(address vault, address stakeAddress, address stakeToken, address rewards);
     function deactivatePool(uint256 _pid) external;
     function addPool(address _implementation, address _stakingAddress, address _stakingToken) external;
+    function setRewardActiveOnCreation(bool _active) external;
+    function setRewardImplementation(address _imp) external;
 }

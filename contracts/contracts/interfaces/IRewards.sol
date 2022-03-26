@@ -7,7 +7,7 @@ interface IRewards{
         uint256 amount;
     }
     
-    function initialize(uint256 _pid) external;
+    function initialize(uint256 _pid, bool _startActive) external;
     function addReward(address _rewardsToken, address _distributor) external;
     function approveRewardDistributor(
         address _rewardsToken,

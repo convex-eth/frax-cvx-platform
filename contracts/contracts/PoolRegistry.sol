@@ -11,6 +11,7 @@ contract PoolRegistry {
 
     address public operator;
     address public rewardImplementation;
+    bool public rewardsStartActive;
     PoolInfo[] public poolInfo;
     mapping(uint256 => mapping(address => address)) public vaultMap; //pool -> user -> vault
     mapping(uint256 => address[]) public poolVaultList; //pool -> vault array
@@ -39,18 +40,27 @@ contract PoolRegistry {
         _;
     }
 
+    //set operator/manager
     function setOperator(address _op) external onlyOwner{
         operator = _op;
     }
 
-    function setRewardImplementation(address _imp) external onlyOwner{
+    //set extra reward implementation contract for future pools
+    function setRewardImplementation(address _imp) external onlyOperator{
         rewardImplementation = _imp;
     }
 
+    //set rewards to be active when pool is created
+    function setRewardActiveOnCreation(bool _active) external onlyOperator{
+        rewardsStartActive = _active;
+    }
+
+    //get number of pools
     function poolLength() external view returns (uint256) {
         return poolInfo.length;
     }
 
+    //get number of vaults made for a specific pool
     function poolVaultLength(uint256 _pid) external view returns (uint256) {
         return poolVaultList[_pid].length;
     }
@@ -64,7 +74,7 @@ contract PoolRegistry {
         address rewards;
         if(rewardImplementation != address(0)){
            rewards = IProxyFactory(proxyFactory).clone(rewardImplementation);
-           IRewards(rewards).initialize(poolInfo.length);
+           IRewards(rewards).initialize(poolInfo.length, rewardsStartActive);
         }
 
         poolInfo.push(

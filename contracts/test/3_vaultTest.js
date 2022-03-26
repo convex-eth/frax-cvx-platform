@@ -3,7 +3,6 @@ var jsonfile = require('jsonfile');
 var contractList = jsonfile.readFileSync('./contracts.json');
 
 const Booster = artifacts.require("Booster");
-const BoosterPlaceholder = artifacts.require("BoosterPlaceholder");
 const FxsDepositor = artifacts.require("FxsDepositor");
 const FraxVoterProxy = artifacts.require("FraxVoterProxy");
 const cvxFxsToken = artifacts.require("cvxFxsToken");
@@ -82,7 +81,7 @@ contract("Vault Tests", async accounts => {
 
 
     let voteproxy = await FraxVoterProxy.at(contractList.system.voteProxy);
-    let operator = await BoosterPlaceholder.at(contractList.system.booster);
+    let operator = await Booster.at(contractList.system.booster);
     let controller = await IFraxGaugeController.at(contractList.frax.gaugeController);
 
     await operator.shutdownSystem({from:multisig, gasPrice:0});
@@ -153,6 +152,7 @@ contract("Vault Tests", async accounts => {
     console.log("tokenBalance: " +tokenBalance);
 
     var lockDuration = day*30;
+    // var lockDuration = day*364*3;
     //stake
     await stakingToken.approve(vault.address, web3.utils.toWei("100000.0","ether"));
     var tx = await vault.stakeLocked(web3.utils.toWei("100000.0","ether"), lockDuration);

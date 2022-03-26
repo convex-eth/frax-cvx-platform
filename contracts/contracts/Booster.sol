@@ -62,6 +62,7 @@ contract Booster{
         feeclaimer = _claimer;
     }
 
+    //set a reward manager address that controls extra reward contracts for each pool
     function setRewardManager(address _rmanager) external onlyOwner{
         rewardManager = _rmanager;
     }
@@ -71,22 +72,16 @@ contract Booster{
         isShutdown = true;
     }
 
+    //claim operator roles for certain systems for direct access
     function claimOperatorRoles() external onlyOwner{
         require(!isShutdown,"shutdown");
 
-        //claim pool reg
+        //claim operator role of pool registry
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setOperator(address)")), address(this));
         IStaker(proxy).execute(poolRegistry,uint256(0),data);
     }
 
-    function setPoolRewardImplementation(address _impl) external onlyOwner{
-        require(!isShutdown,"shutdown");
-
-        //claim pool reg
-        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setRewardImplementation(address)")), _impl);
-        IStaker(proxy).execute(poolRegistry,uint256(0),data);
-    }
-
+    //set fees on user vaults
     function setPoolFees(uint256 _cvxfxs, uint256 _cvx, uint256 _platform) external onlyOwner{
         require(!isShutdown,"shutdown");
 
@@ -94,6 +89,7 @@ contract Booster{
         IStaker(proxy).execute(feeRegistry,uint256(0),data);
     }
 
+    //set fee deposit address for all user vaults
     function setPoolFeeDeposit(address _deposit) external onlyOwner{
         require(!isShutdown,"shutdown");
 
@@ -101,15 +97,24 @@ contract Booster{
         IStaker(proxy).execute(feeRegistry,uint256(0),data);
     }
 
+    //add pool on registry
     function addPool(address _implementation, address _stakingAddress, address _stakingToken) external onlyOwner{
-        //TODO: add require valid_vefxs_proxies check
-
-        //memo: could get stakingToken from stakingAddress directly to avoid mistakes
         IPoolRegistry(poolRegistry).addPool(_implementation, _stakingAddress, _stakingToken);
     }
 
+    //set a new reward pool implementation for future pools
+    function setPoolRewardImplementation(address _impl) external onlyOwner{
+        IPoolRegistry(poolRegistry).setRewardImplementation(_impl);
+    }
+
+    //deactivate a pool
     function deactivatePool(uint256 _pid) external onlyOwner{
         IPoolRegistry(poolRegistry).deactivatePool(_pid);
+    }
+
+    //set extra reward contracts to be active when pools are created
+    function setRewardActiveOnCreation(bool _active) external onlyOwner{
+        IPoolRegistry(poolRegistry).setRewardActiveOnCreation(_active);
     }
 
     //vote for gauge weights
