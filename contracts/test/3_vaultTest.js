@@ -12,6 +12,7 @@ const IFraxFarmERC20 = artifacts.require("IFraxFarmERC20");
 const PoolRegistry = artifacts.require("PoolRegistry");
 const FeeRegistry = artifacts.require("FeeRegistry");
 const MultiRewards = artifacts.require("MultiRewards");
+const PoolUtilities = artifacts.require("PoolUtilities");
 
 const IVPool = artifacts.require("IVPool");
 const IExchange = artifacts.require("IExchange");
@@ -92,8 +93,10 @@ contract("Vault Tests", async accounts => {
     let poolReg = await PoolRegistry.new();
     let booster = await Booster.new(voteproxy.address, poolReg.address, feeReg.address);
     let rewardMaster = await MultiRewards.new(booster.address, poolReg.address);
-    // await rewardMaster.setbooster(booster.address);
     console.log("new booster deployed: " +booster.address);
+
+    let poolUtil = await PoolUtilities.new();
+    console.log("pool utilities: " +poolUtil.address);
 
     await voteproxy.setOperator(booster.address,{from:multisig, gasPrice:0});
     console.log("voteproxy operator set to new booster");
@@ -169,8 +172,13 @@ contract("Vault Tests", async accounts => {
     await stakingAddress.lockedLiquidityOf(vault.address).then(a=>console.log("lockedLiquidityOf: " +a))
     await stakingAddress.combinedWeightOf(vault.address).then(a=>console.log("combinedWeightOf: " +a))
     await stakingAddress.veFXSMultiplier(vault.address).then(a=>console.log("veFXSMultiplier: " +a))
-    await vault.weightedRewardRates().then(a=>console.log("weightedRewardRates: " +a))
-    await vault.userBoostedRewardRates().then(a=>console.log("userBoostedRewardRates: " +a))
+
+    // await vault.weightedRewardRates().then(a=>console.log("weightedRewardRates: " +a))
+    // await vault.userBoostedRewardRates().then(a=>console.log("userBoostedRewardRates: " +a))
+
+    await poolUtil.weightedRewardRates(stakingAddress.address).then(a=>console.log("pool util -> weightedRewardRates: " +a));
+    await poolUtil.userBoostedRewardRates(stakingAddress.address, vault.address).then(a=>console.log("pool util -> userBoostedRewardRates: " +a));
+    await poolUtil.veFXSMultiplier(stakingAddress.address).then(a=>console.log("pool util -> veFXSMultiplier: " +a));
 
     //stake again with additional
     await stakingToken.approve(vault.address, web3.utils.toWei("100000.0","ether"));

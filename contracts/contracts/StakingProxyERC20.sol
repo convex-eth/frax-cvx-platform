@@ -116,38 +116,6 @@ contract StakingProxyERC20 is IProxyVault{
         }
     }
 
-    //helper function to get weighted reward rates (rate per weight unit)
-    function weightedRewardRates() public view returns (uint256[] memory weightedRates) {
-        //get list of reward tokens
-        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
-        //get total weight of all stakers
-        uint256 totalWeight = IFraxFarmERC20(stakingAddress).totalCombinedWeight();
-
-        //calc weighted reward rates
-        weightedRates = new uint256[](rewardTokens.length);
-        for (uint256 i = 0; i < rewardTokens.length; i++){ 
-            weightedRates[i] = IFraxFarmERC20(stakingAddress).rewardRates(i) * 1e18 / totalWeight;
-        }
-    }
-
-    //helper function to get boosted reward rate of user.
-    //returns amount user receives per second based on weight/liq ratio
-    //to get %return, multiply this value by the ratio of (price of reward / price of lp token)
-    function userBoostedRewardRates() external view returns (uint256[] memory boostedRates) {
-        //get list of reward tokens
-        uint256[] memory wrr = weightedRewardRates();
-
-        //get user liquidity and weight
-        uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
-        uint256 userWeight = IFraxFarmERC20(stakingAddress).combinedWeightOf(address(this));
-
-        //calc boosted rates
-        boostedRates = new uint256[](wrr.length);
-        for (uint256 i = 0; i < wrr.length; i++){ 
-            boostedRates[i] = wrr[i] * userWeight / userLiq;
-        }
-    }
-
     /*
     claim flow:
         claim rewards directly to the vault

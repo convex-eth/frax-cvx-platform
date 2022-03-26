@@ -49,6 +49,9 @@ interface IFraxFarmERC20 {
     function proxyToggleStaker(address staker_address) external;
     function stakerSetVeFXSProxy(address proxy_address) external;
     function getReward(address destination_address) external returns (uint256[] memory);
+    function vefxs_max_multiplier() external view returns(uint256);
+    function vefxs_boost_scale_factor() external view returns(uint256);
+    function vefxs_per_frax_for_max_boost() external view returns(uint256);
 
     function sync() external;
 }

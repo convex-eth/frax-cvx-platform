@@ -12,6 +12,7 @@ const IFraxFarmERC20 = artifacts.require("IFraxFarmERC20");
 const PoolRegistry = artifacts.require("PoolRegistry");
 const FeeRegistry = artifacts.require("FeeRegistry");
 const MultiRewards = artifacts.require("MultiRewards");
+const PoolUtilities = artifacts.require("PoolUtilities");
 
 const IVPool = artifacts.require("IVPool");
 const IExchange = artifacts.require("IExchange");
@@ -98,6 +99,10 @@ contract("Vault Tests", async accounts => {
     let rewardMaster = await MultiRewards.new(booster.address, poolReg.address);
     console.log("new booster deployed: " +booster.address);
 
+    let poolUtil = await PoolUtilities.new();
+    console.log("pool utilities: " +poolUtil.address);
+
+
     await voteproxy.setOperator(booster.address,{from:multisig, gasPrice:0});
     console.log("voteproxy operator set to new booster");
 
@@ -122,7 +127,6 @@ contract("Vault Tests", async accounts => {
     console.log(poolinfo);
     var poolRewards = await MultiRewards.at(poolinfo.rewardsAddress);
     console.log("rewards at " +poolRewards.address);
-    // await poolRewards.setbooster(booster.address);
 
     //Uncomment to add rewards
     // await poolRewards.setActive({from:multisig,gasPrice:0});
