@@ -9,7 +9,7 @@ contract PoolUtilities{
     address public constant convexProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
     address public constant vefxs = address(0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0);
 
-    //helper function to get weighted reward rates (rate per weight unit)
+    //get weighted reward rates of a specific staking contract(rate per weight unit)
     function weightedRewardRates(address _stakingAddress) public view returns (uint256[] memory weightedRates) {
         //get list of reward tokens
         address[] memory rewardTokens = IFraxFarmERC20(_stakingAddress).getAllRewardTokens();
@@ -23,9 +23,9 @@ contract PoolUtilities{
         }
     }
 
-    //helper function to get boosted reward rate of user.
+    //get boosted reward rate of user at a specific staking contract
     //returns amount user receives per second based on weight/liq ratio
-    //to get %return, multiply this value by the ratio of (price of reward / price of lp token)
+    //%return = userBoostedRewardRate * timeFrame * price of reward / price of LP / 1e18
     function userBoostedRewardRates(address _stakingAddress, address _vaultAddress) external view returns (uint256[] memory boostedRates) {
         //get list of reward tokens
         uint256[] memory wrr = weightedRewardRates(_stakingAddress);
@@ -42,6 +42,7 @@ contract PoolUtilities{
     }
 
     
+    //get convex vefxs multiplier for a specific staking contract
     function veFXSMultiplier(address _stakingAddress) public view returns (uint256 vefxs_multiplier) {
         uint256 vefxs_bal_to_use = IERC20(vefxs).balanceOf(convexProxy);
         uint256 vefxs_max_multiplier = IFraxFarmERC20(_stakingAddress).vefxs_max_multiplier();

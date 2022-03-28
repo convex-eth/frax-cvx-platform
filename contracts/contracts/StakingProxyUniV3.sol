@@ -3,13 +3,14 @@ pragma solidity 0.8.10;
 
 import "./interfaces/IProxyVault.sol";
 import "./interfaces/IFeeRegistry.sol";
-import "./interfaces/IFraxFarmERC20.sol";
+import "./interfaces/IFraxFarmUniV3.sol";
 import "./interfaces/IRewards.sol";
+import "./interfaces/INonfungiblePositionManager.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 
-contract StakingProxyERC20 is IProxyVault{
+contract StakingProxyUniV3 is IProxyVault{
     using SafeERC20 for IERC20;
 
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
@@ -24,7 +25,7 @@ contract StakingProxyERC20 is IProxyVault{
     uint256 public constant FEE_DENOMINATOR = 10000;
 
     function vaultType() external pure returns(VaultType){
-        return VaultType.Erc20Baic;
+        return VaultType.UniV3;
     }
 
     function vaultVersion() external pure returns(uint256){
@@ -43,10 +44,10 @@ contract StakingProxyERC20 is IProxyVault{
         rewards = _rewardsAddress;
 
         //set proxy address on staking contract
-        IFraxFarmERC20(stakingAddress).stakerSetVeFXSProxy(vefxsProxy);
+        IFraxFarmUniV3(stakingAddress).stakerSetVeFXSProxy(vefxsProxy);
 
         //set infinite approval
-        IERC20(stakingToken).approve(stakingAddress, type(uint256).max);
+        INonfungiblePositionManager(stakingToken).setApprovalForAll(stakingAddress, true);
     }
 
     modifier onlyOwner() {
@@ -55,48 +56,59 @@ contract StakingProxyERC20 is IProxyVault{
     }
 
     //create a new locked state of _secs timelength
-    function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner{
-        if(_liquidity > 0){
-            //pull tokens from user
-            IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
+    function stakeLocked(uint256 _token_id, uint256 _secs) external onlyOwner{
+        //take note of amount liquidity staked
+        uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
+        if(_token_id > 0){
+            //pull token from user
+            INonfungiblePositionManager(stakingToken).safeTransferFrom(msg.sender, address(this), _token_id);
 
             //stake
-            IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
+            IFraxFarmUniV3(stakingAddress).stakeLocked(_token_id, _secs);
         }
         //if rewards are active, checkpoint (can call with _liquidity as 0 if rewards were turned on
         // after initial deposit and just need to checkpoint)
         if(IRewards(rewards).active()){
-            IRewards(rewards).deposit(owner,_liquidity);
+            //get difference of liquidity after deposit
+            userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this)) - userLiq;
+            IRewards(rewards).deposit(owner,userLiq);
         }
     }
 
     //add to a current lock
-    function lockAdditional(bytes32 _kek_id, uint256 _addl_liq) external onlyOwner{
-        if(_addl_liq > 0){
-            //pull tokens from user
-            IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
+    function lockAdditional(uint256 _token_id, uint256 _token0_amt, uint256 _token1_amt) external onlyOwner{
+        uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
 
-            //add stake
-            IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, _addl_liq);
+        //uint256 _token0_amt, uint256 _token1_amt,uint256 _token0_min_in, uint256 _token1_min_in, bool use_balof_override) external onlyOwner{
+        if(_token_id > 0 && _token0_amt > 0 && _token1_amt > 0){
+            address token0 = IFraxFarmUniV3(stakingAddress).uni_token0();
+            address token1 = IFraxFarmUniV3(stakingAddress).uni_token1();
+            //pull tokens directly to staking address
+            IERC20(token0).safeTransferFrom(msg.sender, stakingAddress, _token0_amt);
+            IERC20(token1).safeTransferFrom(msg.sender, stakingAddress, _token1_amt);
+
+            //add stake - use balance of override,  min in is ignored when doing so
+            IFraxFarmUniV3(stakingAddress).lockAdditional(_token_id, _token0_amt, _token1_amt, 0, 0, true);
         }
         //if rewards are active, checkpoint
         if(IRewards(rewards).active()){
-            IRewards(rewards).deposit(owner,_addl_liq);
+            userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this)) - userLiq;
+            IRewards(rewards).deposit(owner,userLiq);
         }
     }
 
     //withdraw a staked position
-    function withdrawLocked(bytes32 _kek_id) external onlyOwner{
+    function withdrawLocked(uint256 _token_id) external onlyOwner{
         //take note of amount liquidity staked
-        uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
+        uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
 
         //withdraw directly to owner(msg.sender)
-        IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
+        IFraxFarmUniV3(stakingAddress).withdrawLocked(_token_id, msg.sender);
 
         //if rewards are active, checkpoint
         if(IRewards(rewards).active()){
             //get difference of liquidity after withdrawn
-            userLiq -= IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
+            userLiq -= IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
             IRewards(rewards).withdraw(owner,userLiq);
         }
     }
@@ -104,8 +116,8 @@ contract StakingProxyERC20 is IProxyVault{
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
     function earned() external view returns (address[] memory token_addresses, uint256[] memory total_earned) {
         //get list of reward tokens
-        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
-        uint256[] memory stakedearned = IFraxFarmERC20(stakingAddress).earned(address(this));
+        address[] memory rewardTokens = IFraxFarmUniV3(stakingAddress).getAllRewardTokens();
+        uint256[] memory stakedearned = IFraxFarmUniV3(stakingAddress).earned(address(this));
         
         token_addresses = new address[](rewardTokens.length + IRewards(rewards).rewardTokenLength());
         total_earned = new uint256[](rewardTokens.length + IRewards(rewards).rewardTokenLength());
@@ -146,14 +158,18 @@ contract StakingProxyERC20 is IProxyVault{
 
         //claim
         if(_claim){
-            IFraxFarmERC20(stakingAddress).getReward(address(this));
+            IFraxFarmUniV3(stakingAddress).getReward(address(this));
+
+            //TODO: waiting for update from Frax team, use bool to claim LP fees directly to owner
+            // IFraxFarmUniV3(stakingAddress).getReward(address(this), false);
+            // IFraxFarmUniV3(stakingAddress).getReward(owner, true);
         }
 
         //process fxs fees
         _processFxs();
 
         //get list of reward tokens
-        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
+        address[] memory rewardTokens = IFraxFarmUniV3(stakingAddress).getAllRewardTokens();
 
         //transfer
         _transferTokens(rewardTokens);
@@ -170,7 +186,11 @@ contract StakingProxyERC20 is IProxyVault{
 
         //claim
         if(_claim){
-            IFraxFarmERC20(stakingAddress).getReward(address(this));
+            IFraxFarmUniV3(stakingAddress).getReward(address(this));
+
+            //TODO: waiting for update from Frax team, use bool to claim LP fees directly to owner
+            // IFraxFarmUniV3(stakingAddress).getReward(address(this), false);
+            // IFraxFarmUniV3(stakingAddress).getReward(owner, true);
         }
 
         //process fxs fees
@@ -190,7 +210,7 @@ contract StakingProxyERC20 is IProxyVault{
             uint256 bal = IRewards(rewards).balanceOf(address(this));
             if(bal == 0){
                 //bal == 0 and liq > 0 can only happen if rewards were turned on after staking
-                uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
+                uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
                 IRewards(rewards).deposit(owner,userLiq);
             }
             IRewards(rewards).getReward(owner);
