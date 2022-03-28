@@ -5,6 +5,7 @@ import "./interfaces/MathUtil.sol";
 import "./interfaces/IBooster.sol";
 import "./interfaces/IPoolRegistry.sol";
 import "./interfaces/IRewards.sol";
+import "./interfaces/IRewardHook.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
@@ -22,6 +23,10 @@ contract MultiRewards is IRewards{
         uint256 lastUpdateTime;
         uint256 rewardPerTokenStored;
     }
+
+    //allow an address to be call at certain events so that
+    //reward emissions etc can be automated
+    address public rewardHook;
 
     //rewards
     address[] public rewardTokens;
@@ -97,6 +102,11 @@ contract MultiRewards is IRewards{
         rewardDistributors[_rewardsToken][_distributor] = _approved;
     }
 
+    function setRewardHook( address _hook ) external onlyOwner{
+        rewardHook = _hook;
+        emit HookSet(_hook);
+    }
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     function deposit(address _owner, uint256 _amount) external updateReward(msg.sender){
@@ -106,6 +116,11 @@ contract MultiRewards is IRewards{
         balances[msg.sender] += _amount;
         totalSupply += _amount;
         emit Deposited(msg.sender, _amount);
+
+        if(rewardHook != address(0)){
+            try IRewardHook(rewardHook).onRewardClaim(IRewardHook.HookType.Deposit, poolId){
+            }catch{}
+        }
     }
 
     function withdraw(address _owner, uint256 _amount) external updateReward(msg.sender){
@@ -115,6 +130,11 @@ contract MultiRewards is IRewards{
         balances[msg.sender] -= _amount;
         totalSupply -= _amount;
         emit Withdrawn(msg.sender, _amount);
+
+        if(rewardHook != address(0)){
+            try IRewardHook(rewardHook).onRewardClaim(IRewardHook.HookType.Withdraw, poolId){
+            }catch{}
+        }
     }
 
 
@@ -183,6 +203,10 @@ contract MultiRewards is IRewards{
                 IERC20(_rewardsToken).safeTransfer(_forward, reward);
                 emit RewardPaid(msg.sender, _rewardsToken, reward);
             }
+        }
+        if(rewardHook != address(0)){
+            try IRewardHook(rewardHook).onRewardClaim(IRewardHook.HookType.RewardClaim, poolId){
+            }catch{}
         }
     }
 
@@ -255,4 +279,5 @@ contract MultiRewards is IRewards{
     event Withdrawn(address indexed _user, uint256 _amount);
     event RewardPaid(address indexed _user, address indexed _rewardsToken, uint256 _reward);
     event Recovered(address _token, uint256 _amount);
+    event HookSet(address _hook);
 }
