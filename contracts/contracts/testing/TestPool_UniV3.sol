@@ -349,6 +349,10 @@ contract TestPool_UniV3 {
 
     }
 
+    function getReward(address destination_address, bool claim_extras) external {
+
+    }
+
     // function _getRewardExtraLogic(address rewardee, address destination_address) internal {
     //     // Collect liquidity fees too
     //     // uint256 accumulated_token0 = 0;

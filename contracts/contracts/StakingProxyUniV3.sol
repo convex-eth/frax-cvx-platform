@@ -40,7 +40,6 @@ contract StakingProxyUniV3 is IProxyVault{
         owner = _owner;
         feeRegistry = _feeRegistry;
         stakingAddress = _stakingAddress;
-        // stakingToken = _stakingToken;
         rewards = _rewardsAddress;
 
         //set proxy address on staking contract
@@ -69,6 +68,7 @@ contract StakingProxyUniV3 is IProxyVault{
     function stakeLocked(uint256 _token_id, uint256 _secs) external onlyOwner{
         //take note of amount liquidity staked
         uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
+
         if(_token_id > 0){
             //pull token from user
             INonfungiblePositionManager(positionManager).safeTransferFrom(msg.sender, address(this), _token_id);
@@ -90,7 +90,6 @@ contract StakingProxyUniV3 is IProxyVault{
     function lockAdditional(uint256 _token_id, uint256 _token0_amt, uint256 _token1_amt) external onlyOwner{
         uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
 
-        //uint256 _token0_amt, uint256 _token1_amt,uint256 _token0_min_in, uint256 _token1_min_in, bool use_balof_override) external onlyOwner{
         if(_token_id > 0 && _token0_amt > 0 && _token1_amt > 0){
             address token0 = IFraxFarmUniV3(stakingAddress).uni_token0();
             address token1 = IFraxFarmUniV3(stakingAddress).uni_token1();
@@ -170,11 +169,10 @@ contract StakingProxyUniV3 is IProxyVault{
 
         //claim
         if(_claim){
-            IFraxFarmUniV3(stakingAddress).getReward(address(this));
-
-            //TODO: waiting for update from Frax team, use bool to claim LP fees directly to owner
-            // IFraxFarmUniV3(stakingAddress).getReward(address(this), false);
-            // IFraxFarmUniV3(stakingAddress).getReward(owner, true);
+            // use bool as false at first to claim all farm rewards and process here
+            // then call again to claim LP fees but send directly to owner
+            IFraxFarmUniV3(stakingAddress).getReward(address(this), false);
+            IFraxFarmUniV3(stakingAddress).getReward(owner, true);
         }
 
         //process fxs fees
@@ -198,11 +196,10 @@ contract StakingProxyUniV3 is IProxyVault{
 
         //claim
         if(_claim){
-            IFraxFarmUniV3(stakingAddress).getReward(address(this));
-
-            //TODO: waiting for update from Frax team, use bool to claim LP fees directly to owner
-            // IFraxFarmUniV3(stakingAddress).getReward(address(this), false);
-            // IFraxFarmUniV3(stakingAddress).getReward(owner, true);
+            // use bool as false at first to claim all farm rewards and process here
+            // then call again to claim LP fees but send directly to owner
+            IFraxFarmUniV3(stakingAddress).getReward(address(this), false);
+            IFraxFarmUniV3(stakingAddress).getReward(owner, true);
         }
 
         //process fxs fees
@@ -262,9 +259,9 @@ contract StakingProxyUniV3 is IProxyVault{
         }
     }
 
-    //there should never be erc721 on this address but since it is a receiver, allow owner to extract any
+    //there should never be an erc721 on this address but since it is a receiver, allow owner to extract any
     //that may exist
-    function recoverERC721(address tokenAddress, uint256 token_id) external onlyOwner {
-        INonfungiblePositionManager(tokenAddress).safeTransferFrom(address(this), owner, token_id);
+    function recoverERC721(address _tokenAddress, uint256 _token_id) external onlyOwner {
+        INonfungiblePositionManager(_tokenAddress).safeTransferFrom(address(this), owner, _token_id);
     }
 }
