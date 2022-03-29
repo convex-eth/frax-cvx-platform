@@ -69,7 +69,7 @@ contract PoolRegistry {
     function addPool(address _implementation, address _stakingAddress, address _stakingToken) external onlyOperator{
         require(_implementation != address(0), "!imp");
         require(_stakingAddress != address(0), "!stkAdd");
-        require(_stakingToken != address(0), "!stkTok");
+        //univ3 doesnt have a staking token so we cant check validity here
 
         address rewards;
         if(rewardImplementation != address(0)){

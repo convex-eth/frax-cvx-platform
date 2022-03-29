@@ -43,10 +43,10 @@ contract StakingProxyERC20 is IProxyVault{
         rewards = _rewardsAddress;
 
         //set proxy address on staking contract
-        IFraxFarmERC20(stakingAddress).stakerSetVeFXSProxy(vefxsProxy);
+        IFraxFarmERC20(_stakingAddress).stakerSetVeFXSProxy(vefxsProxy);
 
         //set infinite approval
-        IERC20(stakingToken).approve(stakingAddress, type(uint256).max);
+        IERC20(stakingToken).approve(_stakingAddress, type(uint256).max);
     }
 
     modifier onlyOwner() {

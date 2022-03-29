@@ -15,11 +15,11 @@ contract StakingProxyUniV3 is IProxyVault{
 
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
     address public constant vefxsProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
+    address public constant positionManager = address(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
 
     address public owner; //owner of the vault
     address public feeRegistry; //fee registry  TODO: can convert to const once deployed to save gas when initialize()
     address public stakingAddress; //farming contract
-    address public stakingToken; //farming token
     address public rewards; //extra rewards on convex
 
     uint256 public constant FEE_DENOMINATOR = 10000;
@@ -40,19 +40,29 @@ contract StakingProxyUniV3 is IProxyVault{
         owner = _owner;
         feeRegistry = _feeRegistry;
         stakingAddress = _stakingAddress;
-        stakingToken = _stakingToken;
+        // stakingToken = _stakingToken;
         rewards = _rewardsAddress;
 
         //set proxy address on staking contract
-        IFraxFarmUniV3(stakingAddress).stakerSetVeFXSProxy(vefxsProxy);
+        IFraxFarmUniV3(_stakingAddress).stakerSetVeFXSProxy(vefxsProxy);
 
         //set infinite approval
-        INonfungiblePositionManager(stakingToken).setApprovalForAll(stakingAddress, true);
+        INonfungiblePositionManager(positionManager).setApprovalForAll(_stakingAddress, true);
     }
 
     modifier onlyOwner() {
         require(owner == msg.sender, "!auth");
         _;
+    }
+
+    // Needed to indicate that this contract is ERC721 compatible
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) external pure returns (bytes4) {
+        return this.onERC721Received.selector;
     }
 
     //create a new locked state of _secs timelength
@@ -61,12 +71,13 @@ contract StakingProxyUniV3 is IProxyVault{
         uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
         if(_token_id > 0){
             //pull token from user
-            INonfungiblePositionManager(stakingToken).safeTransferFrom(msg.sender, address(this), _token_id);
+            INonfungiblePositionManager(positionManager).safeTransferFrom(msg.sender, address(this), _token_id);
 
             //stake
             IFraxFarmUniV3(stakingAddress).stakeLocked(_token_id, _secs);
         }
-        //if rewards are active, checkpoint (can call with _liquidity as 0 if rewards were turned on
+
+        //if rewards are active, checkpoint (can call with _token_id as 0 if rewards were turned on
         // after initial deposit and just need to checkpoint)
         if(IRewards(rewards).active()){
             //get difference of liquidity after deposit
@@ -90,6 +101,7 @@ contract StakingProxyUniV3 is IProxyVault{
             //add stake - use balance of override,  min in is ignored when doing so
             IFraxFarmUniV3(stakingAddress).lockAdditional(_token_id, _token0_amt, _token1_amt, 0, 0, true);
         }
+        
         //if rewards are active, checkpoint
         if(IRewards(rewards).active()){
             userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this)) - userLiq;
@@ -248,5 +260,11 @@ contract StakingProxyUniV3 is IProxyVault{
                 }
             }
         }
+    }
+
+    //there should never be erc721 on this address but since it is a receiver, allow owner to extract any
+    //that may exist
+    function recoverERC721(address tokenAddress, uint256 token_id) external onlyOwner {
+        INonfungiblePositionManager(tokenAddress).safeTransferFrom(address(this), owner, token_id);
     }
 }
