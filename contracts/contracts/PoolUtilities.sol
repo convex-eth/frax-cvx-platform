@@ -5,6 +5,9 @@ import "./interfaces/IFraxFarmERC20.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 
+/*
+This is a utility library which is mainly used for off chain calculations
+*/
 contract PoolUtilities{
     address public constant convexProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
     address public constant vefxs = address(0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0);
@@ -16,8 +19,11 @@ contract PoolUtilities{
         //get total weight of all stakers
         uint256 totalWeight = IFraxFarmERC20(_stakingAddress).totalCombinedWeight();
 
-        //calc weighted reward rates
         weightedRates = new uint256[](rewardTokens.length);
+
+        if(totalWeight == 0) return weightedRates;
+
+        //calc weighted reward rates
         for (uint256 i = 0; i < rewardTokens.length; i++){ 
             weightedRates[i] = IFraxFarmERC20(_stakingAddress).rewardRates(i) * 1e18 / totalWeight;
         }
@@ -34,8 +40,11 @@ contract PoolUtilities{
         uint256 userLiq = IFraxFarmERC20(_stakingAddress).lockedLiquidityOf(_vaultAddress);
         uint256 userWeight = IFraxFarmERC20(_stakingAddress).combinedWeightOf(_vaultAddress);
 
-        //calc boosted rates
         boostedRates = new uint256[](wrr.length);
+
+        if(userLiq == 0) return boostedRates;
+
+        //calc boosted rates
         for (uint256 i = 0; i < wrr.length; i++){ 
             boostedRates[i] = wrr[i] * userWeight / userLiq;
         }
