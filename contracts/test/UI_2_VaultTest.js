@@ -13,7 +13,10 @@ const PoolRegistry = artifacts.require("PoolRegistry");
 const FeeRegistry = artifacts.require("FeeRegistry");
 const MultiRewards = artifacts.require("MultiRewards");
 const PoolUtilities = artifacts.require("PoolUtilities");
+const StakingProxyUniV3 = artifacts.require("StakingProxyUniV3");
+const TestPool_UniV3 = artifacts.require("TestPool_UniV3");
 
+const INonfungiblePositionManager = artifacts.require("INonfungiblePositionManager");
 const IVPool = artifacts.require("IVPool");
 const IExchange = artifacts.require("IExchange");
 const IERC20 = artifacts.require("IERC20");
@@ -68,6 +71,7 @@ contract("Vault Tests", async accounts => {
     await unlockAccount(multisig);
     await unlockAccount(deployer);
 
+    let starttime = await time.latest();
     const advanceTime = async (secondsElaspse) => {
       await time.increase(secondsElaspse);
       await time.advanceBlock();
@@ -78,9 +82,43 @@ contract("Vault Tests", async accounts => {
     //get frax
     let fraxlp = "0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B";
     await unlockAccount(fraxlp);
-    await frax.transfer(userA,web3.utils.toWei("100000.0", "ether"),{from:fraxlp,gasPrice:0});
+    await frax.transfer(userA,web3.utils.toWei("200000.0", "ether"),{from:fraxlp,gasPrice:0});
     var fraxBalance = await frax.balanceOf(userA);
     console.log("frax: " +fraxBalance);
+
+    //get usdc
+    let usdc = await IERC20.at("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48");
+    let usdclp = "0x0a59649758aa4d66e25f08dd01271e891fe52199";
+    await unlockAccount(usdclp);
+    await usdc.transfer(userA,200000000000,{from:usdclp,gasPrice:0});
+    var usdcBalance = await usdc.balanceOf(userA);
+    console.log("usdc: " +usdcBalance);
+
+    //frax/usdc univ3
+    let positionManager = await INonfungiblePositionManager.at("0xC36442b4a4522E871399CD717aBDD847Ab11FE88");
+    await frax.approve(positionManager.address,web3.utils.toWei("100000000.0", "ether"));
+    await usdc.approve(positionManager.address,web3.utils.toWei("100000000.0", "ether"));
+    console.log("approved to univ3");
+
+    //mint univ3 position
+    await positionManager.mint([frax.address,usdc.address,500,"-276380","-276270",web3.utils.toWei("100000000.0", "ether"), 100000000000, 0, 0, userA, starttime+3600]);
+    console.log("minted nft")
+
+    let balanceOfNfts = await positionManager.balanceOf(userA);
+    console.log("nft balanceOf: " +balanceOfNfts);
+
+    let tokenId = await positionManager.tokenOfOwnerByIndex(userA, 0);
+    console.log("token id: " +tokenId);
+
+    let positioninfo = await positionManager.positions(tokenId);
+    console.log("positioninfo: " +JSON.stringify(positioninfo));
+
+    let univ3StakingAddress = await TestPool_UniV3.new(tokenId);
+    console.log("univ3 farm/staking address: " +univ3StakingAddress.address);
+
+    //mint anoter univ3 position
+    await positionManager.mint([frax.address,usdc.address,500,"-276380","-276270",web3.utils.toWei("50000000.0", "ether"), 50000000000, 0, 0, userA, starttime+3600]);
+    console.log("minted another nft")
 
 
     let voteproxy = await FraxVoterProxy.at(contractList.system.voteProxy);
@@ -121,12 +159,19 @@ contract("Vault Tests", async accounts => {
     let stakingToken = await IERC20.at("0xc14900dFB1Aa54e7674e1eCf9ce02b3b35157ba5");
     let impl = await StakingProxyERC20.new();
     var tx = await booster.addPool(impl.address, stakingAddress.address, stakingToken.address,{from:multisig,gasPrice:0});
-    console.log("pool added, gas: " +tx.receipt.gasUsed);
+    console.log("vesper pool added, gas: " +tx.receipt.gasUsed);
 
     var poolinfo = await poolReg.poolInfo(0);
     console.log(poolinfo);
     var poolRewards = await MultiRewards.at(poolinfo.rewardsAddress);
     console.log("rewards at " +poolRewards.address);
+
+    //get vesper lp token
+    let tokenholder = "0x698137c473bc1f0ea9b85ade45caf64ef2df48d6";
+    await unlockAccount(tokenholder);
+    await stakingToken.transfer(userA,web3.utils.toWei("200000.0", "ether"),{from:tokenholder,gasPrice:0});
+    var tokenBalance = await stakingToken.balanceOf(userA);
+    console.log("vesper tokenBalance: " +tokenBalance);
 
     //Uncomment to add rewards
     // await poolRewards.setActive({from:multisig,gasPrice:0});
@@ -138,13 +183,17 @@ contract("Vault Tests", async accounts => {
     // console.log("reward data: \n" +JSON.stringify(rdata));
 
 
-    //get vesper token
-    let tokenholder = "0x698137c473bc1f0ea9b85ade45caf64ef2df48d6";
-    await unlockAccount(tokenholder);
-    await stakingToken.transfer(userA,web3.utils.toWei("200000.0", "ether"),{from:tokenholder,gasPrice:0});
-    var tokenBalance = await stakingToken.balanceOf(userA);
-    console.log("tokenBalance: " +tokenBalance);
+    let univ3impl = await StakingProxyUniV3.new();
+    var tx = await booster.addPool(univ3impl.address, univ3StakingAddress.address, positionManager.address, {from:multisig,gasPrice:0});
+    console.log("univ3 pool added, gas: " +tx.receipt.gasUsed);
 
+    var poolinfo = await poolReg.poolInfo(0);
+    console.log(poolinfo);
+    var poolRewards = await MultiRewards.at(poolinfo.rewardsAddress);
+    console.log("rewards at " +poolRewards.address);
+
+
+    
     //creating user vault
     // var tx = await booster.createVault(0);
     // let vaultAddress = await poolReg.vaultMap(0,userA);
