@@ -16,13 +16,17 @@ contract StakingProxyUniV3 is IProxyVault{
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
     address public constant vefxsProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
     address public constant positionManager = address(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
+    address public immutable feeRegistry; //fee registry
 
     address public owner; //owner of the vault
-    address public feeRegistry; //fee registry  TODO: can convert to const once deployed to save gas when initialize()
     address public stakingAddress; //farming contract
     address public rewards; //extra rewards on convex
 
     uint256 public constant FEE_DENOMINATOR = 10000;
+
+    constructor(address _feeRegistry) {
+        feeRegistry = _feeRegistry;
+    }
 
     function vaultType() external pure returns(VaultType){
         return VaultType.UniV3;
@@ -33,12 +37,11 @@ contract StakingProxyUniV3 is IProxyVault{
     }
 
     //initialize vault
-    function initialize(address _owner, address _feeRegistry, address _stakingAddress, address _stakingToken, address _rewardsAddress) external{
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external{
         require(owner == address(0),"already init");
 
         //set variables
         owner = _owner;
-        feeRegistry = _feeRegistry;
         stakingAddress = _stakingAddress;
         rewards = _rewardsAddress;
 

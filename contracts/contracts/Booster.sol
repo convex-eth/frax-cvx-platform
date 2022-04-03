@@ -69,6 +69,8 @@ contract Booster{
     
     //shutdown this contract.
     function shutdownSystem() external onlyOwner{
+        //This version of booster does not require any special steps before shutting down
+        //and can just immediately be set.
         isShutdown = true;
     }
 
@@ -157,7 +159,7 @@ contract Booster{
         IStaker(proxy).execute(stakeAddress,uint256(0),data);
 
     	//call proxy initialize
-        IProxyVault(vault).initialize(msg.sender, feeRegistry, stakeAddress, stakeToken, rewards);
+        IProxyVault(vault).initialize(msg.sender, stakeAddress, stakeToken, rewards);
     }
 
 

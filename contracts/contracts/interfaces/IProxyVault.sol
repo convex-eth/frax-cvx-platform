@@ -8,5 +8,5 @@ interface IProxyVault {
         UniV3
     }
 
-    function initialize(address _owner, address _feeRegistry, address _stakingAddress, address _stakingToken, address _rewardsAddress) external;
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external;
 }
