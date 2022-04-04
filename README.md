@@ -1,5 +1,8 @@
-# frax-cvx-platform
-Frax staking platform that allows users to trustlessly stake positions on the Frax Finance Gauge system while borrowing Convex's boosting power via veFXS to increase yield.
+# Convex-Frax Staking Platform
+
+## Overview
+
+The Convex-Frax staking platform allows users to trustlessly stake positions on the Frax Finance Gauge system while borrowing Convex's boosting power via veFXS. The Convex system creates unique proxy vaults for each user which only they can control.  This isolates deposits and keeps the user in control of their funds without any risk of admin controls gaining access.  These proxies are then given permission to share in using Convex's veFXS which increases farming efficiency.  In return for this boost, Convex takes a percentage of FXS farmed and distributes to cvxFXS (currently via the cvxFXS/FXS LP pool) and vlCVX.
 
 ## Pool Creation Flow
 
