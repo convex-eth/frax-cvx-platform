@@ -76,6 +76,7 @@ contract MultiRewards is IRewards{
     //turn on rewards contract
     function setActive() external onlyOwner{
         active = true;
+        emit Activate();
     }
 
     // Add a new reward token to be distributed to stakers
@@ -90,6 +91,7 @@ contract MultiRewards is IRewards{
         rewardData[_rewardsToken].lastUpdateTime = block.timestamp;
         rewardData[_rewardsToken].periodFinish = block.timestamp;
         rewardDistributors[_rewardsToken][_distributor] = true;
+        emit RewardAdded(_rewardsToken, _distributor);
     }
 
     // Modify approval for an address to call notifyRewardAmount
@@ -100,6 +102,7 @@ contract MultiRewards is IRewards{
     ) external onlyOwner {
         require(rewardData[_rewardsToken].lastUpdateTime > 0);
         rewardDistributors[_rewardsToken][_distributor] = _approved;
+        emit RewardDistributorApproved(_rewardsToken, _distributor);
     }
 
     function setRewardHook( address _hook ) external onlyOwner{
@@ -280,4 +283,7 @@ contract MultiRewards is IRewards{
     event RewardPaid(address indexed _user, address indexed _rewardsToken, uint256 _reward);
     event Recovered(address _token, uint256 _amount);
     event HookSet(address _hook);
+    event Activate();
+    event RewardAdded(address indexed _reward, address indexed _distributor);
+    event RewardDistributorApproved(address indexed _reward, address indexed _distributor);
 }

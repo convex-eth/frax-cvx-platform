@@ -27,6 +27,9 @@ contract PoolRegistry {
     event PoolCreated(uint256 indexed poolid, address indexed implementation, address stakingAddress, address stakingToken);
     event PoolDeactivated(uint256 indexed poolid);
     event AddUserVault(address indexed user, uint256 indexed poolid);
+    event OperatorChanged(address indexed account);
+    event RewardImplementationChanged(address indexed implementation);
+    event RewardActiveOnCreationChanged(bool value);
 
     constructor() {}
 
@@ -43,16 +46,19 @@ contract PoolRegistry {
     //set operator/manager
     function setOperator(address _op) external onlyOwner{
         operator = _op;
+        emit OperatorChanged(_op);
     }
 
     //set extra reward implementation contract for future pools
     function setRewardImplementation(address _imp) external onlyOperator{
         rewardImplementation = _imp;
+        emit RewardImplementationChanged(_imp);
     }
 
     //set rewards to be active when pool is created
     function setRewardActiveOnCreation(bool _active) external onlyOperator{
         rewardsStartActive = _active;
+        emit RewardActiveOnCreationChanged(_active);
     }
 
     //get number of pools
@@ -117,5 +123,5 @@ contract PoolRegistry {
 
         emit AddUserVault(_user, _pid);
     }
-    
+
 }

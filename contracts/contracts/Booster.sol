@@ -50,21 +50,25 @@ contract Booster{
     //set owner
     function setOwner(address _owner) external onlyOwner{
         owner = _owner;
+        emit OwnerChanged(_owner);
     }
 
     //set fee queue, a contract fees are moved to when claiming
     function setFeeQueue(address _queue) external onlyOwner{
         feeQueue = _queue;
+        emit FeeQueueChanged(_queue);
     }
 
     //set who can call claim fees, 0x0 address will allow anyone to call
     function setFeeClaimer(address _claimer) external onlyOwner{
         feeclaimer = _claimer;
+        emit FeeClaimerChanged(_claimer);
     }
 
     //set a reward manager address that controls extra reward contracts for each pool
     function setRewardManager(address _rmanager) external onlyOwner{
         rewardManager = _rmanager;
+        emit RewardManagerChanged(_rmanager);
     }
     
     //shutdown this contract.
@@ -72,6 +76,7 @@ contract Booster{
         //This version of booster does not require any special steps before shutting down
         //and can just immediately be set.
         isShutdown = true;
+        emit Shutdown();
     }
 
     //claim operator roles for certain systems for direct access
@@ -184,5 +189,10 @@ contract Booster{
     }
 
     
-
+    /* ========== EVENTS ========== */
+    event OwnerChanged(address indexed _address);
+    event FeeQueueChanged(address indexed _address);
+    event FeeClaimerChanged(address indexed _address);
+    event RewardManagerChanged(address indexed _address);
+    event Shutdown();
 }
