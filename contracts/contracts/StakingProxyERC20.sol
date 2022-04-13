@@ -60,6 +60,8 @@ contract StakingProxyERC20 is IProxyVault, ReentrancyGuard{
 
     //create a new locked state of _secs timelength
     function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant{
+        uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
+
         if(_liquidity > 0){
             //pull tokens from user
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
@@ -70,12 +72,15 @@ contract StakingProxyERC20 is IProxyVault, ReentrancyGuard{
         //if rewards are active, checkpoint (can call with _liquidity as 0 if rewards were turned on
         // after initial deposit and just need to checkpoint)
         if(IRewards(rewards).active()){
-            IRewards(rewards).deposit(owner,_liquidity);
+            //get difference of liquidity shares after deposit so that rebasing tokens are handled correctly
+            userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this)) - userLiq;
+            IRewards(rewards).deposit(owner,userLiq);
         }
     }
 
     //add to a current lock
     function lockAdditional(bytes32 _kek_id, uint256 _addl_liq) external onlyOwner nonReentrant{
+        uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
         if(_addl_liq > 0){
             //pull tokens from user
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
@@ -85,7 +90,9 @@ contract StakingProxyERC20 is IProxyVault, ReentrancyGuard{
         }
         //if rewards are active, checkpoint
         if(IRewards(rewards).active()){
-            IRewards(rewards).deposit(owner,_addl_liq);
+            //get difference of liquidity shares after deposit so that rebasing tokens are handled correctly
+            userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this)) - userLiq;
+            IRewards(rewards).deposit(owner,userLiq);
         }
     }
 
