@@ -7,9 +7,10 @@ import "./interfaces/IFraxFarmERC20.sol";
 import "./interfaces/IRewards.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 
-contract StakingProxyERC20 is IProxyVault{
+contract StakingProxyERC20 is IProxyVault, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
@@ -58,7 +59,7 @@ contract StakingProxyERC20 is IProxyVault{
     }
 
     //create a new locked state of _secs timelength
-    function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner{
+    function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant{
         if(_liquidity > 0){
             //pull tokens from user
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
@@ -74,7 +75,7 @@ contract StakingProxyERC20 is IProxyVault{
     }
 
     //add to a current lock
-    function lockAdditional(bytes32 _kek_id, uint256 _addl_liq) external onlyOwner{
+    function lockAdditional(bytes32 _kek_id, uint256 _addl_liq) external onlyOwner nonReentrant{
         if(_addl_liq > 0){
             //pull tokens from user
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
@@ -89,7 +90,7 @@ contract StakingProxyERC20 is IProxyVault{
     }
 
     //withdraw a staked position
-    function withdrawLocked(bytes32 _kek_id) external onlyOwner{
+    function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{
         //take note of amount liquidity staked
         uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
 

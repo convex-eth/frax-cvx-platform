@@ -8,9 +8,10 @@ import "./interfaces/IRewards.sol";
 import "./interfaces/INonfungiblePositionManager.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 
-contract StakingProxyUniV3 is IProxyVault{
+contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
@@ -68,7 +69,7 @@ contract StakingProxyUniV3 is IProxyVault{
     }
 
     //create a new locked state of _secs timelength
-    function stakeLocked(uint256 _token_id, uint256 _secs) external onlyOwner{
+    function stakeLocked(uint256 _token_id, uint256 _secs) external onlyOwner nonReentrant{
         //take note of amount liquidity staked
         uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
 
@@ -90,7 +91,7 @@ contract StakingProxyUniV3 is IProxyVault{
     }
 
     //add to a current lock
-    function lockAdditional(uint256 _token_id, uint256 _token0_amt, uint256 _token1_amt) external onlyOwner{
+    function lockAdditional(uint256 _token_id, uint256 _token0_amt, uint256 _token1_amt) external onlyOwner nonReentrant{
         uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
 
         if(_token_id > 0 && _token0_amt > 0 && _token1_amt > 0){
@@ -112,7 +113,7 @@ contract StakingProxyUniV3 is IProxyVault{
     }
 
     //withdraw a staked position
-    function withdrawLocked(uint256 _token_id) external onlyOwner{
+    function withdrawLocked(uint256 _token_id) external onlyOwner nonReentrant{
         //take note of amount liquidity staked
         uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
 
