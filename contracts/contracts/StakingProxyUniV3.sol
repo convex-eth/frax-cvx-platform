@@ -70,9 +70,6 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
 
     //create a new locked state of _secs timelength
     function stakeLocked(uint256 _token_id, uint256 _secs) external onlyOwner nonReentrant{
-        //take note of amount liquidity staked
-        uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
-
         if(_token_id > 0){
             //pull token from user
             INonfungiblePositionManager(positionManager).safeTransferFrom(msg.sender, address(this), _token_id);
@@ -81,18 +78,12 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
             IFraxFarmUniV3(stakingAddress).stakeLocked(_token_id, _secs);
         }
 
-        //if rewards are active, checkpoint (can call with _token_id as 0 if rewards were turned on
-        // after initial deposit and just need to checkpoint)
-        if(IRewards(rewards).active()){
-            //get difference of liquidity after deposit
-            userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this)) - userLiq;
-            IRewards(rewards).deposit(owner,userLiq);
-        }
+        //checkpoint rewards
+        _checkpointRewards();
     }
 
     //add to a current lock
     function lockAdditional(uint256 _token_id, uint256 _token0_amt, uint256 _token1_amt) external onlyOwner nonReentrant{
-        uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
 
         if(_token_id > 0 && _token0_amt > 0 && _token1_amt > 0){
             address token0 = IFraxFarmUniV3(stakingAddress).uni_token0();
@@ -105,28 +96,38 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
             IFraxFarmUniV3(stakingAddress).lockAdditional(_token_id, _token0_amt, _token1_amt, 0, 0, true);
         }
         
-        //if rewards are active, checkpoint
-        if(IRewards(rewards).active()){
-            userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this)) - userLiq;
-            IRewards(rewards).deposit(owner,userLiq);
-        }
+        //checkpoint rewards
+        _checkpointRewards();
     }
 
     //withdraw a staked position
     function withdrawLocked(uint256 _token_id) external onlyOwner nonReentrant{
-        //take note of amount liquidity staked
-        uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
 
         //withdraw directly to owner(msg.sender)
         IFraxFarmUniV3(stakingAddress).withdrawLocked(_token_id, msg.sender);
 
+        //checkpoint rewards
+        _checkpointRewards();
+    }
+
+    //checkpoint and add/remove weight to convex rewards contract
+    function _checkpointRewards() internal{
         //if rewards are active, checkpoint
         if(IRewards(rewards).active()){
-            //get difference of liquidity after withdrawn
-            userLiq -= IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
-            IRewards(rewards).withdraw(owner,userLiq);
+            //using liquidity shares from staking contract will handle rebasing tokens correctly
+            uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
+            //get current balance of reward contract
+            uint256 bal = IRewards(rewards).balanceOf(address(this));
+            if(userLiq >= bal){
+                //add the difference to reward contract
+                IRewards(rewards).deposit(owner, userLiq - bal);
+            }else{
+                //remove the difference from the reward contract
+                IRewards(rewards).withdraw(owner, bal - userLiq);
+            }
         }
     }
+
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
     function earned() external view returns (address[] memory token_addresses, uint256[] memory total_earned) {
@@ -220,10 +221,11 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
     function _processExtraRewards() internal{
         if(IRewards(rewards).active()){
             //check if there is a balance because the reward contract could have be activated later
+            //dont use _checkpointRewards since difference of 0 will still call deposit() and cost gas
             uint256 bal = IRewards(rewards).balanceOf(address(this));
-            if(bal == 0){
+            uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
+            if(bal == 0 && userLiq > 0){
                 //bal == 0 and liq > 0 can only happen if rewards were turned on after staking
-                uint256 userLiq = IFraxFarmUniV3(stakingAddress).lockedLiquidityOf(address(this));
                 IRewards(rewards).deposit(owner,userLiq);
             }
             IRewards(rewards).getReward(owner);
