@@ -259,7 +259,7 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
             if(_tokens[i] != fxs){
                 uint256 bal = IERC20(_tokens[i]).balanceOf(address(this));
                 if(bal > 0){
-                    IERC20(_tokens[i]).transfer(msg.sender, bal);
+                    IERC20(_tokens[i]).safeTransfer(msg.sender, bal);
                 }
             }
         }
