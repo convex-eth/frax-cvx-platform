@@ -161,7 +161,7 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
     A slightly less gas intensive approach could be to send rewards directly to booster and have it sort everything out.
     However that makes the logic a bit more complex as well as runs a few future proofing risks
     */
-    function getReward() external onlyOwner{
+    function getReward() external{
         getReward(true);
     }
 
@@ -169,7 +169,7 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
     //_claim bool is for the off chance that rewardCollectionPause is true so getReward() fails but
     //there are tokens on this vault for cases such as withdraw() also calling claim.
     //can also be used to rescue tokens on the vault
-    function getReward(bool _claim) public onlyOwner{
+    function getReward(bool _claim) public{
 
         //claim
         if(_claim){
@@ -196,7 +196,7 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
     //_claim bool is for the off chance that rewardCollectionPause is true so getReward() fails but
     //there are tokens on this vault for cases such as withdraw() also calling claim.
     //can also be used to rescue tokens on the vault
-    function getReward(bool _claim, address[] calldata _rewardTokenList) external onlyOwner{
+    function getReward(bool _claim, address[] calldata _rewardTokenList) external{
 
         //claim
         if(_claim){
@@ -247,7 +247,7 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
         //transfer remaining fxs to owner
         sendAmount = IERC20(fxs).balanceOf(address(this));
         if(sendAmount > 0){
-            IERC20(fxs).transfer(msg.sender, sendAmount);
+            IERC20(fxs).transfer(owner, sendAmount);
         }
     }
 
@@ -258,7 +258,7 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
             if(_tokens[i] != fxs){
                 uint256 bal = IERC20(_tokens[i]).balanceOf(address(this));
                 if(bal > 0){
-                    IERC20(_tokens[i]).safeTransfer(msg.sender, bal);
+                    IERC20(_tokens[i]).safeTransfer(owner, bal);
                 }
             }
         }
