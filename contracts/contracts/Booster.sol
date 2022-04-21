@@ -26,9 +26,9 @@ contract Booster{
     bool public isShutdown;
     address public feeQueue;
 
-    event DelegateSet(address indexed _address);
-    event FeesClaimed(uint256 _amount);
-    event Recovered(address indexed _token, uint256 _amount);
+    mapping(address=>mapping(address=>bool)) public feeClaimMap;
+
+    
 
     constructor(address _proxy, address _poolReg, address _feeReg) {
         proxy = _proxy;
@@ -63,6 +63,11 @@ contract Booster{
     function setFeeClaimer(address _claimer) external onlyOwner{
         feeclaimer = _claimer;
         emit FeeClaimerChanged(_claimer);
+    }
+
+    function setFeeClaimPair(address _claimAddress, address _token, bool _active) external onlyOwner{
+        feeClaimMap[_claimAddress][_token] = _active;
+        emit FeeClaimPairSet(_claimAddress, _token, _active);
     }
 
     //set a reward manager address that controls extra reward contracts for each pool
@@ -171,6 +176,7 @@ contract Booster{
     //claim fees - if set, move to a fee queue that rewards can pull from
     function claimFees(address _distroContract, address _token) external {
         require(feeclaimer == address(0) || feeclaimer == msg.sender, "!auth");
+        require(feeClaimMap[_distroContract][_token],"!claimPair");
 
         uint256 bal;
         if(feeQueue != address(0)){
@@ -193,6 +199,10 @@ contract Booster{
     event OwnerChanged(address indexed _address);
     event FeeQueueChanged(address indexed _address);
     event FeeClaimerChanged(address indexed _address);
+    event FeeClaimPairSet(address indexed _address, address indexed _token, bool _value);
     event RewardManagerChanged(address indexed _address);
     event Shutdown();
+    event DelegateSet(address indexed _address);
+    event FeesClaimed(uint256 _amount);
+    event Recovered(address indexed _token, uint256 _amount);
 }
