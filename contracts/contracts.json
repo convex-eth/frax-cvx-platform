@@ -5,6 +5,7 @@
         "cvx": "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
         "cvxFxs": "0xFEEf77d3f69374f66429C91d732A244f074bdf74",
         "fxsDepositor": "0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e",
+        "feeRegistry": "0x7a299A6f5bC33c7E3C8bA5BbdEBEBa8a012394E3",
         "proxyFactory": "0x66807B5598A848602734B82E432dD88DBE13fC8f"
     },
     "frax": {

@@ -17,7 +17,7 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
     address public constant vefxsProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
     address public constant positionManager = address(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
-    address public immutable feeRegistry; //fee registry
+    address public constant feeRegistry = address(0x7a299A6f5bC33c7E3C8bA5BbdEBEBa8a012394E3); //fee registry
 
     address public owner; //owner of the vault
     address public stakingAddress; //farming contract
@@ -25,8 +25,7 @@ contract StakingProxyUniV3 is IProxyVault, ReentrancyGuard{
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
-    constructor(address _feeRegistry) {
-        feeRegistry = _feeRegistry;
+    constructor() {
     }
 
     function vaultType() external pure returns(VaultType){

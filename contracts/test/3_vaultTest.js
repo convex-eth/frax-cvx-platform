@@ -89,7 +89,7 @@ contract("Vault Tests", async accounts => {
     console.log("placeholder shutdown");
 
     //deply new booster
-    let feeReg = await FeeRegistry.new();
+    let feeReg = await FeeRegistry.at(contractList.system.feeRegistry);
     let poolReg = await PoolRegistry.new();
     let booster = await Booster.new(voteproxy.address, poolReg.address, feeReg.address);
     let rewardMaster = await MultiRewards.new(booster.address, poolReg.address);
@@ -114,7 +114,7 @@ contract("Vault Tests", async accounts => {
     await unlockAccount(stakingOwner);
     await stakingAddress.toggleValidVeFXSProxy(contractList.system.voteProxy,{from:stakingOwner,gasPrice:0});
     let stakingToken = await IERC20.at("0xc14900dFB1Aa54e7674e1eCf9ce02b3b35157ba5");
-    let impl = await StakingProxyERC20.new(feeReg.address);
+    let impl = await StakingProxyERC20.new();
     var tx = await booster.addPool(impl.address, stakingAddress.address, stakingToken.address,{from:multisig,gasPrice:0});
     console.log("pool added, gas: " +tx.receipt.gasUsed);
 
