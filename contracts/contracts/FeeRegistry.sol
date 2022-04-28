@@ -20,6 +20,8 @@ contract FeeRegistry{
     uint256 public constant FEE_DENOMINATOR = 10000;
 
 
+    mapping(address => address) public redirectDepositMap;
+
     constructor() {}
 
     /////// Owner Section /////////
@@ -43,4 +45,19 @@ contract FeeRegistry{
         require(_deposit != address(0),"zero");
         feeDeposit = _deposit;
     }
+
+    function setRedirectDepositAddress(address _from, address _deposit) external onlyOwner{
+        redirectDepositMap[_from] = _deposit;
+    }
+
+    function getFeeDepositor(address _from) external view returns(address){
+        //check if in redirect map
+        if(redirectDepositMap[_from] != address(0)){
+            return redirectDepositMap[_from];
+        }
+
+        //return default
+        return feeDeposit;
+    }
+
 }

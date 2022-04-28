@@ -8,4 +8,5 @@ interface IFeeRegistry{
     function totalFees() external view returns(uint256);
     function maxFees() external view returns(uint256);
     function feeDeposit() external view returns(address);
+    function getFeeDepositor(address _from) external view returns(address);
 }
