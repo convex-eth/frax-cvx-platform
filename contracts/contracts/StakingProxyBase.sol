@@ -3,25 +3,24 @@ pragma solidity 0.8.10;
 
 import "./interfaces/IProxyVault.sol";
 import "./interfaces/IFeeRegistry.sol";
-import "./interfaces/IFraxFarmERC20.sol";
+import "./interfaces/IFraxFarmBase.sol";
 import "./interfaces/IRewards.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 
-contract StakingProxyBase is IProxyVault, ReentrancyGuard{
+contract StakingProxyBase is IProxyVault{
     using SafeERC20 for IERC20;
 
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
     address public constant vefxsProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
-    address public constant feeRegistry = address(0x7a299A6f5bC33c7E3C8bA5BbdEBEBa8a012394E3); //fee registry
+    address public constant feeRegistry = address(0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D); //fee registry
 
     address public owner; //owner of the vault
     address public stakingAddress; //farming contract
     address public stakingToken; //farming token
     address public rewards; //extra rewards on convex
-    address public usingProxy;
+    address public usingProxy; //address of proxy being used
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
@@ -77,16 +76,23 @@ contract StakingProxyBase is IProxyVault, ReentrancyGuard{
 
     function _setVeFXSProxy(address _proxyAddress) internal{
         //set proxy address on staking contract
-        IFraxFarmERC20(stakingAddress).stakerSetVeFXSProxy(_proxyAddress);
+        IFraxFarmBase(stakingAddress).stakerSetVeFXSProxy(_proxyAddress);
         usingProxy = _proxyAddress;
     }
+
+
+     function getReward() external virtual{}
+    function getReward(bool _claim) external virtual{}
+    function getReward(bool _claim, address[] calldata _rewardTokenList) external virtual{}
+    function earned() external view virtual returns (address[] memory token_addresses, uint256[] memory total_earned){}
+
 
     //checkpoint and add/remove weight to convex rewards contract
     function _checkpointRewards() internal{
         //if rewards are active, checkpoint
         if(IRewards(rewards).active()){
             //using liquidity shares from staking contract will handle rebasing tokens correctly
-            uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
+            uint256 userLiq = IFraxFarmBase(stakingAddress).lockedLiquidityOf(address(this));
             //get current balance of reward contract
             uint256 bal = IRewards(rewards).balanceOf(address(this));
             if(userLiq >= bal){
@@ -125,7 +131,7 @@ contract StakingProxyBase is IProxyVault, ReentrancyGuard{
             //check if there is a balance because the reward contract could have be activated later
             //dont use _checkpointRewards since difference of 0 will still call deposit() and cost gas
             uint256 bal = IRewards(rewards).balanceOf(address(this));
-            uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
+            uint256 userLiq = IFraxFarmBase(stakingAddress).lockedLiquidityOf(address(this));
             if(bal == 0 && userLiq > 0){
                 //bal == 0 and liq > 0 can only happen if rewards were turned on after staking
                 IRewards(rewards).deposit(owner,userLiq);

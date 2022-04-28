@@ -1,42 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import "./interfaces/IProxyVault.sol";
-import "./interfaces/IFeeRegistry.sol";
+import "./StakingProxyBase.sol";
 import "./interfaces/IFraxFarmERC20.sol";
-import "./interfaces/IRewards.sol";
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 
-contract StakingProxyERC20 is IProxyVault, ReentrancyGuard{
+contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
     using SafeERC20 for IERC20;
-
-    address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
-    address public constant vefxsProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
-    address public constant feeRegistry = address(0x7a299A6f5bC33c7E3C8bA5BbdEBEBa8a012394E3); //fee registry
-
-    address public owner; //owner of the vault
-    address public stakingAddress; //farming contract
-    address public stakingToken; //farming token
-    address public rewards; //extra rewards on convex
-
-    uint256 public constant FEE_DENOMINATOR = 10000;
 
     constructor() {
     }
 
-    function vaultType() external pure returns(VaultType){
+    function vaultType() external pure override returns(VaultType){
         return VaultType.Erc20Baic;
     }
 
-    function vaultVersion() external pure returns(uint256){
+    function vaultVersion() external pure override returns(uint256){
         return 1;
     }
 
     //initialize vault
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external{
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external override{
         require(owner == address(0),"already init");
 
         //set variables
@@ -46,16 +31,12 @@ contract StakingProxyERC20 is IProxyVault, ReentrancyGuard{
         rewards = _rewardsAddress;
 
         //set proxy address on staking contract
-        IFraxFarmERC20(_stakingAddress).stakerSetVeFXSProxy(vefxsProxy);
+        _setVeFXSProxy(vefxsProxy);
 
         //set infinite approval
         IERC20(stakingToken).approve(_stakingAddress, type(uint256).max);
     }
 
-    modifier onlyOwner() {
-        require(owner == msg.sender, "!auth");
-        _;
-    }
 
     //create a new locked state of _secs timelength
     function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant{
@@ -95,26 +76,9 @@ contract StakingProxyERC20 is IProxyVault, ReentrancyGuard{
         _checkpointRewards();
     }
 
-    //checkpoint and add/remove weight to convex rewards contract
-    function _checkpointRewards() internal{
-        //if rewards are active, checkpoint
-        if(IRewards(rewards).active()){
-            //using liquidity shares from staking contract will handle rebasing tokens correctly
-            uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
-            //get current balance of reward contract
-            uint256 bal = IRewards(rewards).balanceOf(address(this));
-            if(userLiq >= bal){
-                //add the difference to reward contract
-                IRewards(rewards).deposit(owner, userLiq - bal);
-            }else{
-                //remove the difference from the reward contract
-                IRewards(rewards).withdraw(owner, bal - userLiq);
-            }
-        }
-    }
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
-    function earned() external view returns (address[] memory token_addresses, uint256[] memory total_earned) {
+    function earned() external view override returns (address[] memory token_addresses, uint256[] memory total_earned) {
         //get list of reward tokens
         address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
         uint256[] memory stakedearned = IFraxFarmERC20(stakingAddress).earned(address(this));
@@ -146,7 +110,7 @@ contract StakingProxyERC20 is IProxyVault, ReentrancyGuard{
     A slightly less gas intensive approach could be to send rewards directly to booster and have it sort everything out.
     However that makes the logic a bit more complex as well as runs a few future proofing risks
     */
-    function getReward() external{
+    function getReward() external override{
         getReward(true);
     }
 
@@ -154,7 +118,7 @@ contract StakingProxyERC20 is IProxyVault, ReentrancyGuard{
     //_claim bool is for the off chance that rewardCollectionPause is true so getReward() fails but
     //there are tokens on this vault for cases such as withdraw() also calling claim.
     //can also be used to rescue tokens on the vault
-    function getReward(bool _claim) public{
+    function getReward(bool _claim) public override{
 
         //claim
         if(_claim){
@@ -178,7 +142,7 @@ contract StakingProxyERC20 is IProxyVault, ReentrancyGuard{
     //_claim bool is for the off chance that rewardCollectionPause is true so getReward() fails but
     //there are tokens on this vault for cases such as withdraw() also calling claim.
     //can also be used to rescue tokens on the vault
-    function getReward(bool _claim, address[] calldata _rewardTokenList) external{
+    function getReward(bool _claim, address[] calldata _rewardTokenList) external override{
 
         //claim
         if(_claim){
@@ -195,51 +159,4 @@ contract StakingProxyERC20 is IProxyVault, ReentrancyGuard{
         _processExtraRewards();
     }
 
-    //get extra rewards
-    function _processExtraRewards() internal{
-        if(IRewards(rewards).active()){
-            //check if there is a balance because the reward contract could have be activated later
-            //dont use _checkpointRewards since difference of 0 will still call deposit() and cost gas
-            uint256 bal = IRewards(rewards).balanceOf(address(this));
-            uint256 userLiq = IFraxFarmERC20(stakingAddress).lockedLiquidityOf(address(this));
-            if(bal == 0 && userLiq > 0){
-                //bal == 0 and liq > 0 can only happen if rewards were turned on after staking
-                IRewards(rewards).deposit(owner,userLiq);
-            }
-            IRewards(rewards).getReward(owner);
-        }
-    }
-
-    //apply fees to fxs and send remaining to owner
-    function _processFxs() internal{
-
-        //get fee rate from booster
-        uint256 totalFees = IFeeRegistry(feeRegistry).totalFees();
-
-        //send fxs fees to fee deposit
-        uint256 fxsBalance = IERC20(fxs).balanceOf(address(this));
-        uint256 sendAmount = fxsBalance * totalFees / FEE_DENOMINATOR;
-        if(sendAmount > 0){
-            IERC20(fxs).transfer(IFeeRegistry(feeRegistry).feeDeposit(), sendAmount);
-        }
-
-        //transfer remaining fxs to owner
-        sendAmount = IERC20(fxs).balanceOf(address(this));
-        if(sendAmount > 0){
-            IERC20(fxs).transfer(owner, sendAmount);
-        }
-    }
-
-    //transfer other reward tokens besides fxs(which needs to have fees applied)
-    function _transferTokens(address[] memory _tokens) internal{
-        //transfer all tokens
-        for(uint256 i = 0; i < _tokens.length; i++){
-            if(_tokens[i] != fxs){
-                uint256 bal = IERC20(_tokens[i]).balanceOf(address(this));
-                if(bal > 0){
-                    IERC20(_tokens[i]).safeTransfer(owner, bal);
-                }
-            }
-        }
-    }
 }
