@@ -9,5 +9,6 @@ interface IFraxFarmBase{
     function toggleValidVeFXSProxy(address proxy_address) external;
     function proxyToggleStaker(address staker_address) external;
     function stakerSetVeFXSProxy(address proxy_address) external;
+    function getReward(address destination_address) external returns (uint256[] memory);
 
 }

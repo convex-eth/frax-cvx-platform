@@ -43,10 +43,6 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         curveLpToken = _lptoken;
         convexDepositToken = _token;
 
-
-        //set proxy address on staking contract
-        _setVeFXSProxy(vefxsProxy);
-
         //set infinite approvals
         IERC20(_stakingToken).approve(_stakingAddress, type(uint256).max);
         IERC20(_lptoken).approve(_stakingToken, type(uint256).max);

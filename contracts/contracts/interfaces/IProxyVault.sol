@@ -10,6 +10,8 @@ interface IProxyVault {
     }
 
     function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external;
+    function usingProxy() external returns(address);
+    function rewards() external returns(address);
     function getReward() external;
     function getReward(bool _claim) external;
     function getReward(bool _claim, address[] calldata _rewardTokenList) external;

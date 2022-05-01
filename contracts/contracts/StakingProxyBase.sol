@@ -51,15 +51,14 @@ contract StakingProxyBase is IProxyVault{
     }
 
     function changeRewards(address _rewardsAddress) external onlyAdmin{
-        //process old rewards first
-        _processExtraRewards();
-
-        //remove from old rewards
+        
+        //remove from old rewards and claim
         if(IRewards(rewards).active()){
             uint256 bal = IRewards(rewards).balanceOf(address(this));
             if(bal > 0){
                 IRewards(rewards).withdraw(owner, bal);
             }
+            IRewards(rewards).getReward(owner);
         }
 
         //set to new rewards
@@ -67,6 +66,12 @@ contract StakingProxyBase is IProxyVault{
 
         //update balance
         _checkpointRewards();
+    }
+
+    //checkpoint weight on farm by calling getReward as its the lowest cost thing to do.
+    function checkpointRewards() external onlyAdmin{
+        //claim rewards to local vault
+        IFraxFarmBase(stakingAddress).getReward(address(this));
     }
 
     function setVeFXSProxy(address _proxy) external onlyAdmin{
@@ -81,7 +86,7 @@ contract StakingProxyBase is IProxyVault{
     }
 
 
-     function getReward() external virtual{}
+    function getReward() external virtual{}
     function getReward(bool _claim) external virtual{}
     function getReward(bool _claim, address[] calldata _rewardTokenList) external virtual{}
     function earned() external view virtual returns (address[] memory token_addresses, uint256[] memory total_earned){}

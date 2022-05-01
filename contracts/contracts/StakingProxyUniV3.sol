@@ -32,9 +32,6 @@ contract StakingProxyUniV3 is StakingProxyBase, ReentrancyGuard{
         stakingAddress = _stakingAddress;
         rewards = _rewardsAddress;
 
-        //set proxy address on staking contract
-        IFraxFarmUniV3(_stakingAddress).stakerSetVeFXSProxy(vefxsProxy);
-
         //set infinite approval
         INonfungiblePositionManager(positionManager).setApprovalForAll(_stakingAddress, true);
     }

@@ -30,9 +30,6 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
         stakingToken = _stakingToken;
         rewards = _rewardsAddress;
 
-        //set proxy address on staking contract
-        _setVeFXSProxy(vefxsProxy);
-
         //set infinite approval
         IERC20(stakingToken).approve(_stakingAddress, type(uint256).max);
     }

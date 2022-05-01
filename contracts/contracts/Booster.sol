@@ -170,6 +170,10 @@ contract Booster{
 
     	//call proxy initialize
         IProxyVault(vault).initialize(msg.sender, stakeAddress, stakeToken, rewards);
+
+        //set vault vefxs proxy
+        data = abi.encodeWithSelector(bytes4(keccak256("setVeFXSProxy(address)")), proxy);
+        IStaker(proxy).execute(vault,uint256(0),data);
     }
 
 
