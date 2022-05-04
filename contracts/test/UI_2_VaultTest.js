@@ -15,6 +15,9 @@ const MultiRewards = artifacts.require("MultiRewards");
 const PoolUtilities = artifacts.require("PoolUtilities");
 const StakingProxyUniV3 = artifacts.require("StakingProxyUniV3");
 const TestPool_UniV3 = artifacts.require("TestPool_UniV3");
+const TestPool_Erc20 = artifacts.require("TestPool_Erc20");
+const ConvexPoolRegistry = artifacts.require("ConvexPoolRegistry");
+const StakingProxyConvex = artifacts.require("StakingProxyConvex");
 
 const INonfungiblePositionManager = artifacts.require("INonfungiblePositionManager");
 const IVPool = artifacts.require("IVPool");
@@ -187,12 +190,35 @@ contract("Vault Tests", async accounts => {
     var tx = await booster.addPool(univ3impl.address, univ3StakingAddress.address, positionManager.address, {from:multisig,gasPrice:0});
     console.log("univ3 pool added, gas: " +tx.receipt.gasUsed);
 
-    var poolinfo = await poolReg.poolInfo(0);
+    var poolinfo = await poolReg.poolInfo(1);
     console.log(poolinfo);
     var poolRewards = await MultiRewards.at(poolinfo.rewardsAddress);
     console.log("rewards at " +poolRewards.address);
 
 
+
+    ///create convex vault fpi/frax
+    let fpistakingToken = await IERC20.at("0xa6f93cd2cb774EC46ec8De0AEc43d7406ABc0413");
+    let fpilp = await IERC20.at("0x4704aB1fb693ce163F7c9D3A31b3FF4eaF797714");
+    let fpifarm = await TestPool_Erc20.new(fpilp.address);
+    let fpiHolder = "0xdb7cbbb1d5d5124f86e92001c9dfdc068c05801d";
+    await unlockAccount(fpiHolder);
+    await fpilp.transfer(userA,web3.utils.toWei("100000.0", "ether"),{from:fpiHolder,gasPrice:0});
+
+    //add to reg
+    let cvxReg = await ConvexPoolRegistry.at(contractList.system.convexPoolRegistry);
+    let proxyAddress = "0x59CFCD384746ec3035299D90782Be065e466800B";
+    await unlockAccount(proxyAddress);
+    await cvxReg.addPoolInfo(fpistakingToken.address, 82,{from:proxyAddress,gasPrice:0});
+
+    let conveximpl = await StakingProxyConvex.new();
+    var tx = await booster.addPool(conveximpl.address, fpifarm.address, fpistakingToken.address,{from:multisig,gasPrice:0});
+    console.log("convex fpi/frax pool added, gas: " +tx.receipt.gasUsed);
+
+    var poolinfo = await poolReg.poolInfo(2);
+    console.log(poolinfo);
+    var poolRewards = await MultiRewards.at(poolinfo.rewardsAddress);
+    console.log("rewards at " +poolRewards.address);
     
     //creating user vault
     // var tx = await booster.createVault(0);
