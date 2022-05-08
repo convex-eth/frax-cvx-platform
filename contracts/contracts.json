@@ -6,7 +6,7 @@
         "cvxFxs": "0xFEEf77d3f69374f66429C91d732A244f074bdf74",
         "fxsDepositor": "0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e",
         "feeRegistry": "0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D",
-        "convexPoolRegistry": "0x682b59Fb0C1d68B72ECe40F4573AE6f7787FFEAB",
+        "convexPoolRegistry": "0x7413bFC877B5573E29f964d572f421554d8EDF86",
         "proxyFactory": "0x66807B5598A848602734B82E432dD88DBE13fC8f"
     },
     "frax": {

@@ -23,7 +23,7 @@ contract ConvexPoolRegistry{
         address crvRewards;
     }
 
-    address public constant owner = address(0x59CFCD384746ec3035299D90782Be065e466800B);
+    address public constant owner = address(0xa3C5A1e09150B75ff251c1a7815A07182c3de2FB);
     address public constant convexCurveBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
 
     mapping(address => PoolInfo) public poolMapping; //map wrapped token to convex pool
@@ -38,14 +38,16 @@ contract ConvexPoolRegistry{
     }
 
     //set platform fees
-    function addPoolInfo(address _wrapperToken, uint256 _convexPid) external onlyOwner{
-        require(ConvexWrapper(_wrapperToken).convexPoolId() == _convexPid, "!pid");
+    function addPoolInfo(address _wrapperToken) external onlyOwner{
 
-        (address _lptoken, address _token, address _gauge, address _crvRewards, , ) = ConvexCurvePools(convexCurveBooster).poolInfo(_convexPid);
+        uint256 convexPid = ConvexWrapper(_wrapperToken).convexPoolId();
+        require(convexPid > 0, "!pid");
+
+        (address _lptoken, address _token, address _gauge, address _crvRewards, , ) = ConvexCurvePools(convexCurveBooster).poolInfo(convexPid);
     
         //set pool mapping
         poolMapping[_wrapperToken] = PoolInfo({
-            poolId: _convexPid,
+            poolId: convexPid,
             lptoken: _lptoken,
             token: _token,
             gauge: _gauge,

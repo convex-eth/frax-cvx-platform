@@ -11,7 +11,7 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
-    address public constant poolRegistry = address(0x682b59Fb0C1d68B72ECe40F4573AE6f7787FFEAB);
+    address public constant poolRegistry = address(0x7413bFC877B5573E29f964d572f421554d8EDF86);
     uint256 public convexPoolId;
     address public curveLpToken;
     address public convexDepositToken;
