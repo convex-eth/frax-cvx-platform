@@ -209,6 +209,8 @@ contract("Vault Tests", async accounts => {
     await fxs.balanceOf(userA).then(a=>console.log("user A fxs: " +a));
     await crv.balanceOf(userA).then(a=>console.log("user A crv: " +a));
     await cvx.balanceOf(userA).then(a=>console.log("user A cvx: " +a));
+    await crv.balanceOf(vault.address).then(a=>console.log("vault crv: " +a));
+    await cvx.balanceOf(vault.address).then(a=>console.log("vault cvx: " +a));
     await fxs.balanceOf(booster.address).then(a=>console.log("booster fxs: " +a));
     await stakingAddress.earned(vault.address).then(a=>console.log("farm earned: " +a));
     await stakingwrapper.earned(vault.address).then(a=>console.log("stakingwrapper earned: " +a));
@@ -216,13 +218,34 @@ contract("Vault Tests", async accounts => {
     await vault.earned().then(a=>console.log("vault earned: " +JSON.stringify(a) ));
     await vault.getReward();
     console.log("-> vault get reward");
-    await stakingwrapper.getReward(vault.address);
-    console.log("-> wrapper get reward");
     await fxs.balanceOf(userA).then(a=>console.log("user A fxs: " +a));
     await crv.balanceOf(userA).then(a=>console.log("user A crv: " +a));
     await cvx.balanceOf(userA).then(a=>console.log("user A cvx: " +a));
+    await crv.balanceOf(vault.address).then(a=>console.log("vault crv: " +a));
+    await cvx.balanceOf(vault.address).then(a=>console.log("vault cvx: " +a));
     await fxs.balanceOf(booster.address).then(a=>console.log("booster fxs: " +a));
 
+    console.log("\n\n===================\n\n")
+
+    await advanceTime(day);
+    await crv.balanceOf(userA).then(a=>console.log("user A crv: " +a));
+    await cvx.balanceOf(userA).then(a=>console.log("user A cvx: " +a));
+    await crv.balanceOf(vault.address).then(a=>console.log("vault crv: " +a));
+    await cvx.balanceOf(vault.address).then(a=>console.log("vault cvx: " +a));
+    await stakingwrapper.getReward(vault.address, userA).catch(a=>console.log("--> error forwarding: " +a));
+    await stakingwrapper.getReward(vault.address);
+    console.log("wrapper.getReward(vault)");
+    await crv.balanceOf(userA).then(a=>console.log("user A crv: " +a));
+    await cvx.balanceOf(userA).then(a=>console.log("user A cvx: " +a));
+    await crv.balanceOf(vault.address).then(a=>console.log("vault crv: " +a));
+    await cvx.balanceOf(vault.address).then(a=>console.log("vault cvx: " +a));
+    // await vault.getReward(false,[crv.address, cvx.address]);
+    await vault.methods['getReward(bool,address[])'](false,[crv.address, cvx.address]);
+    console.log("vault.getReward(false,[crv.address, cvx.address])");
+    await crv.balanceOf(userA).then(a=>console.log("user A crv: " +a));
+    await cvx.balanceOf(userA).then(a=>console.log("user A cvx: " +a));
+    await crv.balanceOf(vault.address).then(a=>console.log("vault crv: " +a));
+    await cvx.balanceOf(vault.address).then(a=>console.log("vault cvx: " +a));
 
 
     // //withdraw

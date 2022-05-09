@@ -202,6 +202,7 @@ contract("Vault Tests", async accounts => {
     let fpilp = await IERC20.at("0x4704aB1fb693ce163F7c9D3A31b3FF4eaF797714");
      // let fpifarm = await IFraxFarmERC20.at("0x183a756F416C723000E7BD3fB0e66cBA3E48c52D");
     let fpifarm = await TestPool_Erc20.new(stakingToken.address);
+    console.log("fpi farm: " +fpifarm.address);
     let fpiHolder = "0xdb7cbbb1d5d5124f86e92001c9dfdc068c05801d";
     await unlockAccount(fpiHolder);
     await fpilp.transfer(userA,web3.utils.toWei("100000.0", "ether"),{from:fpiHolder,gasPrice:0});

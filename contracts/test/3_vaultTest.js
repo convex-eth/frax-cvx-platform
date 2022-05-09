@@ -125,14 +125,15 @@ contract("Vault Tests", async accounts => {
     // await poolRewards.setbooster(booster.address);
 
     //compare gas when rewards contract is active by toggling this
-    // await poolRewards.setActive({from:multisig,gasPrice:0});
+    await poolRewards.setActive({from:multisig,gasPrice:0});
+
     //Uncomment to add rewards
-    // await poolRewards.addReward(contractList.system.cvx, deployer, {from:multisig,gasPrice:0});
-    // let cvx = await IERC20.at(contractList.system.cvx);
-    // await cvx.approve(poolRewards.address,web3.utils.toWei("100000.0", "ether"),{from:deployer});
-    // await poolRewards.notifyRewardAmount(contractList.system.cvx,web3.utils.toWei("1000.0", "ether"),{from:deployer});
-    // let rdata = await poolRewards.rewardData(contractList.system.cvx);
-    // console.log("reward data: \n" +JSON.stringify(rdata));
+    await poolRewards.addReward(contractList.system.cvx, deployer, {from:multisig,gasPrice:0});
+    let cvx = await IERC20.at(contractList.system.cvx);
+    await cvx.approve(poolRewards.address,web3.utils.toWei("100000.0", "ether"),{from:deployer});
+    await poolRewards.notifyRewardAmount(contractList.system.cvx,web3.utils.toWei("1000.0", "ether"),{from:deployer});
+    let rdata = await poolRewards.rewardData(contractList.system.cvx);
+    console.log("reward data: \n" +JSON.stringify(rdata));
 
     var tx = await booster.createVault(0);
     let vaultAddress = await poolReg.vaultMap(0,userA);
@@ -199,8 +200,59 @@ contract("Vault Tests", async accounts => {
     await fxs.balanceOf(booster.address).then(a=>console.log("booster fxs: " +a));
 
 
+    //test reward switching
+    console.log("\n--- test reward switching ---\n");
+    await advanceTime(day);
+    await unlockAccount(booster.address);
+    await unlockAccount(voteproxy.address);
+
+    var poolinfo = await poolReg.poolInfo(0);
+    console.log(poolinfo);
+    var poolRewards = await MultiRewards.at(poolinfo.rewardsAddress);
+    console.log("rewards at " +poolRewards.address);
+    await poolReg.createNewPoolRewards(0,{from:booster.address,gasPrice:0});
+    var poolinfo = await poolReg.poolInfo(0);
+    console.log(poolinfo);
+    var newPoolRewards = await MultiRewards.at(poolinfo.rewardsAddress);
+    await newPoolRewards.setActive({from:multisig,gasPrice:0});
+    console.log("new rewards at " +newPoolRewards.address);
+
+    await poolRewards.balanceOf(vault.address).then(a=>console.log("old rewards balance: " +a))
+    await newPoolRewards.balanceOf(vault.address).then(a=>console.log("new rewards balance: " +a))
+    await cvx.balanceOf(userA).then(a=>console.log("user A cvx: " +a));
+    await vault.changeRewards(newPoolRewards.address,{from:voteproxy.address,gasPrice:0});
+    console.log("rewards changed");
+    await poolRewards.balanceOf(vault.address).then(a=>console.log("old rewards balance: " +a))
+    await newPoolRewards.balanceOf(vault.address).then(a=>console.log("new rewards balance: " +a))
+    await cvx.balanceOf(userA).then(a=>console.log("user A cvx: " +a));
+
+
+    console.log("\n--- test proxy switching ---\n");
+    await advanceTime(day);
+    await stakingAddress.toggleValidVeFXSProxy(deployer,{from:stakingOwner,gasPrice:0});
+    await stakingAddress.lockedLiquidityOf(vault.address).then(a=>console.log("lockedLiquidityOf: " +a))
+    await stakingAddress.combinedWeightOf(vault.address).then(a=>console.log("combinedWeightOf: " +a))
+    await stakingAddress.veFXSMultiplier(vault.address).then(a=>console.log("veFXSMultiplier: " +a))
+    await fxs.balanceOf(vault.address).then(a=>console.log("vault fxs: " +a));
+
+    await vault.checkpointRewards({from:voteproxy.address,gasPrice:0})
+    console.log("checkpointed, should have claimed fxs to vault");
+    await fxs.balanceOf(vault.address).then(a=>console.log("vault fxs: " +a));
+
+    await stakingAddress.proxyToggleStaker(vault.address,{from:voteproxy.address,gasPrice:0});
+    console.log("toggle off vefxs proxy")
+    await stakingAddress.proxyToggleStaker(vault.address,{from:deployer});
+    console.log("toggle on new vefxs proxy")
+    await vault.setVeFXSProxy(deployer,{from:voteproxy.address,gasPrice:0})
+    console.log("set vefxs proxy to deployer");
+    await vault.checkpointRewards({from:voteproxy.address,gasPrice:0})
+    console.log("checkpoint again");
+    await stakingAddress.lockedLiquidityOf(vault.address).then(a=>console.log("lockedLiquidityOf: " +a))
+    await stakingAddress.combinedWeightOf(vault.address).then(a=>console.log("combinedWeightOf: " +a))
+    await stakingAddress.veFXSMultiplier(vault.address).then(a=>console.log("veFXSMultiplier: " +a))
 
     //withdraw
+    console.log("\n--- test withdraw ---\n");
     await advanceTime(lockDuration + day);
     await stakingToken.balanceOf(userA).then(a=>console.log("staking token userA: " +a));
     await vault.withdrawLocked(stakeInfo[0][0]);
