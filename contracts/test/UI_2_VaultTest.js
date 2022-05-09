@@ -198,21 +198,22 @@ contract("Vault Tests", async accounts => {
 
 
     ///create convex vault fpi/frax
-    let fpistakingToken = await IERC20.at("0xA74A725F143C9b4cc139929b6Df67405f8eC9AAe");
+    let fpistakingToken = await IERC20.at("0x7287488F8Df7dddc5f373142D4827aAF92AAC845");
     let fpilp = await IERC20.at("0x4704aB1fb693ce163F7c9D3A31b3FF4eaF797714");
-    let fpifarm = "0x183a756F416C723000E7BD3fB0e66cBA3E48c52D";
+     // let fpifarm = await IFraxFarmERC20.at("0x183a756F416C723000E7BD3fB0e66cBA3E48c52D");
+    let fpifarm = await TestPool_Erc20.new(stakingToken.address);
     let fpiHolder = "0xdb7cbbb1d5d5124f86e92001c9dfdc068c05801d";
     await unlockAccount(fpiHolder);
     await fpilp.transfer(userA,web3.utils.toWei("100000.0", "ether"),{from:fpiHolder,gasPrice:0});
 
     //add to reg
-    let cvxReg = await ConvexPoolRegistry.at(contractList.system.convexPoolRegistry);
-    let proxyAddress = "0x59CFCD384746ec3035299D90782Be065e466800B";
-    await unlockAccount(proxyAddress);
-    await cvxReg.addPoolInfo(fpistakingToken.address, 82,{from:proxyAddress,gasPrice:0});
+    // let cvxReg = await ConvexPoolRegistry.at(contractList.system.convexPoolRegistry);
+    // let proxyAddress = "0x59CFCD384746ec3035299D90782Be065e466800B";
+    // await unlockAccount(proxyAddress);
+    // await cvxReg.addPoolInfo(fpistakingToken.address, 82,{from:proxyAddress,gasPrice:0});
 
     let conveximpl = await StakingProxyConvex.new();
-    var tx = await booster.addPool(conveximpl.address, fpifarm, fpistakingToken.address,{from:multisig,gasPrice:0});
+    var tx = await booster.addPool(conveximpl.address, fpifarm.address, fpistakingToken.address,{from:multisig,gasPrice:0});
     console.log("convex fpi/frax pool added, gas: " +tx.receipt.gasUsed);
 
     var poolinfo = await poolReg.poolInfo(2);

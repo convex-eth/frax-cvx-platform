@@ -345,11 +345,11 @@ contract TestPool_UniV3 {
         }
     }
 
-    function getReward(address destination_address) external {
+    function getReward(address destination_address) external returns (uint256[] memory){
 
     }
 
-    function getReward(address destination_address, bool claim_extras) external {
+    function getReward(address destination_address, bool claim_extras) external returns (uint256[] memory){
 
     }
 

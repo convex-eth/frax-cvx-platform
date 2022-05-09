@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import "./interfaces/IConvexPoolRegistry.sol";
+import "./interfaces/ICurveConvex.sol";
 import "./interfaces/IConvexWrapper.sol";
 import "./StakingProxyBase.sol";
 import "./interfaces/IFraxFarmERC20.sol";
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 
+
 contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
     address public constant poolRegistry = address(0x7413bFC877B5573E29f964d572f421554d8EDF86);
-    uint256 public convexPoolId;
+    address public constant convexCurveBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
+
     address public curveLpToken;
     address public convexDepositToken;
 
@@ -37,9 +39,9 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         stakingToken = _stakingToken;
         rewards = _rewardsAddress;
 
-        //get other pool info
-        (uint256 _pid, address _lptoken, address _token, , ) = IConvexPoolRegistry(poolRegistry).poolMapping(_stakingToken);
-        convexPoolId = _pid;
+        //get tokens from pool info
+        (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(IConvexWrapper(_stakingToken).convexPoolId());
+    
         curveLpToken = _lptoken;
         convexDepositToken = _token;
 
@@ -71,7 +73,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     function stakeLockedConvexToken(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant{
         if(_liquidity > 0){
             //pull tokens from user
-            IERC20(curveLpToken).safeTransferFrom(msg.sender, address(this), _liquidity);
+            IERC20(convexDepositToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
             //stake into wrapper
             IConvexWrapper(stakingToken).stake(_liquidity, address(this));
@@ -116,7 +118,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     function lockAdditionalCurveLp(bytes32 _kek_id, uint256 _addl_liq) external onlyOwner nonReentrant{
         if(_addl_liq > 0){
             //pull tokens from user
-            IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
+            IERC20(curveLpToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
 
             //deposit into wrapper
             IConvexWrapper(stakingToken).deposit(_addl_liq, address(this));
@@ -133,7 +135,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     function lockAdditionalConvexToken(bytes32 _kek_id, uint256 _addl_liq) external onlyOwner nonReentrant{
         if(_addl_liq > 0){
             //pull tokens from user
-            IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
+            IERC20(convexDepositToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
 
             //stake into wrapper
             IConvexWrapper(stakingToken).stake(_addl_liq, address(this));
@@ -159,13 +161,13 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     //withdraw a staked position
     function withdrawLockedAndUnwrap(bytes32 _kek_id) external onlyOwner nonReentrant{
 
-        //withdraw directly to owner(msg.sender)
+        //withdraw
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, address(this));
 
         //unwrap
         uint256 balance = IERC20(stakingToken).balanceOf(address(this));
         IConvexWrapper(stakingToken).withdrawAndUnwrap(balance);
-        IERC20(stakingToken).transfer(owner,balance);
+        IERC20(curveLpToken).transfer(owner,balance);
 
         //checkpoint rewards
         _checkpointRewards();

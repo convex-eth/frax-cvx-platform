@@ -17,6 +17,7 @@ contract TestPool_Erc20 {
     uint256 public _total_liquidity_locked;
     mapping(address => uint256) _locked_liquidity;
     address[] internal rewardTokens;
+    address public owner;
 
     /* ========== STRUCTS ========== */
 
@@ -34,7 +35,7 @@ contract TestPool_Erc20 {
     constructor (
         address _stakeToken
     ){
-
+        owner = msg.sender;
         stakingToken = IERC20(_stakeToken);
         rewardTokens = [0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0];
     }
@@ -44,8 +45,8 @@ contract TestPool_Erc20 {
     function getAllRewardTokens() external view returns (address[] memory) {
         return rewardTokens;
     }
-    function earned(address account) external view returns(uint256){
-        return 0;
+    function earned(address account) external view returns(uint256[] memory new_earned){
+        new_earned = new uint256[](rewardTokens.length);
     }
     function veFXSMultiplier(address account) external view returns(uint256){
         return 0;
@@ -217,12 +218,12 @@ contract TestPool_Erc20 {
         }
     }
 
-    function getReward(address destination_address) external {
-
+    function getReward(address destination_address) external returns (uint256[] memory _reward){
+        _reward = new uint256[](1);
     }
 
-    function getReward(address destination_address, bool claim_extras) external {
-
+    function getReward(address destination_address, bool claim_extras) external returns (uint256[] memory _reward){
+        _reward = new uint256[](1);
     }
 
     function proxyToggleStaker(address staker) external{
@@ -230,6 +231,10 @@ contract TestPool_Erc20 {
     }
 
     function stakerSetVeFXSProxy(address proxy) external{
+
+    }
+
+    function toggleValidVeFXSProxy(address _proxy) external{
 
     }
 
