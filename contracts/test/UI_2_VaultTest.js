@@ -150,6 +150,7 @@ contract("Vault Tests", async accounts => {
     await booster.claimOperatorRoles();
     await booster.setOwner(multisig);
     await booster.setRewardManager(multisig,{from:multisig,gasPrice:0});
+    await booster.setPoolManager(multisig,{from:multisig,gasPrice:0});
     await booster.setPoolRewardImplementation(rewardMaster.address,{from:multisig,gasPrice:0});
     await booster.setPoolFeeDeposit(booster.address,{from:multisig,gasPrice:0});
     console.log("booster init");

@@ -21,6 +21,7 @@ contract Booster{
     address public immutable poolRegistry;
     address public immutable feeRegistry;
     address public owner;
+    address public poolManager;
     address public rewardManager;
     address public feeclaimer;
     bool public isShutdown;
@@ -37,6 +38,7 @@ contract Booster{
         isShutdown = false;
         owner = msg.sender;
         rewardManager = msg.sender;
+        poolManager = msg.sender;
         feeclaimer = msg.sender;
     }
 
@@ -44,6 +46,11 @@ contract Booster{
 
     modifier onlyOwner() {
         require(owner == msg.sender, "!auth");
+        _;
+    }
+
+    modifier onlyPoolManager() {
+        require(poolManager == msg.sender, "!auth");
         _;
     }
 
@@ -74,6 +81,12 @@ contract Booster{
     function setRewardManager(address _rmanager) external onlyOwner{
         rewardManager = _rmanager;
         emit RewardManagerChanged(_rmanager);
+    }
+
+    //set pool manager
+    function setPoolManager(address _pmanager) external onlyOwner{
+        poolManager = _pmanager;
+        emit PoolManagerChanged(_pmanager);
     }
     
     //shutdown this contract.
@@ -110,22 +123,22 @@ contract Booster{
     }
 
     //add pool on registry
-    function addPool(address _implementation, address _stakingAddress, address _stakingToken) external onlyOwner{
+    function addPool(address _implementation, address _stakingAddress, address _stakingToken) external onlyPoolManager{
         IPoolRegistry(poolRegistry).addPool(_implementation, _stakingAddress, _stakingToken);
     }
 
     //set a new reward pool implementation for future pools
-    function setPoolRewardImplementation(address _impl) external onlyOwner{
+    function setPoolRewardImplementation(address _impl) external onlyPoolManager{
         IPoolRegistry(poolRegistry).setRewardImplementation(_impl);
     }
 
     //deactivate a pool
-    function deactivatePool(uint256 _pid) external onlyOwner{
+    function deactivatePool(uint256 _pid) external onlyPoolManager{
         IPoolRegistry(poolRegistry).deactivatePool(_pid);
     }
 
     //set extra reward contracts to be active when pools are created
-    function setRewardActiveOnCreation(bool _active) external onlyOwner{
+    function setRewardActiveOnCreation(bool _active) external onlyPoolManager{
         IPoolRegistry(poolRegistry).setRewardActiveOnCreation(_active);
     }
 
@@ -205,6 +218,7 @@ contract Booster{
     event FeeClaimerChanged(address indexed _address);
     event FeeClaimPairSet(address indexed _address, address indexed _token, bool _value);
     event RewardManagerChanged(address indexed _address);
+    event PoolManagerChanged(address indexed _address);
     event Shutdown();
     event DelegateSet(address indexed _address);
     event FeesClaimed(uint256 _amount);

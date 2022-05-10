@@ -108,15 +108,11 @@ contract("Vault Tests", async accounts => {
     await booster.claimOperatorRoles();
     await booster.setOwner(multisig);
     await booster.setRewardManager(multisig,{from:multisig,gasPrice:0});
+    await booster.setPoolManager(multisig,{from:multisig,gasPrice:0});
     await booster.setPoolRewardImplementation(rewardMaster.address,{from:multisig,gasPrice:0});
     await booster.setPoolFeeDeposit(booster.address,{from:multisig,gasPrice:0});
     console.log("booster init");
 
-    //add to reg
-    // let cvxReg = await ConvexPoolRegistry.at(contractList.system.convexPoolRegistry);
-    // let proxyAddress = "0x59CFCD384746ec3035299D90782Be065e466800B";
-    // await unlockAccount(proxyAddress);
-    // await cvxReg.addPoolInfo(fpistakingToken.address, 82,{from:proxyAddress,gasPrice:0});
 
     // let stakingToken = await IERC20.at("0xA74A725F143C9b4cc139929b6Df67405f8eC9AAe");
     let stakingToken = await IERC20.at("0x7287488F8Df7dddc5f373142D4827aAF92AAC845");
@@ -133,9 +129,6 @@ contract("Vault Tests", async accounts => {
     //set wrapper vault
     await stakingwrapper.setVault(stakingAddress.address,{from:deployer});
 
-    //add to reg
-    // await booster.addConvexPoolToRegistry(stakingToken.address, 82, {from:multisig,gasPrice:0});
-    // console.log("added wrapper to convex registry");
 
     let impl = await StakingProxyConvex.new();
     var tx = await booster.addPool(impl.address, stakingAddress.address, stakingToken.address,{from:multisig,gasPrice:0});
@@ -145,7 +138,6 @@ contract("Vault Tests", async accounts => {
     console.log(poolinfo);
     var poolRewards = await MultiRewards.at(poolinfo.rewardsAddress);
     console.log("rewards at " +poolRewards.address);
-    // await poolRewards.setbooster(booster.address);
 
     //compare gas when rewards contract is active by toggling this
     // await poolRewards.setActive({from:multisig,gasPrice:0});
