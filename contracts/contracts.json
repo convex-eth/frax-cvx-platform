@@ -1,13 +1,17 @@
 {
     "system": {
         "voteProxy": "0x59CFCD384746ec3035299D90782Be065e466800B",
-        "booster": "0xA2cF21b157b2f203e37b616b619f438B5aa86Ee5",
+        "boosterplaceholder": "0xA2cF21b157b2f203e37b616b619f438B5aa86Ee5",
+        "booster": "0x9cA3EC5f627ad5D92498Fd1b006b35577760ba9A",
         "cvx": "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
+        "locker": "0x72a19342e8F1838460eBFCCEf09F6585e32db86E",
         "cvxFxs": "0xFEEf77d3f69374f66429C91d732A244f074bdf74",
         "crv": "0xD533a949740bb3306d119CC777fa900bA034cd52",
         "fxsDepositor": "0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e",
+        "poolRegistry": "0x41a5881c17185383e19Df6FA4EC158a6F4851A69",
         "feeRegistry": "0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D",
-        "convexPoolRegistry": "0x7413bFC877B5573E29f964d572f421554d8EDF86",
+        "feeDeposit": "",
+        "rewardImplementation": "",
         "proxyFactory": "0x66807B5598A848602734B82E432dD88DBE13fC8f"
     },
     "frax": {
@@ -16,6 +20,7 @@
         "vefxs": "0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0",
         "gaugeControllerOLD": "0x44ade9AA409B0C29463fF7fcf07c9d3c939166ce",
         "gaugeController": "0x3669C421b77340B2979d1A00a792CC2ee0FcE737",
+        "rewardDistributor": "0x278dC748edA1d8eFEf1aDFB518542612b49Fcd34",
         "vefxsRewardDistro": "0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872",
         "walletChecker": "0x53c13BA8834a1567474b19822aAD85c6F90D9f9F"
     },

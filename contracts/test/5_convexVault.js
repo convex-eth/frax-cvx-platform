@@ -16,12 +16,15 @@ const FeeRegistry = artifacts.require("FeeRegistry");
 const MultiRewards = artifacts.require("MultiRewards");
 const PoolUtilities = artifacts.require("PoolUtilities");
 const IConvexWrapper = artifacts.require("IConvexWrapper");
+const ICvxLocker = artifacts.require("ICvxLocker");
+const FeeDeposit = artifacts.require("FeeDeposit");
 
 const IVPool = artifacts.require("IVPool");
 const IExchange = artifacts.require("IExchange");
 const IERC20 = artifacts.require("IERC20");
 
 const IFraxGaugeController = artifacts.require("IFraxGaugeController");
+const IFraxRewardDistributor = artifacts.require("IFraxRewardDistributor");
 
 const ICurveConvex = artifacts.require("ICurveConvex");
 
@@ -57,6 +60,7 @@ contract("Vault Tests", async accounts => {
     let vefxs = await IERC20.at(contractList.frax.vefxs);
     let crv = await IERC20.at(contractList.system.crv);
     let cvx = await IERC20.at(contractList.system.cvx);
+    let cvxfxs = await IERC20.at(contractList.system.cvxFxs);
 
     let userA = accounts[0];
     let userB = accounts[1];
@@ -86,17 +90,30 @@ contract("Vault Tests", async accounts => {
 
 
     let voteproxy = await FraxVoterProxy.at(contractList.system.voteProxy);
-    let operator = await Booster.at(contractList.system.booster);
+    let operator = await Booster.at(contractList.system.boosterplaceholder);
     let controller = await IFraxGaugeController.at(contractList.frax.gaugeController);
 
+    await operator.shutdownSystem({from:multisig, gasPrice:0});
     await operator.shutdownSystem({from:multisig, gasPrice:0});
     console.log("placeholder shutdown");
 
     //deply new booster
     let feeReg = await FeeRegistry.at(contractList.system.feeRegistry);
     let poolReg = await PoolRegistry.new();
-    let booster = await Booster.new(voteproxy.address, poolReg.address, feeReg.address);
-    let rewardMaster = await MultiRewards.new(booster.address, poolReg.address);
+    let feeDepo = await FeeDeposit.new({from:deployer});
+    var booster = await Booster.new(voteproxy.address, poolReg.address, feeReg.address);
+    console.log("booster deployed: " +booster.address);
+
+    await voteproxy.setOperator(booster.address,{from:multisig, gasPrice:0});
+    console.log("voteproxy operator set to new booster");
+
+    await booster.shutdownSystem();
+    console.log("placeholder2 shutdown");
+
+    booster = await Booster.new(voteproxy.address, poolReg.address, feeReg.address);
+    console.log("redeploy booster")
+
+    let rewardMaster = await MultiRewards.new(poolReg.address);
     console.log("new booster deployed: " +booster.address);
 
     let poolUtil = await PoolUtilities.new();
@@ -106,11 +123,12 @@ contract("Vault Tests", async accounts => {
     console.log("voteproxy operator set to new booster");
 
     await booster.claimOperatorRoles();
-    await booster.setOwner(multisig);
+    await booster.setPendingOwner(multisig);
+    await booster.acceptPendingOwner({from:multisig,gasPrice:0});
     await booster.setRewardManager(multisig,{from:multisig,gasPrice:0});
     await booster.setPoolManager(multisig,{from:multisig,gasPrice:0});
     await booster.setPoolRewardImplementation(rewardMaster.address,{from:multisig,gasPrice:0});
-    await booster.setPoolFeeDeposit(booster.address,{from:multisig,gasPrice:0});
+    await booster.setPoolFeeDeposit(feeDepo.address,{from:multisig,gasPrice:0});
     console.log("booster init");
 
 
@@ -118,16 +136,28 @@ contract("Vault Tests", async accounts => {
     let stakingToken = await IERC20.at("0x7287488F8Df7dddc5f373142D4827aAF92AAC845");
     let stakingwrapper = await IConvexWrapper.at(stakingToken.address);
 
+
     //create new pool and vault
-    // let stakingAddress = await IFraxFarmERC20.at("0x183a756F416C723000E7BD3fB0e66cBA3E48c52D");
-    let stakingAddress = await TestPool_Erc20.new(stakingToken.address);
-    var stakingOwner = await stakingAddress.owner();
-    await unlockAccount(stakingOwner);
-    await stakingAddress.toggleValidVeFXSProxy(contractList.system.voteProxy,{from:stakingOwner,gasPrice:0});
+    let stakingAddress = await IFraxFarmERC20.at("0x0a08673E3d7c454E1c6b27acD059C50Df6727FC9");
+    // let stakingAddress = await TestPool_Erc20.new(stakingToken.address);
+    // var stakingOwner = await stakingAddress.owner();
+    // await unlockAccount(stakingOwner);
+    // await stakingAddress.toggleValidVeFXSProxy(contractList.system.voteProxy,{from:stakingOwner,gasPrice:0});
     
+    //add to gauge
+    let fraxadmin = "0xb1748c79709f4ba2dd82834b8c82d4a505003f27";
+    await unlockAccount(fraxadmin);
+    let gaugeController = await IFraxGaugeController.at(contractList.frax.gaugeController);
+    // await gaugeController.add_gauge(stakingAddress.address,0,0,{from:fraxadmin,gasPrice:0});
+
+    await booster.voteGaugeWeight(gaugeController.address, stakingAddress.address, 10000, {from:multisig, gasPrice:0});
+    console.log("voted");
+    await advanceTime(day*7);
+    // let fraxRewardDistro = await IFraxRewardDistributor.at(contractList.frax.rewardDistributor);
+    // await fraxRewardDistro.setGaugeState(stakingAddress.address, 0, 1, { from:fraxadmin,gasPrice:0 });
 
     //set wrapper vault
-    await stakingwrapper.setVault(stakingAddress.address,{from:deployer});
+    // await stakingwrapper.setVault(stakingAddress.address,{from:deployer});
 
 
     let impl = await StakingProxyConvex.new();
@@ -140,14 +170,13 @@ contract("Vault Tests", async accounts => {
     console.log("rewards at " +poolRewards.address);
 
     //compare gas when rewards contract is active by toggling this
-    // await poolRewards.setActive({from:multisig,gasPrice:0});
+    await poolRewards.setActive({from:multisig,gasPrice:0});
     //Uncomment to add rewards
-    // await poolRewards.addReward(contractList.system.cvx, deployer, {from:multisig,gasPrice:0});
-    // let cvx = await IERC20.at(contractList.system.cvx);
-    // await cvx.approve(poolRewards.address,web3.utils.toWei("100000.0", "ether"),{from:deployer});
-    // await poolRewards.notifyRewardAmount(contractList.system.cvx,web3.utils.toWei("1000.0", "ether"),{from:deployer});
-    // let rdata = await poolRewards.rewardData(contractList.system.cvx);
-    // console.log("reward data: \n" +JSON.stringify(rdata));
+    await poolRewards.addReward(contractList.system.cvx, deployer, {from:multisig,gasPrice:0});
+    await cvx.approve(poolRewards.address,web3.utils.toWei("100000.0", "ether"),{from:deployer});
+    await poolRewards.notifyRewardAmount(contractList.system.cvx,web3.utils.toWei("1000.0", "ether"),{from:deployer});
+    let rdata = await poolRewards.rewardData(contractList.system.cvx);
+    console.log("reward data: \n" +JSON.stringify(rdata));
 
     var tx = await booster.createVault(0);
     let vaultAddress = await poolReg.vaultMap(0,userA);
@@ -178,15 +207,15 @@ contract("Vault Tests", async accounts => {
     console.log("stake info: " +stakeInfo);
     console.log("kek id: " +stakeInfo[0][0]);
     console.log("stake info: " +JSON.stringify(stakeInfo));
-    // await stakingAddress.userStakedFrax(vault.address).then(a=>console.log("userStakedFrax: " +a));
-    // await stakingAddress.getAllRewardTokens().then(a=>console.log("getAllRewardTokens: " +a))
-    // await stakingAddress.lockedLiquidityOf(vault.address).then(a=>console.log("lockedLiquidityOf: " +a))
-    // await stakingAddress.combinedWeightOf(vault.address).then(a=>console.log("combinedWeightOf: " +a))
-    // await stakingAddress.veFXSMultiplier(vault.address).then(a=>console.log("veFXSMultiplier: " +a))
+    await stakingAddress.userStakedFrax(vault.address).then(a=>console.log("userStakedFrax: " +a));
+    await stakingAddress.getAllRewardTokens().then(a=>console.log("getAllRewardTokens: " +a))
+    await stakingAddress.lockedLiquidityOf(vault.address).then(a=>console.log("lockedLiquidityOf: " +a))
+    await stakingAddress.combinedWeightOf(vault.address).then(a=>console.log("combinedWeightOf: " +a))
+    await stakingAddress.veFXSMultiplier(vault.address).then(a=>console.log("veFXSMultiplier: " +a))
 
-    // await poolUtil.weightedRewardRates(stakingAddress.address).then(a=>console.log("pool util -> weightedRewardRates: " +a));
-    // await poolUtil.userBoostedRewardRates(stakingAddress.address, vault.address).then(a=>console.log("pool util -> userBoostedRewardRates: " +a));
-    // await poolUtil.veFXSMultiplier(stakingAddress.address).then(a=>console.log("pool util -> veFXSMultiplier: " +a));
+    await poolUtil.weightedRewardRates(stakingAddress.address).then(a=>console.log("pool util -> weightedRewardRates: " +a));
+    await poolUtil.userBoostedRewardRates(stakingAddress.address, vault.address).then(a=>console.log("pool util -> userBoostedRewardRates: " +a));
+    await poolUtil.veFXSMultiplier(stakingAddress.address).then(a=>console.log("pool util -> veFXSMultiplier: " +a));
 
     //stake again with additional
     // await stakingToken.approve(vault.address, web3.utils.toWei("100000.0","ether"));
@@ -203,6 +232,7 @@ contract("Vault Tests", async accounts => {
     await cvx.balanceOf(userA).then(a=>console.log("user A cvx: " +a));
     await crv.balanceOf(vault.address).then(a=>console.log("vault crv: " +a));
     await cvx.balanceOf(vault.address).then(a=>console.log("vault cvx: " +a));
+    await fxs.balanceOf(feeDepo.address).then(a=>console.log("feeDepo fxs: " +a));
     await fxs.balanceOf(booster.address).then(a=>console.log("booster fxs: " +a));
     await stakingAddress.earned(vault.address).then(a=>console.log("farm earned: " +a));
     await stakingwrapper.earned(vault.address).then(a=>console.log("stakingwrapper earned: " +a));
@@ -215,6 +245,7 @@ contract("Vault Tests", async accounts => {
     await cvx.balanceOf(userA).then(a=>console.log("user A cvx: " +a));
     await crv.balanceOf(vault.address).then(a=>console.log("vault crv: " +a));
     await cvx.balanceOf(vault.address).then(a=>console.log("vault cvx: " +a));
+    await fxs.balanceOf(feeDepo.address).then(a=>console.log("feeDepo fxs: " +a));
     await fxs.balanceOf(booster.address).then(a=>console.log("booster fxs: " +a));
 
     console.log("\n\n===================\n\n")
@@ -239,6 +270,28 @@ contract("Vault Tests", async accounts => {
     await crv.balanceOf(vault.address).then(a=>console.log("vault crv: " +a));
     await cvx.balanceOf(vault.address).then(a=>console.log("vault cvx: " +a));
 
+
+    //fee depo distribute
+    console.log("\n\n===================\n\n")
+
+    let vlcvx = await ICvxLocker.at(contractList.system.locker);
+    await vlcvx.addReward(cvxfxs.address, feeDepo.address, true, {from:multisig,gasPrice:0});
+    console.log("added reward token");
+
+    let cvxfxsStash = "0x4f3AD55D7b884CDC48ADD1e2451A13af17887F26";
+    await fxs.balanceOf(feeDepo.address).then(a=>console.log("feeDepo fxs: " +a));
+    await fxs.balanceOf(cvxfxsStash).then(a=>console.log("stash fxs: " +a));
+    await fxs.balanceOf(deployer).then(a=>console.log("deployer fxs: " +a));
+    await cvxfxs.balanceOf(vlcvx.address).then(a=>console.log("vlcvx cvxfxs: " +a));
+    await vlcvx.rewardData(cvxfxs.address).then(a=>console.log("vlcvx cvxfxs reward data: " +JSON.stringify(a) ));
+
+    await feeDepo.distribute({from:deployer});
+
+    await fxs.balanceOf(feeDepo.address).then(a=>console.log("feeDepo fxs: " +a));
+    await fxs.balanceOf(cvxfxsStash).then(a=>console.log("stash fxs: " +a));
+    await fxs.balanceOf(deployer).then(a=>console.log("deployer fxs: " +a));
+    await cvxfxs.balanceOf(vlcvx.address).then(a=>console.log("vlcvx cvxfxs: " +a));
+    await vlcvx.rewardData(cvxfxs.address).then(a=>console.log("vlcvx cvxfxs reward data: " +JSON.stringify(a)));
 
     // //withdraw
     await advanceTime(lockDuration + day);

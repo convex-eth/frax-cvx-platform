@@ -135,7 +135,8 @@ contract("Vault Tests", async accounts => {
     console.log("voteproxy operator set to new booster");
 
     await booster.claimOperatorRoles();
-    await booster.setOwner(multisig);
+    await booster.setPendingOwner(multisig);
+    await booster.acceptPendingOwner({from:multisig,gasPrice:0});
     await booster.setRewardManager(multisig,{from:multisig,gasPrice:0});
     await booster.setPoolManager(multisig,{from:multisig,gasPrice:0});
     await booster.setPoolRewardImplementation(rewardMaster.address,{from:multisig,gasPrice:0});

@@ -21,6 +21,7 @@ contract Booster{
     address public immutable poolRegistry;
     address public immutable feeRegistry;
     address public owner;
+    address public pendingOwner;
     address public poolManager;
     address public rewardManager;
     address public feeclaimer;
@@ -40,6 +41,9 @@ contract Booster{
         rewardManager = msg.sender;
         poolManager = msg.sender;
         feeclaimer = msg.sender;
+
+        feeClaimMap[address(0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872)][fxs] = true;
+        emit FeeClaimPairSet(address(0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872), fxs, true);
     }
 
     /////// Owner Section /////////
@@ -54,10 +58,19 @@ contract Booster{
         _;
     }
 
-    //set owner
-    function setOwner(address _owner) external onlyOwner{
-        owner = _owner;
-        emit OwnerChanged(_owner);
+    //set pending owner
+    function setPendingOwner(address _po) external onlyOwner{
+        pendingOwner = _po;
+        emit SetPendingOwner(_po);
+    }
+
+    //claim ownership
+    function acceptPendingOwner() external {
+        require(pendingOwner != address(0) && msg.sender == pendingOwner, "!p_owner");
+
+        owner = pendingOwner;
+        pendingOwner = address(0);
+        emit OwnerChanged(owner);
     }
 
     //set fee queue, a contract fees are moved to when claiming
@@ -213,6 +226,7 @@ contract Booster{
 
     
     /* ========== EVENTS ========== */
+    event SetPendingOwner(address indexed _address);
     event OwnerChanged(address indexed _address);
     event FeeQueueChanged(address indexed _address);
     event FeeClaimerChanged(address indexed _address);

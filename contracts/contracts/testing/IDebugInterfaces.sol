@@ -6,6 +6,23 @@ pragma solidity 0.8.10;
 // import '@openzeppelin/contracts/token/ER721/extensions/IERC721Enumerable.sol';
 // import '@openzeppelin/contracts/token/ER721/extensions/IERC721Metadata.sol';
 
+interface ICvxLocker{
+    function addReward(
+        address _rewardsToken,
+        address _distributor,
+        bool _useBoost
+    ) external;
+
+    function approveRewardDistributor(
+        address _rewardsToken,
+        address _distributor,
+        bool _approved
+    ) external;
+
+    function rewardData(address _token) external view returns(bool, uint40, uint208, uint40, uint208);
+}
+
+
 interface IExchange {
     function swapExactTokensForTokens(
         uint256,

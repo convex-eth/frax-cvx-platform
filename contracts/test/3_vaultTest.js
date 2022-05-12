@@ -102,18 +102,27 @@ contract("Vault Tests", async accounts => {
     console.log("voteproxy operator set to new booster");
 
     await booster.claimOperatorRoles();
-    await booster.setOwner(multisig);
+    await booster.setPendingOwner(multisig);
+    await booster.acceptPendingOwner({from:multisig,gasPrice:0});
     await booster.setRewardManager(multisig,{from:multisig,gasPrice:0});
     await booster.setPoolManager(multisig,{from:multisig,gasPrice:0});
     await booster.setPoolRewardImplementation(rewardMaster.address,{from:multisig,gasPrice:0});
     await booster.setPoolFeeDeposit(booster.address,{from:multisig,gasPrice:0});
     console.log("booster init");
 
+    let vesper = await IFraxFarmERC20.at("0x698137C473bc1F0Ea9b85adE45Caf64ef2DF48d6");
+    await vesper.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check vesper: " +a));
+    let temple = await IFraxFarmERC20.at("0x10460d02226d6ef7B2419aE150E6377BdbB7Ef16");
+    await temple.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check temple: " +a));
+    let afrax = await IFraxFarmERC20.at("0x02577b426F223A6B4f2351315A19ecD6F357d65c");
+    await afrax.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check afrax: " +a));
+
     //create new pool and vault
     let stakingAddress = await IFraxFarmERC20.at("0x698137C473bc1F0Ea9b85adE45Caf64ef2DF48d6");
     var stakingOwner = await stakingAddress.owner();
     await unlockAccount(stakingOwner);
     await stakingAddress.toggleValidVeFXSProxy(contractList.system.voteProxy,{from:stakingOwner,gasPrice:0});
+    await stakingAddress.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check: " +a));
     let stakingToken = await IERC20.at("0xc14900dFB1Aa54e7674e1eCf9ce02b3b35157ba5");
     let impl = await StakingProxyERC20.new();
     var tx = await booster.addPool(impl.address, stakingAddress.address, stakingToken.address,{from:multisig,gasPrice:0});

@@ -80,15 +80,25 @@ contract FeeDeposit {
         }
 
         uint256 fxsbalance = IERC20(fxs).balanceOf(address(this));
-        
-        //get reward amounts
-        uint256 cvxfxsRewards = fxsbalance * IFeeRegistry(feeRegistry).cvxfxsIncentive() / denominator;
-        uint256 platformRewards = fxsbalance * IFeeRegistry(feeRegistry).platformIncentive() / denominator;
+        uint256 incentiveAmount = fxsbalance * callIncentive / denominator;
 
+        //remove 1% first
+        fxsbalance -= incentiveAmount;
+
+        //get reward amounts
+        uint256 totalFees = IFeeRegistry(feeRegistry).totalFees();
+        uint256 cvxRewards = fxsbalance * IFeeRegistry(feeRegistry).cvxIncentive() / totalFees;
+        uint256 platformRewards = fxsbalance * IFeeRegistry(feeRegistry).platformIncentive() / totalFees;
+        
+
+        //process distro fees
+        if(incentiveAmount > 0){
+            IERC20(fxs).safeTransfer(msg.sender, incentiveAmount);
+        }
 
         //process vlcvx rewards
-        if(cvxfxsRewards > 0){
-            IFxsDepositor(fxsDeposit).deposit(cvxfxsRewards, true);
+        if(cvxRewards > 0){
+            IFxsDepositor(fxsDeposit).deposit(cvxRewards, true);
         }
 
         uint256 cvxfxsbalance = IERC20(cvxFxs).balanceOf(address(this));

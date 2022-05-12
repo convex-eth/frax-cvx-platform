@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import "./interfaces/MathUtil.sol";
 import "./interfaces/IBooster.sol";
+import "./interfaces/IVoterProxy.sol";
 import "./interfaces/IPoolRegistry.sol";
 import "./interfaces/IRewards.sol";
 import "./interfaces/IRewardHook.sol";
@@ -23,6 +24,8 @@ contract MultiRewards is IRewards{
         uint256 lastUpdateTime;
         uint256 rewardPerTokenStored;
     }
+
+    address public constant vefxsProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
 
     //allow an address to be call at certain events so that
     //reward emissions etc can be automated
@@ -47,7 +50,6 @@ contract MultiRewards is IRewards{
     mapping(address => uint256) public balances;
     uint256 public totalSupply;
  
-    address public immutable convexBooster;
     address public immutable poolRegistry;
     uint256 public poolId;
     bool public active;
@@ -55,8 +57,7 @@ contract MultiRewards is IRewards{
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(address _booster, address _poolRegistry) {
-        convexBooster = _booster;
+    constructor(address _poolRegistry) {
         poolRegistry = _poolRegistry;
     }
 
@@ -251,14 +252,14 @@ contract MultiRewards is IRewards{
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
     function recoverERC20(address _tokenAddress, uint256 _tokenAmount) external onlyOwner {
         require(rewardData[_tokenAddress].lastUpdateTime == 0, "Cannot withdraw reward token");
-        IERC20(_tokenAddress).safeTransfer(IBooster(convexBooster).rewardManager(), _tokenAmount);
+        IERC20(_tokenAddress).safeTransfer(IBooster(IVoterProxy(vefxsProxy).operator()).rewardManager(), _tokenAmount);
         emit Recovered(_tokenAddress, _tokenAmount);
     }
 
     /* ========== MODIFIERS ========== */
 
     modifier onlyOwner() {
-        require(IBooster(convexBooster).rewardManager() == msg.sender, "!owner");
+        require(IBooster(IVoterProxy(vefxsProxy).operator()).rewardManager() == msg.sender, "!owner");
         _;
     }
 
