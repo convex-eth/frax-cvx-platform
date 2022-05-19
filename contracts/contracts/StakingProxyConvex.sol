@@ -26,7 +26,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     function vaultVersion() external pure override returns(uint256){
-        return 1;
+        return 2;
     }
 
     //initialize vault
@@ -53,7 +53,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
 
     //create a new locked state of _secs timelength with a Curve LP token
-    function stakeLockedCurveLp(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant{
+    function stakeLockedCurveLp(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant returns (bytes32 kek_id){
         if(_liquidity > 0){
             //pull tokens from user
             IERC20(curveLpToken).safeTransferFrom(msg.sender, address(this), _liquidity);
@@ -62,7 +62,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IConvexWrapper(stakingToken).deposit(_liquidity, address(this));
 
             //stake
-            IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
+            kek_id = IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
         }
         
         //checkpoint rewards
@@ -70,7 +70,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     //create a new locked state of _secs timelength with a Convex deposit token
-    function stakeLockedConvexToken(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant{
+    function stakeLockedConvexToken(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant returns (bytes32 kek_id){
         if(_liquidity > 0){
             //pull tokens from user
             IERC20(convexDepositToken).safeTransferFrom(msg.sender, address(this), _liquidity);
@@ -79,7 +79,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IConvexWrapper(stakingToken).stake(_liquidity, address(this));
 
             //stake into frax
-            IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
+            kek_id = IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
         }
         
         //checkpoint rewards
@@ -87,13 +87,13 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     //create a new locked state of _secs timelength
-    function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant{
+    function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant returns (bytes32 kek_id){
         if(_liquidity > 0){
             //pull tokens from user
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
             //stake
-            IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
+            kek_id = IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
         }
         
         //checkpoint rewards
@@ -208,11 +208,11 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     claim flow:
         claim rewards directly to the vault
         calculate fees to send to fee deposit
-        send fxs to booster for fees
+        send fxs to a holder contract for fees
         get reward list of tokens that were received
         send all remaining tokens to owner
 
-    A slightly less gas intensive approach could be to send rewards directly to booster and have it sort everything out.
+    A slightly less gas intensive approach could be to send rewards directly to a holder contract and have it sort everything out.
     However that makes the logic a bit more complex as well as runs a few future proofing risks
     */
     function getReward() external override{

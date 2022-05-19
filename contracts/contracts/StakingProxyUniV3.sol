@@ -115,11 +115,11 @@ contract StakingProxyUniV3 is StakingProxyBase, ReentrancyGuard{
     claim flow:
         claim rewards directly to the vault
         calculate fees to send to fee deposit
-        send fxs to booster for fees
+        send fxs to a holder contract for fees
         get reward list of tokens that were received
         send all remaining tokens to owner
 
-    A slightly less gas intensive approach could be to send rewards directly to booster and have it sort everything out.
+    A slightly less gas intensive approach could be to send rewards directly to a holder contract and have it sort everything out.
     However that makes the logic a bit more complex as well as runs a few future proofing risks
     */
     function getReward() external override{

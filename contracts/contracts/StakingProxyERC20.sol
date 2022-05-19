@@ -17,7 +17,7 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
     }
 
     function vaultVersion() external pure override returns(uint256){
-        return 1;
+        return 2;
     }
 
     //initialize vault
@@ -36,13 +36,13 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
 
 
     //create a new locked state of _secs timelength
-    function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant{
+    function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant returns (bytes32 kek_id){
         if(_liquidity > 0){
             //pull tokens from user
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
-            //stake
-            IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
+            //stake (use balanceof in case of change during transfer)
+            kek_id = IFraxFarmERC20(stakingAddress).stakeLocked(IERC20(stakingToken).balanceOf(address(this)), _secs);
         }
         
         //checkpoint rewards
@@ -55,8 +55,8 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
             //pull tokens from user
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
 
-            //add stake
-            IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, _addl_liq);
+            //add stake (use balanceof in case of change during transfer)
+            IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, IERC20(stakingToken).balanceOf(address(this)));
         }
         
         //checkpoint rewards
@@ -64,10 +64,10 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
     }
 
     //withdraw a staked position
-    function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{
+    function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant returns (uint256 liquidity){
 
         //withdraw directly to owner(msg.sender)
-        IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
+        liquidity = IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
 
         //checkpoint rewards
         _checkpointRewards();
@@ -100,11 +100,11 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
     claim flow:
         claim rewards directly to the vault
         calculate fees to send to fee deposit
-        send fxs to booster for fees
+        send fxs to a holder contract for fees
         get reward list of tokens that were received
         send all remaining tokens to owner
 
-    A slightly less gas intensive approach could be to send rewards directly to booster and have it sort everything out.
+    A slightly less gas intensive approach could be to send rewards directly to a holder contract and have it sort everything out.
     However that makes the logic a bit more complex as well as runs a few future proofing risks
     */
     function getReward() external override{

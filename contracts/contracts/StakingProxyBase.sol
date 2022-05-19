@@ -113,7 +113,7 @@ contract StakingProxyBase is IProxyVault{
     //apply fees to fxs and send remaining to owner
     function _processFxs() internal{
 
-        //get fee rate from booster
+        //get fee rate from fee registry
         uint256 totalFees = IFeeRegistry(feeRegistry).totalFees();
 
         //send fxs fees to fee deposit
