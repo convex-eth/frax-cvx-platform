@@ -64,6 +64,11 @@ contract Booster{
         emit SetPendingOwner(_po);
     }
 
+    function _proxyCall(address _to, bytes memory _data) internal{
+        (bool success,) = IStaker(proxy).execute(_to,uint256(0),_data);
+        require(success, "Proxy Call Fail");
+    }
+
     //claim ownership
     function acceptPendingOwner() external {
         require(pendingOwner != address(0) && msg.sender == pendingOwner, "!p_owner");
@@ -116,7 +121,7 @@ contract Booster{
 
         //claim operator role of pool registry
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setOperator(address)")), address(this));
-        IStaker(proxy).execute(poolRegistry,uint256(0),data);
+        _proxyCall(poolRegistry,data);
     }
 
     //set fees on user vaults
@@ -124,7 +129,7 @@ contract Booster{
         require(!isShutdown,"shutdown");
 
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setFees(uint256,uint256,uint256)")), _cvxfxs, _cvx, _platform);
-        IStaker(proxy).execute(feeRegistry,uint256(0),data);
+        _proxyCall(feeRegistry,data);
     }
 
     //set fee deposit address for all user vaults
@@ -132,7 +137,7 @@ contract Booster{
         require(!isShutdown,"shutdown");
 
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setDepositAddress(address)")), _deposit);
-        IStaker(proxy).execute(feeRegistry,uint256(0),data);
+        _proxyCall(feeRegistry,data);
     }
 
     //add pool on registry
@@ -156,15 +161,18 @@ contract Booster{
     }
 
     //vote for gauge weights
-    function voteGaugeWeight(address _controller, address _gauge, uint256 _weight) external onlyOwner{
-        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("vote_for_gauge_weights(address,uint256)")), _gauge, _weight);
-        IStaker(proxy).execute(_controller,uint256(0),data);
+    function voteGaugeWeight(address _controller, address[] calldata _gauge, uint256[] calldata _weight) external onlyOwner{
+        for(uint256 i = 0; i < _gauge.length; ){
+            bytes memory data = abi.encodeWithSelector(bytes4(keccak256("vote_for_gauge_weights(address,uint256)")), _gauge[i], _weight[i]);
+            _proxyCall(_controller,data);
+            unchecked{ ++i; }
+        }
     }
 
     //set voting delegate
     function setDelegate(address _delegateContract, address _delegate, bytes32 _space) external onlyOwner{
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setDelegate(bytes32,address)")), _space, _delegate);
-        IStaker(proxy).execute(_delegateContract,uint256(0),data);
+        _proxyCall(_delegateContract,data);
         emit DelegateSet(_delegate);
     }
 
@@ -174,11 +182,28 @@ contract Booster{
         emit Recovered(_tokenAddress, _tokenAmount);
     }
 
+    //manually set vefxs proxy for a given vault
+    function setVeFXSProxy(address[] calldata _vaults) external onlyOwner{
+        for(uint256 i = 0; i < _vaults.length; ){
+
+            //set proxy
+            bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setVeFXSProxy(address)")), proxy);
+            _proxyCall(_vaults[i],data);
+
+            //call get rewards to checkpoint
+            data = abi.encodeWithSelector(bytes4(keccak256("checkpointRewards()")));
+            _proxyCall(_vaults[i],data);
+
+            unchecked{ ++i; }
+        }
+
+    }
+
     //recover tokens on the proxy
     function recoverERC20FromProxy(address _tokenAddress, uint256 _tokenAmount, address _withdrawTo) external onlyOwner{
 
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("transfer(address,uint256)")), _withdrawTo, _tokenAmount);
-        IStaker(proxy).execute(_tokenAddress,uint256(0),data);
+        _proxyCall(_tokenAddress,data);
 
         emit Recovered(_tokenAddress, _tokenAmount);
     }
@@ -192,14 +217,14 @@ contract Booster{
 
     	//make voterProxy call proxyToggleStaker(vault) on the pool's stakingAddress to set it as a proxied child
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("proxyToggleStaker(address)")), vault);
-        IStaker(proxy).execute(stakeAddress,uint256(0),data);
+        _proxyCall(stakeAddress,data);
 
     	//call proxy initialize
         IProxyVault(vault).initialize(msg.sender, stakeAddress, stakeToken, rewards);
 
         //set vault vefxs proxy
         data = abi.encodeWithSelector(bytes4(keccak256("setVeFXSProxy(address)")), proxy);
-        IStaker(proxy).execute(vault,uint256(0),data);
+        _proxyCall(vault,data);
     }
 
 

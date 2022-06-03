@@ -2,7 +2,7 @@
     "system": {
         "voteProxy": "0x59CFCD384746ec3035299D90782Be065e466800B",
         "boosterplaceholder": "0xA2cF21b157b2f203e37b616b619f438B5aa86Ee5",
-        "booster": "0x9cA3EC5f627ad5D92498Fd1b006b35577760ba9A",
+        "booster": "0xEe3Ab4e439ed52C7B8668864e2452ed23a9D67e8",
         "cvx": "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
         "locker": "0x72a19342e8F1838460eBFCCEf09F6585e32db86E",
         "cvxFxs": "0xFEEf77d3f69374f66429C91d732A244f074bdf74",
@@ -28,5 +28,38 @@
         "vefxsRewardDistro": "0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872",
         "walletChecker": "0x53c13BA8834a1567474b19822aAD85c6F90D9f9F"
     },
-    "pools": []
+    "pools": [
+        {
+            "id": 0,
+            "implementation": "0x1d0c890236261c3A2440aF03Ab10654E60476d80",
+            "stakingAddress": "0x698137C473bc1F0Ea9b85adE45Caf64ef2DF48d6",
+            "stakingToken": "0xc14900dFB1Aa54e7674e1eCf9ce02b3b35157ba5",
+            "rewardsAddress": "0xb2a7c3765550689Ca17625612cAaFc09aB180722",
+            "name": "Vesper Frax"
+        },
+        {
+            "id": 1,
+            "implementation": "0x1d0c890236261c3A2440aF03Ab10654E60476d80",
+            "stakingAddress": "0x10460d02226d6ef7B2419aE150E6377BdbB7Ef16",
+            "stakingToken": "0x6021444f1706f15465bEe85463BCc7d7cC17Fc03",
+            "rewardsAddress": "0x36ef9f3643CAb98d2be0fD3501315968F3C21F85",
+            "name": "Temple Frax"
+        },
+        {
+            "id": 2,
+            "implementation": "0x1d0c890236261c3A2440aF03Ab10654E60476d80",
+            "stakingAddress": "0x02577b426F223A6B4f2351315A19ecD6F357d65c",
+            "stakingToken": "0xd4937682df3C8aEF4FE912A96A74121C0829E664",
+            "rewardsAddress": "0x1B252023CcC42964c777194834110e48060F84c9",
+            "name": "Aave Frax"
+        },
+        {
+            "id": 3,
+            "implementation": "0x689339C08836471BE7FD5915e1f676471C4c7225",
+            "stakingAddress": "0x0a08673E3d7c454E1c6b27acD059C50Df6727FC9",
+            "stakingToken": "0x7287488F8Df7dddc5f373142D4827aAF92AAC845",
+            "rewardsAddress": "0x67aDC811815320833cc5A526a2F73b70BC3220dD",
+            "name": "Convex Frax/Fpi"
+        }
+    ]
 }
