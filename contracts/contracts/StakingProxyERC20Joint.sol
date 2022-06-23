@@ -17,7 +17,7 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
     }
 
     function vaultType() external pure override returns(VaultType){
-        return VaultType.Erc20Join;
+        return VaultType.Erc20Joint;
     }
 
     function vaultVersion() external pure override returns(uint256){

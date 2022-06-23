@@ -7,7 +7,7 @@ interface IProxyVault {
         Erc20Baic,
         UniV3,
         Convex,
-        Erc20Join
+        Erc20Joint
     }
 
     function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external;
