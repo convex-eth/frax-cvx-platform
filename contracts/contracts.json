@@ -12,8 +12,8 @@
         "poolRegistry": "0x41a5881c17185383e19Df6FA4EC158a6F4851A69",
         "feeRegistry": "0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D",
         "feeDeposit": "0xcBec22233Dad5E15AB9c02CAA4d914F3c97323f7",
-        "vaultErc20Implementation": "0x1d0c890236261c3A2440aF03Ab10654E60476d80",
-        "vaultConvexImplementation": "0x689339C08836471BE7FD5915e1f676471C4c7225",
+        "vaultErc20Implementation": "0x86A3fBe2B4986fE3A85651Df65Def59D0FC14Bef",
+        "vaultConvexImplementation": "0x709608f31AbA4fCAbae1c37115009F71E7Ed53B6",
         "vaultUniImplementation": "",
         "rewardImplementation": "0xAFd3D38feCEbCdda6d934979d4aC7f17330a96Ca",
         "proxyFactory": "0x66807B5598A848602734B82E432dD88DBE13fC8f"
@@ -56,6 +56,15 @@
         {
             "id": 3,
             "implementation": "0x689339C08836471BE7FD5915e1f676471C4c7225",
+            "stakingAddress": "0x0a08673E3d7c454E1c6b27acD059C50Df6727FC9",
+            "stakingToken": "0x7287488F8Df7dddc5f373142D4827aAF92AAC845",
+            "rewardsAddress": "0x67aDC811815320833cc5A526a2F73b70BC3220dD",
+            "name": "Convex Frax/Fpi",
+            "active": false
+        },
+        {
+            "id": 4,
+            "implementation": "0x709608f31AbA4fCAbae1c37115009F71E7Ed53B6",
             "stakingAddress": "0x0a08673E3d7c454E1c6b27acD059C50Df6727FC9",
             "stakingToken": "0x7287488F8Df7dddc5f373142D4827aAF92AAC845",
             "rewardsAddress": "0x67aDC811815320833cc5A526a2F73b70BC3220dD",

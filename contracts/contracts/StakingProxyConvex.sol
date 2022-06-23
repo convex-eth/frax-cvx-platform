@@ -150,7 +150,9 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
     //withdraw a staked position
     function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{
-
+        //make sure we're checkpointed
+        IConvexWrapper(stakingToken).user_checkpoint([address(this),address(0)]);
+        
         //withdraw directly to owner(msg.sender)
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
 
@@ -160,6 +162,8 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
     //withdraw a staked position
     function withdrawLockedAndUnwrap(bytes32 _kek_id) external onlyOwner nonReentrant{
+        //make sure we're checkpointed
+        IConvexWrapper(stakingToken).user_checkpoint([address(this),address(0)]);
 
         //withdraw
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, address(this));

@@ -18,4 +18,5 @@ interface IConvexWrapper{
   function rewardLength() external view returns(uint256);
   function earned(address _account) external view returns(EarnedData[] memory claimable);
   function setVault(address _vault) external;
+  function user_checkpoint(address[2] calldata _accounts) external returns(bool);
 }
