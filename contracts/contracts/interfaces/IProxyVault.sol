@@ -6,7 +6,8 @@ interface IProxyVault {
     enum VaultType{
         Erc20Baic,
         UniV3,
-        Convex
+        Convex,
+        Erc20Join
     }
 
     function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external;
