@@ -5,12 +5,16 @@ pragma solidity 0.8.10;
 import "./interfaces/IStaker.sol";
 import "./interfaces/IPoolRegistry.sol";
 import "./interfaces/IProxyVault.sol";
+import "./interfaces/IProxyOwner.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 
 /*
 Main interface for the whitelisted proxy contract.
+
+**This contract is meant to be able to be replaced for upgrade purposes. use IVoterProxy.operator() to always reference the current booster
+
 */
 contract Booster{
     using SafeERC20 for IERC20;
@@ -30,7 +34,8 @@ contract Booster{
 
     mapping(address=>mapping(address=>bool)) public feeClaimMap;
 
-    
+    mapping(address=>address) public proxyOwners;
+
 
     constructor(address _proxy, address _poolReg, address _feeReg) {
         proxy = _proxy;
@@ -40,10 +45,15 @@ contract Booster{
         owner = msg.sender;
         rewardManager = msg.sender;
         poolManager = msg.sender;
-        feeclaimer = msg.sender;
 
+        feeclaimer = address(0);//msg.sender;
         feeClaimMap[address(0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872)][fxs] = true;
         emit FeeClaimPairSet(address(0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872), fxs, true);
+        feeQueue = address(0x4f3AD55D7b884CDC48ADD1e2451A13af17887F26);//stash for cvxfxs convex pool
+        emit FeeQueueChanged(address(0x4f3AD55D7b884CDC48ADD1e2451A13af17887F26));
+
+        //set our proxy as its own owner
+        proxyOwners[_proxy] = _proxy;
     }
 
     /////// Owner Section /////////
@@ -93,6 +103,11 @@ contract Booster{
     function setFeeClaimPair(address _claimAddress, address _token, bool _active) external onlyOwner{
         feeClaimMap[_claimAddress][_token] = _active;
         emit FeeClaimPairSet(_claimAddress, _token, _active);
+    }
+
+    function addProxyOwner(address _proxy, address _owner) external onlyOwner{
+        proxyOwners[_proxy] = _owner;
+        emit ProxyOwnerSet(_proxy, _owner);
     }
 
     //set a reward manager address that controls extra reward contracts for each pool
@@ -183,19 +198,54 @@ contract Booster{
     }
 
     //manually set vefxs proxy for a given vault
-    function setVeFXSProxy(address[] calldata _vaults) external onlyOwner{
-        for(uint256 i = 0; i < _vaults.length; ){
+    function setVeFXSProxy(address _vault, address _newproxy) external{
+        require(!isShutdown,"shutdown");
 
-            //set proxy
-            bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setVeFXSProxy(address)")), proxy);
-            _proxyCall(_vaults[i],data);
+        //get owner of vault
+        address vaultOwner = IProxyVault(_vault).owner();
 
-            //call get rewards to checkpoint
-            data = abi.encodeWithSelector(bytes4(keccak256("checkpointRewards()")));
-            _proxyCall(_vaults[i],data);
+        //require vault owner or convex admin to call
+        require(vaultOwner == msg.sender || owner == msg.sender, "!auth" );
 
-            unchecked{ ++i; }
+        //require new proxy to be known
+        require(proxyOwners[_newproxy] != address(0),"!proxy");
+        
+        //call checkpoint to checkpoint rewards with current boost
+        data = abi.encodeWithSelector(bytes4(keccak256("checkpointRewards()")));
+        _proxyCall(_vault,data);
+
+        //get current proxy
+        address currentProxy = IProxyVault(_vault).usingProxy();
+
+        //tell current proxy admin to remove
+        if(currentProxy == proxy){
+            //proxy is currently convex, call internal
+            bytes memory data = abi.encodeWithSelector(bytes4(keccak256("proxyToggleStaker(address)")), vault);
+            _proxyCall(stakeAddress,data);
+        }else{
+            //get proxy owner from list
+            IProxyOwner(proxyOwners[currentProxy]).proxyToggleStaker(_vault);
         }
+
+        //tell next proxy admin to add
+        if(_newproxy == proxy){
+            //new proxy is convex, call internal
+            bytes memory data = abi.encodeWithSelector(bytes4(keccak256("proxyToggleStaker(address)")), vault);
+            _proxyCall(stakeAddress,data);
+        }else{
+            //get proxy owner from list
+            IProxyOwner(proxyOwners[_newproxy]).proxyToggleStaker(_vault);
+        }
+
+
+        //set proxy on vault
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setVeFXSProxy(address)")), proxy);
+        _proxyCall(_vaults[i],data);
+
+        //call get rewards to checkpoint with new boosted weight
+        //should be a bit cheaper than call above since there should be no token transfers in second call
+        data = abi.encodeWithSelector(bytes4(keccak256("checkpointRewards()")));
+        _proxyCall(_vaults[i],data);
 
     }
 
@@ -256,6 +306,7 @@ contract Booster{
     event FeeQueueChanged(address indexed _address);
     event FeeClaimerChanged(address indexed _address);
     event FeeClaimPairSet(address indexed _address, address indexed _token, bool _value);
+    event ProxyOwnerSet(address indexed _address, address _owner);
     event RewardManagerChanged(address indexed _address);
     event PoolManagerChanged(address indexed _address);
     event Shutdown();
