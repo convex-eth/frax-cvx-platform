@@ -211,7 +211,7 @@ contract Booster{
         require(proxyOwners[_newproxy] != address(0),"!proxy");
         
         //call checkpoint to checkpoint rewards with current boost
-        data = abi.encodeWithSelector(bytes4(keccak256("checkpointRewards()")));
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("checkpointRewards()")));
         _proxyCall(_vault,data);
 
         //get current proxy
@@ -220,8 +220,8 @@ contract Booster{
         //tell current proxy admin to remove
         if(currentProxy == proxy){
             //proxy is currently convex, call internal
-            bytes memory data = abi.encodeWithSelector(bytes4(keccak256("proxyToggleStaker(address)")), vault);
-            _proxyCall(stakeAddress,data);
+            data = abi.encodeWithSelector(bytes4(keccak256("proxyToggleStaker(address)")), _vault);
+            _proxyCall(IProxyVault(_vault).stakingAddress(),data);
         }else{
             //get proxy owner from list
             IProxyOwner(proxyOwners[currentProxy]).proxyToggleStaker(_vault);
@@ -230,8 +230,8 @@ contract Booster{
         //tell next proxy admin to add
         if(_newproxy == proxy){
             //new proxy is convex, call internal
-            bytes memory data = abi.encodeWithSelector(bytes4(keccak256("proxyToggleStaker(address)")), vault);
-            _proxyCall(stakeAddress,data);
+            data = abi.encodeWithSelector(bytes4(keccak256("proxyToggleStaker(address)")), _vault);
+            _proxyCall(IProxyVault(_vault).stakingAddress(),data);
         }else{
             //get proxy owner from list
             IProxyOwner(proxyOwners[_newproxy]).proxyToggleStaker(_vault);
@@ -239,13 +239,13 @@ contract Booster{
 
 
         //set proxy on vault
-        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setVeFXSProxy(address)")), proxy);
-        _proxyCall(_vaults[i],data);
+        data = abi.encodeWithSelector(bytes4(keccak256("setVeFXSProxy(address)")), proxy);
+        _proxyCall(_vault,data);
 
         //call get rewards to checkpoint with new boosted weight
         //should be a bit cheaper than call above since there should be no token transfers in second call
         data = abi.encodeWithSelector(bytes4(keccak256("checkpointRewards()")));
-        _proxyCall(_vaults[i],data);
+        _proxyCall(_vault,data);
 
     }
 
