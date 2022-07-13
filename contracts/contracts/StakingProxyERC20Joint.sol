@@ -16,6 +16,11 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
         jointManager = _manager;
     }
 
+    modifier onlyJointManager() {
+        require(jointManager == msg.sender, "!auth_jmng");
+        _;
+    }
+
     function vaultType() external pure override returns(VaultType){
         return VaultType.Erc20Joint;
     }
@@ -39,6 +44,11 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
 
         //set infinite approval
         IERC20(stakingToken).approve(_stakingAddress, type(uint256).max);
+    }
+
+    function jointSetVeFXSProxy(address _proxy) external onlyJointManager{
+        //set the vefxs proxy
+        _setVeFXSProxy(_proxy);
     }
 
 

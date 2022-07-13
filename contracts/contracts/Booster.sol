@@ -261,7 +261,7 @@ contract Booster{
     //////// End Owner Section ///////////
 
 
-    function createVault(uint256 _pid) external{
+    function createVault(uint256 _pid) external returns (address){
     	//create minimal proxy vault for specified pool
         (address vault, address stakeAddress, address stakeToken, address rewards) = IPoolRegistry(poolRegistry).addUserVault(_pid, msg.sender);
 
@@ -275,6 +275,8 @@ contract Booster{
         //set vault vefxs proxy
         data = abi.encodeWithSelector(bytes4(keccak256("setVeFXSProxy(address)")), proxy);
         _proxyCall(vault,data);
+
+        return vault;
     }
 
 
