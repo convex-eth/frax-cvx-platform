@@ -41,6 +41,7 @@ contract JointVaultManager{
     event SetOwnerDeposit(address _depost);
     event SetJointownerDeposit(address _depost);
     event SetAllowedAddress(address _account, bool _allowed);
+    event SetVeFXSProxy(address _vault, address _proxy);
 
     constructor() {}
 
@@ -134,7 +135,7 @@ contract JointVaultManager{
         return allowedAddresses[_account];
     }
 
-    function setVaultProxy(address _vault, address _proxy) external onlyJointOwner{
+    function setVaultProxy(address _vault) external onlyJointOwner{
         address currentBooster = IVoterProxy(ownerProxy).operator();
         //can call if current booster not on a confirmed list
         //we want to use the booster function if possible to properly manage everything
@@ -142,6 +143,8 @@ contract JointVaultManager{
         require(!allowedBooster[currentBooster], "!auth");
 
         //set proxy used on vault
-        IJointProxyVault(_vault).jointSetVeFXSProxy(_proxy);
+        IJointProxyVault(_vault).jointSetVeFXSProxy(jointownerProxy);
+
+        emit SetVeFXSProxy(_vault, jointownerProxy);
     }
 }
