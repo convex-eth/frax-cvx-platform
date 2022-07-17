@@ -8,4 +8,5 @@ interface IBooster {
    function setDelegate(address _delegateContract, address _delegate, bytes32 _space) external;
    function owner() external returns(address);
    function rewardManager() external returns(address);
+   function isShutdown() external returns(bool);
 }

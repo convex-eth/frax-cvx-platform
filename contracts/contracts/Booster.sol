@@ -239,7 +239,7 @@ contract Booster{
 
 
         //set proxy on vault
-        data = abi.encodeWithSelector(bytes4(keccak256("setVeFXSProxy(address)")), proxy);
+        data = abi.encodeWithSelector(bytes4(keccak256("setVeFXSProxy(address)")), _newproxy);
         _proxyCall(_vault,data);
 
         //call get rewards to checkpoint with new boosted weight

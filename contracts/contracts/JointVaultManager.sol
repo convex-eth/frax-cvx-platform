@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 
 import "./interfaces/IVoterProxy.sol";
+import "./interfaces/IBooster.sol";
 import "./interfaces/IJointProxyVault.sol";
 /*
 
@@ -140,7 +141,8 @@ contract JointVaultManager{
         //can call if current booster not on a confirmed list
         //we want to use the booster function if possible to properly manage everything
         //but this gives joint owner a way to protect itself from unwanted changes to booster
-        require(!allowedBooster[currentBooster], "!auth");
+        //(also allow to be called on accepted but shutdown boosters)
+        require(!allowedBooster[currentBooster] || IBooster(currentBooster).isShutdown(), "!auth");
 
         //set proxy used on vault
         IJointProxyVault(_vault).jointSetVeFXSProxy(jointownerProxy);

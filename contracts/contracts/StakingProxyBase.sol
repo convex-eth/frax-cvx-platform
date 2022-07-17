@@ -70,11 +70,16 @@ contract StakingProxyBase is IProxyVault{
 
     //checkpoint weight on farm by calling getReward as its the lowest cost thing to do.
     function checkpointRewards() external onlyAdmin{
-        //claim rewards to local vault
+        //checkpoint the frax farm
+        _checkpointFarm();
+    }
+
+    function _checkpointFarm() internal{
+        //claim rewards to local vault as a means to checkpoint
         IFraxFarmBase(stakingAddress).getReward(address(this));
     }
 
-    function setVeFXSProxy(address _proxy) external onlyAdmin{
+    function setVeFXSProxy(address _proxy) external virtual onlyAdmin{
         //set the vefxs proxy
         _setVeFXSProxy(_proxy);
     }

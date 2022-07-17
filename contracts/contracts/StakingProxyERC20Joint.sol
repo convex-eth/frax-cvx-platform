@@ -10,10 +10,18 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
-    address public immutable jointManager;
+    enum PlatformType{
+        Unknown,
+        Temple
+    }
 
-    constructor(address _manager) {
+    address public immutable jointManager;
+    bool public proxySetFromJoint;
+    PlatformType public immutable jointPlatform;
+
+    constructor(address _manager, PlatformType _platformType) {
         jointManager = _manager;
+        jointPlatform = _platformType;
     }
 
     modifier onlyJointManager() {
@@ -47,6 +55,21 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
     }
 
     function jointSetVeFXSProxy(address _proxy) external onlyJointManager{
+        //checkpoint rewards
+        _checkpointFarm();
+
+        //set the vefxs proxy
+        _setVeFXSProxy(_proxy);
+
+        //if joint manager requires setting, dont allow main admin to revert back
+        proxySetFromJoint = true;
+
+        //checkpoint rewards again
+        _checkpointFarm();
+    }
+
+    function setVeFXSProxy(address _proxy) external override onlyAdmin{
+        require(!proxySetFromJoint,"!setproxy");
         //set the vefxs proxy
         _setVeFXSProxy(_proxy);
     }
