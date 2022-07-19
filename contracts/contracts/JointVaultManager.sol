@@ -14,7 +14,7 @@ contract JointVaultManager{
     address public constant jointowner = address(0x8c2D06e11ca4414e00CdEa8f28633A2edAf79499);
 
     address public constant ownerProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
-    address public constant jointownerProxy = address(0xc0223fb0562555bec938de5363d63edd65102283);
+    address public constant jointownerProxy = address(0xC0223fB0562555Bec938de5363D63EDd65102283);
 
     uint256 public ownerIncentive = 200;
     uint256 public jointownerIncentive = 200;

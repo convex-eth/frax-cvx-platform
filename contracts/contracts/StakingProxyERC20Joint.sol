@@ -210,7 +210,7 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
         }
 
         //coowner fees
-        (feeAmount, depositAddress) = IJointVaultManager(jointManager).getCoownerFee(fxsBalance,usingProxy);
+        (feeAmount, depositAddress) = IJointVaultManager(jointManager).getJointownerFee(fxsBalance,usingProxy);
         if(feeAmount > 0){
             IERC20(fxs).transfer(depositAddress, feeAmount);
         }
