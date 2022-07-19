@@ -77,13 +77,13 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
 
 
     //create a new locked state of _secs timelength
-    function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant returns (bytes32 kek_id){
+    function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant{
         if(_liquidity > 0){
             //pull tokens from user
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
             //stake (use balanceof in case of change during transfer)
-            kek_id = IFraxFarmERC20(stakingAddress).stakeLocked(IERC20(stakingToken).balanceOf(address(this)), _secs);
+            IFraxFarmERC20(stakingAddress).stakeLocked(IERC20(stakingToken).balanceOf(address(this)), _secs);
         }
         
         //checkpoint rewards
@@ -199,9 +199,6 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
 
 
     function _processFxsJoint() internal{
-
-        //get fee rate from fee registry
-        uint256 totalFees = IFeeRegistry(feeRegistry).totalFees();
 
         //send fxs fees to fee deposit
         uint256 fxsBalance = IERC20(fxs).balanceOf(address(this));
