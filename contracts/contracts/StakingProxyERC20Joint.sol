@@ -105,10 +105,10 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
     }
 
     //withdraw a staked position
-    function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant returns (uint256 liquidity){
+    function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{
 
         //withdraw directly to owner(msg.sender)
-        liquidity = IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
+        IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
 
         //checkpoint rewards
         _checkpointRewards();
