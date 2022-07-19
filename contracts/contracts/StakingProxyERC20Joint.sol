@@ -70,6 +70,7 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
 
     function setVeFXSProxy(address _proxy) external override onlyAdmin{
         require(!proxySetFromJoint,"!setproxy");
+        require(_proxy == vefxsProxy || _proxy == IJointVaultManager(jointManager).jointownerProxy(),"!jointproxy" );
         //set the vefxs proxy
         _setVeFXSProxy(_proxy);
     }
