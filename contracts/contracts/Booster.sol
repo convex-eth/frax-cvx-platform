@@ -46,6 +46,8 @@ contract Booster{
         rewardManager = msg.sender;
         poolManager = msg.sender;
 
+
+        //TODO: consider moving to a module so dont have to set everything again if upgraded
         feeclaimer = address(0);//msg.sender;
         feeClaimMap[address(0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872)][fxs] = true;
         emit FeeClaimPairSet(address(0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872), fxs, true);

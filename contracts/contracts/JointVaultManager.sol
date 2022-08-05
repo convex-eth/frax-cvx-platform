@@ -16,14 +16,14 @@ contract JointVaultManager{
     address public constant ownerProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
     address public constant jointownerProxy = address(0xC0223fB0562555Bec938de5363D63EDd65102283);
 
-    uint256 public ownerIncentive = 200;
-    uint256 public jointownerIncentive = 200;
-    uint256 public boosterIncentive = 1300;
+    uint256 public ownerIncentive = 700;
+    uint256 public jointownerIncentive = 700;
+    uint256 public boosterIncentive = 300;
     uint256 public totalFees = 1700;
 
-    uint256 public newOwnerIncentive = 200;
-    uint256 public newJointownerIncentive = 200;
-    uint256 public newBoosterIncentive = 1300;
+    uint256 public newOwnerIncentive = 700;
+    uint256 public newJointownerIncentive = 700;
+    uint256 public newBoosterIncentive = 300;
     address public feeProposedAddress;
 
     address public ownerFeeDeposit;
@@ -44,7 +44,16 @@ contract JointVaultManager{
     event SetAllowedAddress(address _account, bool _allowed);
     event SetVeFXSProxy(address _vault, address _proxy);
 
-    constructor() {}
+    constructor() {
+        //set current booster as allowed
+        address currentBooster = IVoterProxy(ownerProxy).operator();
+        allowedBooster[currentBooster] = true;
+
+        //default owner deposit
+        ownerFeeDeposit = address(0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e);
+        //default jointowner deposit
+        jointownerFeeDeposit = address(0x8c2D06e11ca4414e00CdEa8f28633A2edAf79499);
+    }
 
     /////// Owner Section /////////
 
