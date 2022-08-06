@@ -2,7 +2,7 @@
 pragma solidity 0.8.10;
 
 import "./StakingProxyBase.sol";
-import "./interfaces/IFraxFarmERC20.sol";
+import "./interfaces/IFraxFarmERC20NoReturn.sol";
 import "./interfaces/IJointVaultManager.sol";
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
@@ -83,7 +83,7 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
             //stake (use balanceof in case of change during transfer)
-            IFraxFarmERC20(stakingAddress).stakeLocked(IERC20(stakingToken).balanceOf(address(this)), _secs);
+            IFraxFarmERC20NoReturn(stakingAddress).stakeLocked(IERC20(stakingToken).balanceOf(address(this)), _secs);
         }
         
         //checkpoint rewards
@@ -97,7 +97,7 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
 
             //add stake (use balanceof in case of change during transfer)
-            IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, IERC20(stakingToken).balanceOf(address(this)));
+            IFraxFarmERC20NoReturn(stakingAddress).lockAdditional(_kek_id, IERC20(stakingToken).balanceOf(address(this)));
         }
         
         //checkpoint rewards
@@ -108,7 +108,7 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
     function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{
 
         //withdraw directly to owner(msg.sender)
-        IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
+        IFraxFarmERC20NoReturn(stakingAddress).withdrawLocked(_kek_id, msg.sender);
 
         //checkpoint rewards
         _checkpointRewards();
@@ -118,8 +118,8 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
     function earned() external view override returns (address[] memory token_addresses, uint256[] memory total_earned) {
         //get list of reward tokens
-        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
-        uint256[] memory stakedearned = IFraxFarmERC20(stakingAddress).earned(address(this));
+        address[] memory rewardTokens = IFraxFarmERC20NoReturn(stakingAddress).getAllRewardTokens();
+        uint256[] memory stakedearned = IFraxFarmERC20NoReturn(stakingAddress).earned(address(this));
         
         token_addresses = new address[](rewardTokens.length + IRewards(rewards).rewardTokenLength());
         total_earned = new uint256[](rewardTokens.length + IRewards(rewards).rewardTokenLength());
@@ -160,14 +160,14 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
 
         //claim
         if(_claim){
-            IFraxFarmERC20(stakingAddress).getReward(address(this));
+            IFraxFarmERC20NoReturn(stakingAddress).getReward(address(this));
         }
 
         //process fxs fees
         _processFxsJoint();
 
         //get list of reward tokens
-        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
+        address[] memory rewardTokens = IFraxFarmERC20NoReturn(stakingAddress).getAllRewardTokens();
 
         //transfer
         _transferTokens(rewardTokens);
@@ -184,7 +184,7 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
 
         //claim
         if(_claim){
-            IFraxFarmERC20(stakingAddress).getReward(address(this));
+            IFraxFarmERC20NoReturn(stakingAddress).getReward(address(this));
         }
 
         //process fxs fees

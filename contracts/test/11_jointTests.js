@@ -182,10 +182,10 @@ contract("Vault Tests", async accounts => {
 
     let tokenholder = "0x10460d02226d6ef7b2419ae150e6377bdbb7ef16";
     await unlockAccount(tokenholder);
-    await stakingToken.transfer(userA,web3.utils.toWei("100000.0", "ether"),{from:tokenholder,gasPrice:0});
+    await stakingToken.transfer(userA,web3.utils.toWei("1000000.0", "ether"),{from:tokenholder,gasPrice:0});
     await stakingToken.balanceOf(userA).then(a=>console.log("staking token userA: " +a));
 
-    var lockDuration = day*30;
+    var lockDuration = day*180;
     console.log("lock for: " +lockDuration);
     await stakingToken.approve(vault.address, web3.utils.toWei("10000000.0","ether"));
     var tx = await vault.stakeLocked(web3.utils.toWei("100000.0","ether"), lockDuration);
