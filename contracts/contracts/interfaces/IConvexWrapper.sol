@@ -8,7 +8,9 @@ interface IConvexWrapper{
         uint256 amount;
     }
 
-  function convexPoolId() external returns(uint256 _poolId);
+  function convexPoolId() external view returns(uint256 _poolId);
+  function balanceOf(address _account) external view returns(uint256);
+  function totalBalanceOf(address _account) external view returns(uint256);
   function deposit(uint256 _amount, address _to) external;
   function stake(uint256 _amount, address _to) external;
   function withdraw(uint256 _amount) external;

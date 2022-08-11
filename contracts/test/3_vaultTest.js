@@ -110,13 +110,6 @@ contract("Vault Tests", async accounts => {
     await booster.setPoolFeeDeposit(booster.address,{from:multisig,gasPrice:0});
     console.log("booster init");
 
-    let vesper = await IFraxFarmERC20.at("0x698137C473bc1F0Ea9b85adE45Caf64ef2DF48d6");
-    await vesper.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check vesper: " +a));
-    let temple = await IFraxFarmERC20.at("0x10460d02226d6ef7B2419aE150E6377BdbB7Ef16");
-    await temple.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check temple: " +a));
-    let afrax = await IFraxFarmERC20.at("0x02577b426F223A6B4f2351315A19ecD6F357d65c");
-    await afrax.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check afrax: " +a));
-
     //create new pool and vault
     let stakingAddress = await IFraxFarmERC20.at("0x698137C473bc1F0Ea9b85adE45Caf64ef2DF48d6");
     var stakingOwner = await stakingAddress.owner();

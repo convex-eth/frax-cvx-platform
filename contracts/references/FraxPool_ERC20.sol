@@ -1,3 +1,56 @@
+/**
+ *Submitted for verification at Etherscan.io on 2022-08-09
+*/
+
+// SPDX-License-Identifier: GPL-2.0-or-later
+pragma solidity >=0.8.0;
+
+// Sources flattened with hardhat v2.10.1 https://hardhat.org
+
+// File contracts/Math/Math.sol
+
+
+/**
+ * @dev Standard math utilities missing in the Solidity language.
+ */
+library Math {
+    /**
+     * @dev Returns the largest of two numbers.
+     */
+    function max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a >= b ? a : b;
+    }
+
+    /**
+     * @dev Returns the smallest of two numbers.
+     */
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+
+    /**
+     * @dev Returns the average of two numbers. The result is rounded towards
+     * zero.
+     */
+    function average(uint256 a, uint256 b) internal pure returns (uint256) {
+        // (a + b) / 2 can overflow, so we distribute
+        return (a / 2) + (b / 2) + ((a % 2 + b % 2) / 2);
+    }
+
+    // babylonian method (https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method)
+    function sqrt(uint y) internal pure returns (uint z) {
+        if (y > 3) {
+            z = y;
+            uint x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+    }
+}
 
 
 // File contracts/Curve/IveFXS.sol
@@ -163,9 +216,444 @@ interface IFraxGaugeFXSRewardsDistributor {
 }
 
 
+// File contracts/Common/Context.sol
+
+
+/*
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with GSN meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address payable) {
+        return payable(msg.sender);
+    }
+
+    function _msgData() internal view virtual returns (bytes memory) {
+        this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
+        return msg.data;
+    }
+}
+
+
+// File contracts/Math/SafeMath.sol
+
+
+/**
+ * @dev Wrappers over Solidity's arithmetic operations with added overflow
+ * checks.
+ *
+ * Arithmetic operations in Solidity wrap on overflow. This can easily result
+ * in bugs, because programmers usually assume that an overflow raises an
+ * error, which is the standard behavior in high level programming languages.
+ * `SafeMath` restores this intuition by reverting the transaction when an
+ * operation overflows.
+ *
+ * Using this library instead of the unchecked operations eliminates an entire
+ * class of bugs, so it's recommended to use it always.
+ */
+library SafeMath {
+    /**
+     * @dev Returns the addition of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `+` operator.
+     *
+     * Requirements:
+     * - Addition cannot overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a, "SafeMath: addition overflow");
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     * - Subtraction cannot overflow.
+     */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        return sub(a, b, "SafeMath: subtraction overflow");
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     * - Subtraction cannot overflow.
+     *
+     * _Available since v2.4.0._
+     */
+    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        require(b <= a, errorMessage);
+        uint256 c = a - b;
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the multiplication of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `*` operator.
+     *
+     * Requirements:
+     * - Multiplication cannot overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        uint256 c = a * b;
+        require(c / a == b, "SafeMath: multiplication overflow");
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers. Reverts on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return div(a, b, "SafeMath: division by zero");
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers. Reverts with custom message on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     *
+     * _Available since v2.4.0._
+     */
+    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        // Solidity only automatically asserts when dividing by 0
+        require(b > 0, errorMessage);
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * Reverts when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        return mod(a, b, "SafeMath: modulo by zero");
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * Reverts with custom message when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     *
+     * _Available since v2.4.0._
+     */
+    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        require(b != 0, errorMessage);
+        return a % b;
+    }
+}
+
+
+// File contracts/ERC20/IERC20.sol
+
+
+
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP. Does not include
+ * the optional functions; to access them see {ERC20Detailed}.
+ */
+interface IERC20 {
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `recipient`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address recipient, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `sender` to `recipient` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+// File contracts/Uniswap/TransferHelper.sol
+
+
+// helper methods for interacting with ERC20 tokens and sending ETH that do not consistently return true/false
+library TransferHelper {
+    function safeApprove(address token, address to, uint value) internal {
+        // bytes4(keccak256(bytes('approve(address,uint256)')));
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0x095ea7b3, to, value));
+        require(success && (data.length == 0 || abi.decode(data, (bool))), 'TransferHelper: APPROVE_FAILED');
+    }
+
+    function safeTransfer(address token, address to, uint value) internal {
+        // bytes4(keccak256(bytes('transfer(address,uint256)')));
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0xa9059cbb, to, value));
+        require(success && (data.length == 0 || abi.decode(data, (bool))), 'TransferHelper: TRANSFER_FAILED');
+    }
+
+    function safeTransferFrom(address token, address from, address to, uint value) internal {
+        // bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0x23b872dd, from, to, value));
+        require(success && (data.length == 0 || abi.decode(data, (bool))), 'TransferHelper: TRANSFER_FROM_FAILED');
+    }
+
+    function safeTransferETH(address to, uint value) internal {
+        (bool success,) = to.call{value:value}(new bytes(0));
+        require(success, 'TransferHelper: ETH_TRANSFER_FAILED');
+    }
+}
+
+
+// File contracts/Utils/ReentrancyGuard.sol
+
+
+/**
+ * @dev Contract module that helps prevent reentrant calls to a function.
+ *
+ * Inheriting from `ReentrancyGuard` will make the {nonReentrant} modifier
+ * available, which can be applied to functions to make sure there are no nested
+ * (reentrant) calls to them.
+ *
+ * Note that because there is a single `nonReentrant` guard, functions marked as
+ * `nonReentrant` may not call one another. This can be worked around by making
+ * those functions `private`, and then adding `external` `nonReentrant` entry
+ * points to them.
+ *
+ * TIP: If you would like to learn more about reentrancy and alternative ways
+ * to protect against it, check out our blog post
+ * https://blog.openzeppelin.com/reentrancy-after-istanbul/[Reentrancy After Istanbul].
+ */
+abstract contract ReentrancyGuard {
+    // Booleans are more expensive than uint256 or any type that takes up a full
+    // word because each write operation emits an extra SLOAD to first read the
+    // slot's contents, replace the bits taken up by the boolean, and then write
+    // back. This is the compiler's defense against contract upgrades and
+    // pointer aliasing, and it cannot be disabled.
+
+    // The values being non-zero value makes deployment a bit more expensive,
+    // but in exchange the refund on every call to nonReentrant will be lower in
+    // amount. Since refunds are capped to a percentage of the total
+    // transaction's gas, it is best to keep them low in cases like this one, to
+    // increase the likelihood of the full refund coming into effect.
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED = 2;
+
+    uint256 private _status;
+
+    constructor () internal {
+        _status = _NOT_ENTERED;
+    }
+
+    /**
+     * @dev Prevents a contract from calling itself, directly or indirectly.
+     * Calling a `nonReentrant` function from another `nonReentrant`
+     * function is not supported. It is possible to prevent this from happening
+     * by making the `nonReentrant` function external, and make it call a
+     * `private` function that does the actual work.
+     */
+    modifier nonReentrant() {
+        // On the first call to nonReentrant, _notEntered will be true
+        require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
+
+        // Any calls to nonReentrant after this point will fail
+        _status = _ENTERED;
+
+        _;
+
+        // By storing the original value once again, a refund is triggered (see
+        // https://eips.ethereum.org/EIPS/eip-2200)
+        _status = _NOT_ENTERED;
+    }
+}
+
+
+// File contracts/Staking/Owned.sol
+
+
+// https://docs.synthetix.io/contracts/Owned
+contract Owned {
+    address public owner;
+    address public nominatedOwner;
+
+    constructor (address _owner) public {
+        require(_owner != address(0), "Owner address cannot be 0");
+        owner = _owner;
+        emit OwnerChanged(address(0), _owner);
+    }
+
+    function nominateNewOwner(address _owner) external onlyOwner {
+        nominatedOwner = _owner;
+        emit OwnerNominated(_owner);
+    }
+
+    function acceptOwnership() external {
+        require(msg.sender == nominatedOwner, "You must be nominated before you can accept ownership");
+        emit OwnerChanged(owner, nominatedOwner);
+        owner = nominatedOwner;
+        nominatedOwner = address(0);
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner, "Only the contract owner may perform this action");
+        _;
+    }
+
+    event OwnerNominated(address newOwner);
+    event OwnerChanged(address oldOwner, address newOwner);
+}
+
+
+// File contracts/Misc_AMOs/convex/IConvexBaseRewardPool.sol
+
+
+interface IConvexBaseRewardPool {
+  function addExtraReward(address _reward) external returns (bool);
+  function balanceOf(address account) external view returns (uint256);
+  function clearExtraRewards() external;
+  function currentRewards() external view returns (uint256);
+  function donate(uint256 _amount) external returns (bool);
+  function duration() external view returns (uint256);
+  function earned(address account) external view returns (uint256);
+  function extraRewards(uint256) external view returns (address);
+  function extraRewardsLength() external view returns (uint256);
+  function getReward() external returns (bool);
+  function getReward(address _account, bool _claimExtras) external returns (bool);
+  function historicalRewards() external view returns (uint256);
+  function lastTimeRewardApplicable() external view returns (uint256);
+  function lastUpdateTime() external view returns (uint256);
+  function newRewardRatio() external view returns (uint256);
+  function operator() external view returns (address);
+  function periodFinish() external view returns (uint256);
+  function pid() external view returns (uint256);
+  function queueNewRewards(uint256 _rewards) external returns (bool);
+  function queuedRewards() external view returns (uint256);
+  function rewardManager() external view returns (address);
+  function rewardPerToken() external view returns (uint256);
+  function rewardPerTokenStored() external view returns (uint256);
+  function rewardRate() external view returns (uint256);
+  function rewardToken() external view returns (address);
+  function rewards(address) external view returns (uint256);
+  function stake(uint256 _amount) external returns (bool);
+  function stakeAll() external returns (bool);
+  function stakeFor(address _for, uint256 _amount) external returns (bool);
+  function stakingToken() external view returns (address);
+  function totalSupply() external view returns (uint256);
+  function userRewardPerTokenPaid(address) external view returns (uint256);
+  function withdraw(uint256 amount, bool claim) external returns (bool);
+  function withdrawAll(bool claim) external;
+  function withdrawAllAndUnwrap(bool claim) external;
+  function withdrawAndUnwrap(uint256 amount, bool claim) external returns (bool);
+}
+
+
 // File contracts/Staking/FraxUnifiedFarmTemplate.sol
 
-pragma experimental ABIEncoderV2;
 
 // ====================================================================
 // |     ______                   _______                             |
@@ -177,7 +665,7 @@ pragma experimental ABIEncoderV2;
 // ====================================================================
 // ====================== FraxUnifiedFarmTemplate =====================
 // ====================================================================
-// Migratable Farming contract that accounts for veFXS
+// Farming contract that accounts for veFXS
 // Overrideable for UniV3, ERC20s, etc
 // New for V2
 //      - Multiple reward tokens possible
@@ -195,7 +683,6 @@ pragma experimental ABIEncoderV2;
 // Jason Huan: https://github.com/jasonhuan
 // Sam Kazemian: https://github.com/samkazemian
 // Dennis: github.com/denett
-// Sam Sun: https://github.com/samczsun
 
 // Originally inspired by Synthetix.io, but heavily modified by the Frax team
 // (Locked, veFXS, and UniV3 portions are new)
@@ -208,19 +695,18 @@ pragma experimental ABIEncoderV2;
 
 
 
+// Extra rewards
 
 contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
-    using SafeERC20 for ERC20;
 
     /* ========== STATE VARIABLES ========== */
 
     // Instances
-    IveFXS private veFXS = IveFXS(0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0);
+    IveFXS private immutable veFXS = IveFXS(0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0);
     
     // Frax related
-    address internal constant frax_address = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
-    bool internal frax_is_token0;
-    uint256 private fraxPerLPStored;
+    address internal immutable frax_address = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
+    uint256 public fraxPerLPStored;
 
     // Constant for various precisions
     uint256 internal constant MULTIPLIER_PRECISION = 1e18;
@@ -230,14 +716,15 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
     uint256 public lastUpdateTime;
 
     // Lock time and multiplier settings
-    uint256 public lock_max_multiplier = uint256(3e18); // E18. 1x = e18
-    uint256 public lock_time_for_max_multiplier = 3 * 365 * 86400; // 3 years
-    uint256 public lock_time_min = 86400; // 1 * 86400  (1 day)
+    uint256 public lock_max_multiplier = uint256(2e18); // E18. 1x = e18
+    uint256 public lock_time_for_max_multiplier = 1 * 365 * 86400; // 1 year
+    // uint256 public lock_time_for_max_multiplier = 2 * 86400; // 2 days
+    uint256 public lock_time_min = 594000; // 6.875 * 86400 (~7 day)
 
     // veFXS related
     uint256 public vefxs_boost_scale_factor = uint256(4e18); // E18. 4x = 4e18; 100 / scale_factor = % vefxs supply needed for max boost
     uint256 public vefxs_max_multiplier = uint256(2e18); // E18. 1x = 1e18
-    uint256 public vefxs_per_frax_for_max_boost = uint256(2e18); // E18. 2e18 means 2 veFXS must be held by the staker per 1 FRAX
+    uint256 public vefxs_per_frax_for_max_boost = uint256(4e18); // E18. 2e18 means 2 veFXS must be held by the staker per 1 FRAX
     mapping(address => uint256) internal _vefxsMultiplierStored;
     mapping(address => bool) internal valid_vefxs_proxies;
     mapping(address => mapping(address => bool)) internal proxy_allowed_stakers;
@@ -257,7 +744,7 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
     uint256[] private rewardsPerTokenStored;
     mapping(address => mapping(uint256 => uint256)) private userRewardsPerTokenPaid; // staker addr -> token id -> paid amount
     mapping(address => mapping(uint256 => uint256)) private rewards; // staker addr -> token id -> reward amount
-    mapping(address => uint256) internal lastRewardClaimTime; // staker addr -> timestamp
+    mapping(address => uint256) public lastRewardClaimTime; // staker addr -> timestamp
     
     // Gauge tracking
     uint256[] private last_gauge_relative_weights;
@@ -270,16 +757,12 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
     mapping(address => uint256) internal _combined_weights;
     mapping(address => uint256) public proxy_lp_balances; // Keeps track of LP balances proxy-wide. Needed to make sure the proxy boost is kept in line
 
-    // List of valid migrators (set by governance)
-    mapping(address => bool) internal valid_migrators;
 
-    // Stakers set which migrator(s) they want to use
-    mapping(address => mapping(address => bool)) internal staker_allowed_migrators;
+    // Stakers set which proxy(s) they want to use
     mapping(address => address) public staker_designated_proxies; // Keep public so users can see on the frontend if they have a proxy
 
-    // Admin booleans for emergencies, migrations, and overrides
+    // Admin booleans for emergencies and overrides
     bool public stakesUnlocked; // Release locked stakes in case of emergency
-    bool internal migrationsOn; // Used for migrations. Prevents new stakes, but allows LP and reward withdrawals
     bool internal withdrawalsPaused; // For emergencies
     bool internal rewardsCollectionPaused; // For emergencies
     bool internal stakingPaused; // For emergencies
@@ -300,13 +783,8 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
         _;
     }
 
-    modifier isMigrating() {
-        require(migrationsOn == true, "Not in migration");
-        _;
-    }
-
-    modifier updateRewardAndBalance(address account, bool sync_too) {
-        _updateRewardAndBalance(account, sync_too);
+    modifier updateRewardAndBalanceMdf(address account, bool sync_too) {
+        updateRewardAndBalance(account, sync_too);
         _;
     }
 
@@ -462,11 +940,15 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
 
     // Multiplier amount, given the length of the lock
     function lockMultiplier(uint256 secs) public view returns (uint256) {
+        // return Math.min(
+        //     lock_max_multiplier,
+        //     uint256(MULTIPLIER_PRECISION) + (
+        //         (secs * (lock_max_multiplier - MULTIPLIER_PRECISION)) / lock_time_for_max_multiplier
+        //     )
+        // ) ;
         return Math.min(
             lock_max_multiplier,
-            uint256(MULTIPLIER_PRECISION) + (
-                (secs * (lock_max_multiplier - MULTIPLIER_PRECISION)) / lock_time_for_max_multiplier
-            )
+            (secs * lock_max_multiplier) / lock_time_for_max_multiplier
         ) ;
     }
 
@@ -500,10 +982,22 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
         return (proxyStakedFrax(proxy_address) * vefxs_per_frax_for_max_boost) / MULTIPLIER_PRECISION;
     }
 
+    function getProxyFor(address addr) public view returns (address){
+        if (valid_vefxs_proxies[addr]) {
+            // If addr itself is a proxy, return that.
+            // If it farms itself directly, it should use the shared LP tally in proxyStakedFrax
+            return addr;
+        }
+        else {
+            // Otherwise, return the proxy, or address(0)
+            return staker_designated_proxies[addr];
+        }
+    }
+
     function veFXSMultiplier(address account) public view returns (uint256 vefxs_multiplier) {
         // Use either the user's or their proxy's veFXS balance
         uint256 vefxs_bal_to_use = 0;
-        address the_proxy = staker_designated_proxies[account];
+        address the_proxy = getProxyFor(account);
         vefxs_bal_to_use = (the_proxy == address(0)) ? veFXS.balanceOf(account) : veFXS.balanceOf(the_proxy);
 
         // First option based on fraction of total veFXS supply, with an added scale factor
@@ -535,16 +1029,10 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
 
     /* =============== MUTATIVE FUNCTIONS =============== */
 
-    // ------ MIGRATIONS ------
-
-    // Staker can allow a migrator 
-    function stakerToggleMigrator(address migrator_address) external {
-        require(valid_migrators[migrator_address], "Invalid migrator address");
-        staker_allowed_migrators[msg.sender][migrator_address] = !staker_allowed_migrators[msg.sender][migrator_address]; 
-    }
 
     // Proxy can allow a staker to use their veFXS balance (the staker will have to reciprocally toggle them too)
     // Must come before stakerSetVeFXSProxy
+    // CALLED BY PROXY
     function proxyToggleStaker(address staker_address) external {
         require(valid_vefxs_proxies[msg.sender], "Invalid proxy");
         proxy_allowed_stakers[msg.sender][staker_address] = !proxy_allowed_stakers[msg.sender][staker_address]; 
@@ -559,9 +1047,19 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
     }
 
     // Staker can allow a veFXS proxy (the proxy will have to toggle them first)
+    // CALLED BY STAKER
     function stakerSetVeFXSProxy(address proxy_address) external {
         require(valid_vefxs_proxies[proxy_address], "Invalid proxy");
         require(proxy_allowed_stakers[proxy_address][msg.sender], "Proxy has not allowed you yet");
+        
+        // Corner case sanity check to make sure LP isn't double counted
+        address old_proxy_addr = staker_designated_proxies[msg.sender];
+        if (old_proxy_addr != address(0)) {
+            // Remove the LP count from the old proxy
+            proxy_lp_balances[old_proxy_addr] -= _locked_liquidity[msg.sender];
+        }
+
+        // Set the new proxy
         staker_designated_proxies[msg.sender] = proxy_address; 
 
         // Add the the LP as well
@@ -578,7 +1076,7 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
 
     // ------ REWARDS SYNCING ------
 
-    function _updateRewardAndBalance(address account, bool sync_too) internal {
+    function updateRewardAndBalance(address account, bool sync_too) public {
         // Need to retro-adjust some things if the period hasn't been renewed, then start a new one
         if (sync_too){
             sync();
@@ -633,32 +1131,50 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
 
     // ------ REWARDS CLAIMING ------
 
+    function getRewardExtraLogic(address destination_address) public nonReentrant {
+        require(rewardsCollectionPaused == false, "Rewards collection paused");
+        return _getRewardExtraLogic(msg.sender, destination_address);
+    }
+
     function _getRewardExtraLogic(address rewardee, address destination_address) internal virtual {
         revert("Need gREL logic");
     }
 
     // Two different getReward functions are needed because of delegateCall and msg.sender issues
+    // For backwards-compatibility
     function getReward(address destination_address) external nonReentrant returns (uint256[] memory) {
-        require(rewardsCollectionPaused == false, "Rewards collection paused");
-        return _getReward(msg.sender, destination_address);
+        return _getReward(msg.sender, destination_address, true);
+    }
+
+    function getReward2(address destination_address, bool claim_extra_too) external nonReentrant returns (uint256[] memory) {
+        return _getReward(msg.sender, destination_address, claim_extra_too);
     }
 
     // No withdrawer == msg.sender check needed since this is only internally callable
-    function _getReward(address rewardee, address destination_address) internal updateRewardAndBalance(rewardee, true) returns (uint256[] memory rewards_before) {
+    function _getReward(address rewardee, address destination_address, bool do_extra_logic) internal updateRewardAndBalanceMdf(rewardee, true) returns (uint256[] memory rewards_before) {
+        // Update the last reward claim time first, as an extra reentrancy safeguard
+        lastRewardClaimTime[rewardee] = block.timestamp;
+        
+        // Make sure rewards collection isn't paused
+        require(rewardsCollectionPaused == false, "Rewards collection paused");
+        
         // Update the rewards array and distribute rewards
         rewards_before = new uint256[](rewardTokens.length);
 
         for (uint256 i = 0; i < rewardTokens.length; i++){ 
             rewards_before[i] = rewards[rewardee][i];
             rewards[rewardee][i] = 0;
-            TransferHelper.safeTransfer(rewardTokens[i], destination_address, rewards_before[i]);
+            if (rewards_before[i] > 0) {
+                TransferHelper.safeTransfer(rewardTokens[i], destination_address, rewards_before[i]);
+
+                emit RewardPaid(rewardee, rewards_before[i], rewardTokens[i], destination_address);
+            }
         }
 
         // Handle additional reward logic
-        _getRewardExtraLogic(rewardee, destination_address);
-
-        // Update the last reward claim time
-        lastRewardClaimTime[rewardee] = block.timestamp;
+        if (do_extra_logic) {
+            _getRewardExtraLogic(rewardee, destination_address);
+        }
     }
 
 
@@ -682,7 +1198,7 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
         
         // Make sure there are enough tokens to renew the reward period
         for (uint256 i = 0; i < rewardTokens.length; i++){ 
-            require((rewardRates(i) * rewardsDuration * (num_periods_elapsed + 1)) <= ERC20(rewardTokens[i]).balanceOf(address(this)), string(abi.encodePacked("Not enough reward tokens available: ", rewardTokens[i])) );
+            require((rewardRates(i) * rewardsDuration * (num_periods_elapsed + 1)) <= IERC20(rewardTokens[i]).balanceOf(address(this)), string(abi.encodePacked("Not enough reward tokens available: ", rewardTokens[i])) );
         }
         
         // uint256 old_lastUpdateTime = lastUpdateTime;
@@ -696,6 +1212,26 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
 
         // Update the fraxPerLPStored
         fraxPerLPStored = fraxPerLPToken();
+
+        // Pull in rewards and set the reward rate for one week, based off of that
+        // If the rewards get messed up for some reason, set this to 0 and it will skip
+        // if (rewardRatesManual[1] != 0 && rewardRatesManual[2] != 0) {
+        //     // CRV & CVX
+        //     // ====================================
+        //     uint256 crv_before = ERC20(rewardTokens[1]).balanceOf(address(this));
+        //     uint256 cvx_before = ERC20(rewardTokens[2]).balanceOf(address(this));
+        //     IConvexBaseRewardPool(0x329cb014b562d5d42927cfF0dEdF4c13ab0442EF).getReward(
+        //         address(this),
+        //         true
+        //     );
+        //     uint256 crv_after = ERC20(rewardTokens[1]).balanceOf(address(this));
+        //     uint256 cvx_after = ERC20(rewardTokens[2]).balanceOf(address(this));
+
+        //     // Set the new reward rate
+        //     rewardRatesManual[1] = (crv_after - crv_before) / rewardsDuration;
+        //     rewardRatesManual[2] = (cvx_after - cvx_before) / rewardsDuration;
+        // }
+
     }
 
     function _updateStoredRewardsAndTime() internal {
@@ -729,6 +1265,9 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
         // Sync the gauge weight, if applicable
         sync_gauge_weights(false);
 
+        // Update the fraxPerLPStored
+        fraxPerLPStored = fraxPerLPToken();
+
         if (block.timestamp >= periodFinish) {
             retroCatchUp();
         }
@@ -737,7 +1276,7 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
         }
     }
 
-    /* ========== RESTRICTED FUNCTIONS - Curator / migrator callable ========== */
+    /* ========== RESTRICTED FUNCTIONS - Curator callable ========== */
     
     // ------ FARM SYNCING ------
     // In children...
@@ -758,15 +1297,6 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
     
     function unlockStakes() external onlyByOwnGov {
         stakesUnlocked = !stakesUnlocked;
-    }
-
-    function toggleMigrations() external onlyByOwnGov {
-        migrationsOn = !migrationsOn;
-    }
-
-    // Adds supported migrator address
-    function toggleMigrator(address migrator_address) external onlyByOwnGov {
-        valid_migrators[migrator_address] = !valid_migrators[migrator_address];
     }
 
     // Adds a valid veFXS proxy address
@@ -833,6 +1363,9 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
         rewardManagers[reward_token_address] = new_manager_address;
     }
 
+    /* ========== EVENTS ========== */
+    event RewardPaid(address indexed user, uint256 amount, address token_address, address destination_address);
+
     /* ========== A CHICKEN ========== */
     //
     //         ,~.
@@ -856,75 +1389,132 @@ contract FraxUnifiedFarmTemplate is Owned, ReentrancyGuard {
 }
 
 
-// File contracts/Misc_AMOs/vesper/IVPool.sol
+// File contracts/Misc_AMOs/convex/IConvexStakingWrapperFrax.sol
 
 
-interface IVPool {
-  function DOMAIN_SEPARATOR() external view returns (bytes32);
-  function MAX_BPS() external view returns (uint256);
-  function VERSION() external view returns (string memory);
-  function acceptGovernorship() external;
-  function addInList(address _listToUpdate, address _addressToAdd) external;
+interface IConvexStakingWrapperFrax {
+  function addRewards() external;
   function allowance(address owner, address spender) external view returns (uint256);
   function approve(address spender, uint256 amount) external returns (bool);
-  function availableCreditLimit(address _strategy) external view returns (uint256);
   function balanceOf(address account) external view returns (uint256);
-  function convertFrom18(uint256 _amount) external view returns (uint256);
-  function decimalConversionFactor() external view returns (uint256);
+  function collateralVault() external view returns (address);
+  function convexBooster() external view returns (address);
+  function convexPool() external view returns (address);
+  function convexPoolId() external view returns (uint256);
+  function convexToken() external view returns (address);
+  function crv() external view returns (address);
+  function curveToken() external view returns (address);
+  function cvx() external view returns (address);
   function decimals() external view returns (uint8);
   function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
-  function deposit(uint256 _amount) external;
-  function depositWithPermit(uint256 _amount, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external;
-  function excessDebt(address _strategy) external view returns (uint256);
-  function feeCollector() external view returns (address);
-  function feeWhitelist() external view returns (address);
-  function getStrategies() external view returns (address[] memory);
-  function getWithdrawQueue() external view returns (address[] memory);
-  function governor() external view returns (address);
+  function deposit(uint256 _amount, address _to) external;
+//   function earned(address _account) external view returns (tuple[] memory claimable);
+  function getReward(address _account, address _forwardTo) external;
+  function getReward(address _account) external;
   function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
-  function initialize(string memory _name, string memory _symbol, address _token, address _poolAccountant, address _addressListFactory) external;
-  function keepers() external view returns (address);
-  function maintainers() external view returns (address);
-  function migrateStrategy(address _old, address _new) external;
-  function multiTransfer(address[] memory _recipients, uint256[] memory _amounts) external returns (bool);
+  function initialize(address _curveToken, address _convexToken, address _convexPool, uint256 _poolId, address _vault) external;
+  function isInit() external view returns (bool);
+  function isShutdown() external view returns (bool);
   function name() external view returns (string memory);
-  function nonces(address) external view returns (uint256);
-  function open() external;
-  function pause() external;
-  function paused() external view returns (bool);
-  function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external;
-  function poolAccountant() external view returns (address);
-  function poolRewards() external view returns (address);
-  function pricePerShare() external view returns (uint256);
-  function removeFromList(address _listToUpdate, address _addressToRemove) external;
-  function reportEarning(uint256 _profit, uint256 _loss, uint256 _payback) external;
-  function reportLoss(uint256 _loss) external;
+  function owner() external view returns (address);
+  function registeredRewards(address) external view returns (uint256);
+  function renounceOwnership() external;
+  function rewardLength() external view returns (uint256);
+  function rewards(uint256) external view returns (address reward_token, address reward_pool, uint128 reward_integral, uint128 reward_remaining);
+  function setApprovals() external;
+  function setVault(address _vault) external;
   function shutdown() external;
-  function stopEverything() external view returns (bool);
-  function strategy(address _strategy) external view returns (bool _active, uint256 _interestFee, uint256 _debtRate, uint256 _lastRebalance, uint256 _totalDebt, uint256 _totalLoss, uint256 _totalProfit, uint256 _debtRatio);
-  function sweepERC20(address _fromToken) external;
+  function stake(uint256 _amount, address _to) external;
   function symbol() external view returns (string memory);
-  function token() external view returns (address);
-  function tokensHere() external view returns (uint256);
-  function totalDebt() external view returns (uint256);
-  function totalDebtOf(address _strategy) external view returns (uint256);
-  function totalDebtRatio() external view returns (uint256);
+  function totalBalanceOf(address _account) external view returns (uint256);
   function totalSupply() external view returns (uint256);
-  function totalValue() external view returns (uint256);
   function transfer(address recipient, uint256 amount) external returns (bool);
   function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-  function transferGovernorship(address _proposedGovernor) external;
-  function unpause() external;
-  function updateFeeCollector(address _newFeeCollector) external;
-  function updatePoolRewards(address _newPoolRewards) external;
-  function updateWithdrawFee(uint256 _newWithdrawFee) external;
-  function whitelistedWithdraw(uint256 _shares) external;
-  function withdraw(uint256 _shares) external;
-  function withdrawFee() external view returns (uint256);
+  function transferOwnership(address newOwner) external;
+  function user_checkpoint(address[2] memory _accounts) external returns (bool);
+  function withdraw(uint256 _amount) external;
+  function withdrawAndUnwrap(uint256 _amount) external;
+}
+
+
+// File contracts/Misc_AMOs/convex/IDepositToken.sol
+
+
+interface IDepositToken {
+  function allowance(address owner, address spender) external view returns (uint256);
+  function approve(address spender, uint256 amount) external returns (bool);
+  function balanceOf(address account) external view returns (uint256);
+  function burn(address _from, uint256 _amount) external;
+  function decimals() external view returns (uint8);
+  function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
+  function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
+  function mint(address _to, uint256 _amount) external;
+  function name() external view returns (string memory);
+  function operator() external view returns (address);
+  function symbol() external view returns (string memory);
+  function totalSupply() external view returns (uint256);
+  function transfer(address recipient, uint256 amount) external returns (bool);
+  function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+}
+
+
+// File contracts/Misc_AMOs/curve/I2pool.sol
+
+
+interface I2pool {
+    function decimals() external view returns (uint256);
+    function transfer(address _to, uint256 _value) external returns (bool);
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
+    function approve(address _spender, uint256 _value) external returns (bool);
+    function A() external view returns (uint256);
+    function A_precise() external view returns (uint256);
+    function get_virtual_price() external view returns (uint256);
+    function lp_price() external view returns (uint256);
+    function calc_token_amount(uint256[2] memory _amounts, bool _is_deposit) external view returns (uint256);
+    function add_liquidity(uint256[2] memory _amounts, uint256 _min_mint_amount) external returns (uint256);
+    function get_dy(int128 i, int128 j, uint256 _dx) external view returns (uint256);
+    function exchange(int128 i, int128 j, uint256 _dx, uint256 _min_dy) external returns (uint256);
+    function remove_liquidity(uint256 _amount, uint256[2] memory _min_amounts) external returns (uint256[2] memory);
+    function remove_liquidity_imbalance(uint256[2] memory _amounts, uint256 _max_burn_amount) external returns (uint256);
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
+    function remove_liquidity_one_coin(uint256 _token_amount, int128 i, uint256 _min_amount) external returns (uint256);
+    function ramp_A(uint256 _future_A, uint256 _future_time) external;
+    function stop_ramp_A() external;
+    function commit_new_fee(uint256 _new_fee, uint256 _new_admin_fee) external;
+    function apply_new_fee() external;
+    function revert_new_parameters() external;
+    function commit_transfer_ownership(address _owner) external;
+    function apply_transfer_ownership() external;
+    function revert_transfer_ownership() external;
+    function admin_balances(uint256 i) external view returns (uint256);
+    function withdraw_admin_fees() external;
+    function donate_admin_fees() external;
+    function kill_me() external;
+    function unkill_me() external;
+    function coins(uint256 arg0) external view returns (address);
+    function balances(uint256 arg0) external view returns (uint256);
+    function fee() external view returns (uint256);
+    function admin_fee() external view returns (uint256);
+    function owner() external view returns (address);
+    function initial_A() external view returns (uint256);
+    function future_A() external view returns (uint256);
+    function initial_A_time() external view returns (uint256);
+    function future_A_time() external view returns (uint256);
+    function admin_actions_deadline() external view returns (uint256);
+    function transfer_ownership_deadline() external view returns (uint256);
+    function future_fee() external view returns (uint256);
+    function future_admin_fee() external view returns (uint256);
+    function future_owner() external view returns (address);
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+    function balanceOf(address arg0) external view returns (uint256);
+    function allowance(address arg0, address arg1) external view returns (uint256);
+    function totalSupply() external view returns (uint256);
 }
 
 
 // File contracts/Staking/FraxUnifiedFarm_ERC20.sol
+
 
 // ====================================================================
 // |     ______                   _______                             |
@@ -941,13 +1531,20 @@ interface IVPool {
 
 // -------------------- VARIES --------------------
 
+// Convex wrappers
+
+
+
+// Fraxswap
+// import '../Fraxswap/core/interfaces/IFraxswapPair.sol';
+
 // G-UNI
 // import "../Misc_AMOs/gelato/IGUniPool.sol";
 
 // mStable
 // import '../Misc_AMOs/mstable/IFeederPool.sol';
 
-// // StakeDAO sdETH-FraxPut
+// StakeDAO sdETH-FraxPut
 // import '../Misc_AMOs/stakedao/IOpynPerpVault.sol';
 
 // StakeDAO Vault
@@ -957,6 +1554,7 @@ interface IVPool {
 // import '../Uniswap/Interfaces/IUniswapV2Pair.sol';
 
 // Vesper
+// import '../Misc_AMOs/vesper/IVPool.sol';
 
 // ------------------------------------------------
 
@@ -964,25 +1562,35 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
 
     /* ========== STATE VARIABLES ========== */
 
+    // -------------------- COMMON -------------------- 
+    bool internal frax_is_token0;
+
     // -------------------- VARIES --------------------
 
+    // Convex stkcvxFPIFRAX
+    IConvexStakingWrapperFrax public immutable stakingToken;
+    I2pool public curvePool;
+
+    // Fraxswap
+    // IFraxswapPair public immutable stakingToken;
+
     // G-UNI
-    // IGUniPool public stakingToken;
+    // IGUniPool public immutable stakingToken;
     
     // mStable
-    // IFeederPool public stakingToken;
+    // IFeederPool public immutable stakingToken;
 
     // sdETH-FraxPut Vault
-    // IOpynPerpVault public stakingToken;
+    // IOpynPerpVault public immutable stakingToken;
 
     // StakeDAO Vault
-    // IStakeDaoVault public stakingToken;
+    // IStakeDaoVault public immutable stakingToken;
 
     // Uniswap V2
-    // IUniswapV2Pair public stakingToken;
+    // IUniswapV2Pair public immutable stakingToken;
 
     // Vesper
-    IVPool public stakingToken;
+    // IVPool public immutable stakingToken;
 
     // ------------------------------------------------
 
@@ -1015,10 +1623,21 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
     {
 
         // -------------------- VARIES --------------------
+        // Convex stkcvxFPIFRAX
+        stakingToken = IConvexStakingWrapperFrax(_stakingToken);
+        curvePool = I2pool(0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2);
+        address token0 = curvePool.coins(0);
+        frax_is_token0 = (token0 == frax_address);
+
+        // Fraxswap
+        // stakingToken = IFraxswapPair(_stakingToken);
+        // address token0 = stakingToken.token0();
+        // frax_is_token0 = (token0 == frax_address);
+
         // G-UNI
         // stakingToken = IGUniPool(_stakingToken);
         // address token0 = address(stakingToken.token0());
-        // frax_is_token0 = token0 == frax_address;
+        // frax_is_token0 = (token0 == frax_address);
 
         // mStable
         // stakingToken = IFeederPool(_stakingToken);
@@ -1036,10 +1655,7 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
         // else frax_is_token0 = false;
 
         // Vesper
-        stakingToken = IVPool(_stakingToken);
-
-        // ------------------------------------------------
-
+        // stakingToken = IVPool(_stakingToken);
     }
 
     /* ============= VIEWS ============= */
@@ -1049,6 +1665,26 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
     function fraxPerLPToken() public view override returns (uint256) {
         // Get the amount of FRAX 'inside' of the lp tokens
         uint256 frax_per_lp_token;
+
+        // Convex stkcvxFPIFRAX
+        // ============================================
+        {
+            frax_per_lp_token = curvePool.get_virtual_price() / 2; 
+            // Count full value here since FRAX and FPI are both part of FRAX ecosystem
+            // frax_per_lp_token = curvePool.get_virtual_price(); // BAD
+            // frax_per_lp_token = curvePool.lp_price() / 2;
+        }
+
+        // Fraxswap
+        // ============================================
+        // {
+        //     uint256 total_frax_reserves;
+        //     (uint256 _reserve0, uint256 _reserve1, , ,) = (stakingToken.getReserveAfterTwamm(block.timestamp));
+        //     if (frax_is_token0) total_frax_reserves = _reserve0;
+        //     else total_frax_reserves = _reserve1;
+
+        //     frax_per_lp_token = (total_frax_reserves * 1e18) / stakingToken.totalSupply();
+        // }
 
         // G-UNI
         // ============================================
@@ -1099,14 +1735,67 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
 
         // Vesper
         // ============================================
-        frax_per_lp_token = stakingToken.pricePerShare();
+        // frax_per_lp_token = stakingToken.pricePerShare();
 
         return frax_per_lp_token;
     }
 
     // ------ LIQUIDITY AND WEIGHTS ------
 
-    // Calculated the combined weight for an account
+    function calcCurrLockMultiplier(address account, uint256 stake_idx) public view returns (uint256 midpoint_lock_multiplier) {
+        // Get the stake
+        LockedStake memory thisStake = lockedStakes[account][stake_idx];
+
+        // Handles corner case where user never claims for a new stake
+        // Don't want the multiplier going above the max
+        uint256 accrue_start_time;
+        if (lastRewardClaimTime[account] < thisStake.start_timestamp) {
+            accrue_start_time = thisStake.start_timestamp;
+        }
+        else {
+            accrue_start_time = lastRewardClaimTime[account];
+        }
+        
+        // If the lock is expired
+        if (thisStake.ending_timestamp <= block.timestamp) {
+            // If the lock expired in the time since the last claim, the weight needs to be proportionately averaged this time
+            if (lastRewardClaimTime[account] < thisStake.ending_timestamp){
+                uint256 time_before_expiry = thisStake.ending_timestamp - accrue_start_time;
+                uint256 time_after_expiry = block.timestamp - thisStake.ending_timestamp;
+
+                // Average the pre-expiry lock multiplier
+                uint256 pre_expiry_avg_multiplier = lockMultiplier(time_before_expiry / 2);
+
+                // Get the weighted-average lock_multiplier
+                // uint256 numerator = (pre_expiry_avg_multiplier * time_before_expiry) + (MULTIPLIER_PRECISION * time_after_expiry);
+                uint256 numerator = (pre_expiry_avg_multiplier * time_before_expiry) + (0 * time_after_expiry);
+                midpoint_lock_multiplier = numerator / (time_before_expiry + time_after_expiry);
+            }
+            else {
+                // Otherwise, it needs to just be 1x
+                // midpoint_lock_multiplier = MULTIPLIER_PRECISION;
+
+                // Otherwise, it needs to just be 0x
+                midpoint_lock_multiplier = 0;
+            }
+        }
+        // If the lock is not expired
+        else {
+            // Decay the lock multiplier based on the time left
+            uint256 avg_time_left;
+            {
+                uint256 time_left_p1 = thisStake.ending_timestamp - accrue_start_time;
+                uint256 time_left_p2 = thisStake.ending_timestamp - block.timestamp;
+                avg_time_left = (time_left_p1 + time_left_p2) / 2;
+            }
+            midpoint_lock_multiplier = lockMultiplier(avg_time_left);
+        }
+
+        // Sanity check: make sure it never goes above the initial multiplier
+        if (midpoint_lock_multiplier > thisStake.lock_multiplier) midpoint_lock_multiplier = thisStake.lock_multiplier;
+    }
+
+    // Calculate the combined weight for an account
     function calcCurCombinedWeight(address account) public override view
         returns (
             uint256 old_combined_weight,
@@ -1122,11 +1811,16 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
         new_vefxs_multiplier = veFXSMultiplier(account);
 
         uint256 midpoint_vefxs_multiplier;
-        if (_locked_liquidity[account] == 0 && _combined_weights[account] == 0) {
+        if (
+            (_locked_liquidity[account] == 0 && _combined_weights[account] == 0) || 
+            (new_vefxs_multiplier >= _vefxsMultiplierStored[account])
+        ) {
             // This is only called for the first stake to make sure the veFXS multiplier is not cut in half
+            // Also used if the user increased or maintained their position
             midpoint_vefxs_multiplier = new_vefxs_multiplier;
         }
         else {
+            // Handles natural decay with a non-increased veFXS position
             midpoint_vefxs_multiplier = (new_vefxs_multiplier + _vefxsMultiplierStored[account]) / 2;
         }
 
@@ -1134,28 +1828,14 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
         new_combined_weight = 0;
         for (uint256 i = 0; i < lockedStakes[account].length; i++) {
             LockedStake memory thisStake = lockedStakes[account][i];
-            uint256 lock_multiplier = thisStake.lock_multiplier;
 
-            // If the lock is expired
-            if (thisStake.ending_timestamp <= block.timestamp) {
-                // If the lock expired in the time since the last claim, the weight needs to be proportionately averaged this time
-                if (lastRewardClaimTime[account] < thisStake.ending_timestamp){
-                    uint256 time_before_expiry = thisStake.ending_timestamp - lastRewardClaimTime[account];
-                    uint256 time_after_expiry = block.timestamp - thisStake.ending_timestamp;
+            // Calculate the midpoint lock multiplier
+            uint256 midpoint_lock_multiplier = calcCurrLockMultiplier(account, i);
 
-                    // Get the weighted-average lock_multiplier
-                    uint256 numerator = (lock_multiplier * time_before_expiry) + (MULTIPLIER_PRECISION * time_after_expiry);
-                    lock_multiplier = numerator / (time_before_expiry + time_after_expiry);
-                }
-                // Otherwise, it needs to just be 1x
-                else {
-                    lock_multiplier = MULTIPLIER_PRECISION;
-                }
-            }
-
+            // Calculate the combined boost
             uint256 liquidity = thisStake.liquidity;
-            uint256 combined_boosted_amount = (liquidity * (lock_multiplier + midpoint_vefxs_multiplier)) / MULTIPLIER_PRECISION;
-            new_combined_weight = new_combined_weight + combined_boosted_amount;
+            uint256 combined_boosted_amount = liquidity + ((liquidity * (midpoint_lock_multiplier + midpoint_vefxs_multiplier)) / MULTIPLIER_PRECISION);
+            new_combined_weight += combined_boosted_amount;
         }
     }
 
@@ -1206,7 +1886,7 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
     }
 
     // Add additional LPs to an existing locked stake
-    function lockAdditional(bytes32 kek_id, uint256 addl_liq) updateRewardAndBalance(msg.sender, true) public {
+    function lockAdditional(bytes32 kek_id, uint256 addl_liq) nonReentrant updateRewardAndBalanceMdf(msg.sender, true) public {
         // Get the stake and its index
         (LockedStake memory thisStake, uint256 theArrayIndex) = _getStake(msg.sender, kek_id);
 
@@ -1214,7 +1894,7 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
         uint256 new_amt = thisStake.liquidity + addl_liq;
 
         // Checks
-        require(addl_liq >= 0, "Must be nonzero");
+        require(addl_liq >= 0, "Must be positive");
 
         // Pull the tokens from the sender
         TransferHelper.safeTransferFrom(address(stakingToken), msg.sender, address(this), addl_liq);
@@ -1232,24 +1912,54 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
         _total_liquidity_locked += addl_liq;
         _locked_liquidity[msg.sender] += addl_liq;
         {
-            address the_proxy = staker_designated_proxies[msg.sender];
+            address the_proxy = getProxyFor(msg.sender);
             if (the_proxy != address(0)) proxy_lp_balances[the_proxy] += addl_liq;
         }
 
         // Need to call to update the combined weights
-        _updateRewardAndBalance(msg.sender, false);
+        updateRewardAndBalance(msg.sender, false);
+
+        emit LockedAdditional(msg.sender, kek_id, addl_liq);
     }
 
-    // Two different stake functions are needed because of delegateCall and msg.sender issues (important for migration)
-    function stakeLocked(uint256 liquidity, uint256 secs) nonReentrant external {
-        _stakeLocked(msg.sender, msg.sender, liquidity, secs, block.timestamp);
+    // Extends the lock of an existing stake
+    function lockLonger(bytes32 kek_id, uint256 new_ending_ts) nonReentrant updateRewardAndBalanceMdf(msg.sender, true) public {
+        // Get the stake and its index
+        (LockedStake memory thisStake, uint256 theArrayIndex) = _getStake(msg.sender, kek_id);
+
+        // Check
+        require(new_ending_ts > block.timestamp, "Must be in the future");
+
+        // Calculate some times
+        uint256 time_left = (thisStake.ending_timestamp > block.timestamp) ? thisStake.ending_timestamp - block.timestamp : 0;
+        uint256 new_secs = new_ending_ts - block.timestamp;
+
+        // Checks
+        // require(time_left > 0, "Already expired");
+        require(new_secs > time_left, "Cannot shorten lock time");
+        require(new_secs >= lock_time_min, "Minimum stake time not met");
+        require(new_secs <= lock_time_for_max_multiplier, "Trying to lock for too long");
+
+        // Update the stake
+        lockedStakes[msg.sender][theArrayIndex] = LockedStake(
+            kek_id,
+            block.timestamp,
+            thisStake.liquidity,
+            new_ending_ts,
+            lockMultiplier(new_secs)
+        );
+
+        // Need to call to update the combined weights
+        updateRewardAndBalance(msg.sender, false);
+
+        emit LockedLonger(msg.sender, kek_id, new_secs, block.timestamp, new_ending_ts);
     }
 
-    function _stakeLockedInternalLogic(
-        address source_address,
-        uint256 liquidity
-    ) internal virtual {
-        revert("Need _stakeLockedInternalLogic logic");
+    
+
+    // Two different stake functions are needed because of delegateCall and msg.sender issues (important for proxies)
+    function stakeLocked(uint256 liquidity, uint256 secs) nonReentrant external returns (bytes32) {
+        return _stakeLocked(msg.sender, msg.sender, liquidity, secs, block.timestamp);
     }
 
     // If this were not internal, and source_address had an infinite approve, this could be exploitable
@@ -1260,8 +1970,8 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
         uint256 liquidity,
         uint256 secs,
         uint256 start_timestamp
-    ) internal updateRewardAndBalance(staker_address, true) {
-        require(stakingPaused == false || valid_migrators[msg.sender] == true, "Staking paused or in migration");
+    ) internal updateRewardAndBalanceMdf(staker_address, true) returns (bytes32) {
+        require(stakingPaused == false, "Staking paused");
         require(secs >= lock_time_min, "Minimum stake time not met");
         require(secs <= lock_time_for_max_multiplier,"Trying to lock for too long");
 
@@ -1286,60 +1996,64 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
         _total_liquidity_locked += liquidity;
         _locked_liquidity[staker_address] += liquidity;
         {
-            address the_proxy = staker_designated_proxies[staker_address];
+            address the_proxy = getProxyFor(staker_address);
             if (the_proxy != address(0)) proxy_lp_balances[the_proxy] += liquidity;
         }
         
         // Need to call again to make sure everything is correct
-        _updateRewardAndBalance(staker_address, false);
+        updateRewardAndBalance(staker_address, false);
 
         emit StakeLocked(staker_address, liquidity, secs, kek_id, source_address);
+
+        return kek_id;
     }
 
     // ------ WITHDRAWING ------
 
-    // Two different withdrawLocked functions are needed because of delegateCall and msg.sender issues (important for migration)
-    function withdrawLocked(bytes32 kek_id, address destination_address) nonReentrant external {
+    // Two different withdrawLocked functions are needed because of delegateCall and msg.sender issues (important for proxies)
+    function withdrawLocked(bytes32 kek_id, address destination_address) nonReentrant external returns (uint256) {
         require(withdrawalsPaused == false, "Withdrawals paused");
-        _withdrawLocked(msg.sender, destination_address, kek_id);
+        return _withdrawLocked(msg.sender, destination_address, kek_id);
     }
 
     // No withdrawer == msg.sender check needed since this is only internally callable and the checks are done in the wrapper
-    // functions like migrator_withdraw_locked() and withdrawLocked()
     function _withdrawLocked(
         address staker_address,
         address destination_address,
         bytes32 kek_id
-    ) internal {
+    ) internal returns (uint256) {
         // Collect rewards first and then update the balances
-        _getReward(staker_address, destination_address);
+        _getReward(staker_address, destination_address, true);
 
         // Get the stake and its index
         (LockedStake memory thisStake, uint256 theArrayIndex) = _getStake(staker_address, kek_id);
-        require(block.timestamp >= thisStake.ending_timestamp || stakesUnlocked == true || valid_migrators[msg.sender] == true, "Stake is still locked!");
+        require(block.timestamp >= thisStake.ending_timestamp || stakesUnlocked == true, "Stake is still locked!");
         uint256 liquidity = thisStake.liquidity;
 
         if (liquidity > 0) {
+
+            // Give the tokens to the destination_address
+            // Should throw if insufficient balance
+            TransferHelper.safeTransfer(address(stakingToken), destination_address, liquidity);
+
             // Update liquidities
-            _total_liquidity_locked = _total_liquidity_locked - liquidity;
-            _locked_liquidity[staker_address] = _locked_liquidity[staker_address] - liquidity;
+            _total_liquidity_locked -= liquidity;
+            _locked_liquidity[staker_address] -= liquidity;
             {
-                address the_proxy = staker_designated_proxies[staker_address];
+                address the_proxy = getProxyFor(staker_address);
                 if (the_proxy != address(0)) proxy_lp_balances[the_proxy] -= liquidity;
             }
 
             // Remove the stake from the array
             delete lockedStakes[staker_address][theArrayIndex];
 
-            // Give the tokens to the destination_address
-            // Should throw if insufficient balance
-            stakingToken.transfer(destination_address, liquidity);
-
             // Need to call again to make sure everything is correct
-            _updateRewardAndBalance(staker_address, false);
+            updateRewardAndBalance(staker_address, false);
 
             emit WithdrawLocked(staker_address, liquidity, kek_id, destination_address);
         }
+
+        return liquidity;
     }
 
 
@@ -1347,34 +2061,22 @@ contract FraxUnifiedFarm_ERC20 is FraxUnifiedFarmTemplate {
         // Do nothing
     }
 
-     /* ========== RESTRICTED FUNCTIONS - Curator / migrator callable ========== */
-
-    // Migrator can stake for someone else (they won't be able to withdraw it back though, only staker_address can). 
-    function migrator_stakeLocked_for(address staker_address, uint256 amount, uint256 secs, uint256 start_timestamp) external isMigrating {
-        require(staker_allowed_migrators[staker_address][msg.sender] && valid_migrators[msg.sender], "Mig. invalid or unapproved");
-        _stakeLocked(staker_address, msg.sender, amount, secs, start_timestamp);
-    }
-
-    // Used for migrations
-    function migrator_withdraw_locked(address staker_address, bytes32 kek_id) external isMigrating {
-        require(staker_allowed_migrators[staker_address][msg.sender] && valid_migrators[msg.sender], "Mig. invalid or unapproved");
-        _withdrawLocked(staker_address, msg.sender, kek_id);
-    }
-    
     /* ========== RESTRICTED FUNCTIONS - Owner or timelock only ========== */
 
     // Inherited...
 
     /* ========== EVENTS ========== */
-
+    event LockedAdditional(address indexed user, bytes32 kek_id, uint256 amount);
+    event LockedLonger(address indexed user, bytes32 kek_id, uint256 new_secs, uint256 new_start_ts, uint256 new_end_ts);
     event StakeLocked(address indexed user, uint256 amount, uint256 secs, bytes32 kek_id, address source_address);
     event WithdrawLocked(address indexed user, uint256 liquidity, bytes32 kek_id, address destination_address);
 }
 
 
-// File contracts/Staking/Variants/FraxUnifiedFarm_ERC20_Vesper_Orbit_FRAX.sol
+// File contracts/Staking/Variants/FraxUnifiedFarm_ERC20_Convex_stkcvxFRAXBP.sol
 
-contract FraxUnifiedFarm_ERC20_Vesper_Orbit_FRAX is FraxUnifiedFarm_ERC20 {
+
+contract FraxUnifiedFarm_ERC20_Convex_stkcvxFRAXBP is FraxUnifiedFarm_ERC20 {
     constructor (
         address _owner,
         address[] memory _rewardTokens,

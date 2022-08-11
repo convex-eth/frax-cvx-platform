@@ -23,6 +23,7 @@ interface IFraxFarmERC20 {
     function lockedStakesOf(address account) external view returns (LockedStake[] memory);
     function lockedStakesOfLength(address account) external view returns (uint256);
     function lockAdditional(bytes32 kek_id, uint256 addl_liq) external;
+    function lockLonger(bytes32 kek_id, uint256 new_ending_ts) external;
     function stakeLocked(uint256 liquidity, uint256 secs) external returns (bytes32);
     function withdrawLocked(bytes32 kek_id, address destination_address) external returns (uint256);
 

@@ -14,6 +14,8 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
     address public constant poolRegistry = address(0x7413bFC877B5573E29f964d572f421554d8EDF86);
     address public constant convexCurveBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
+    address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
+    address public constant cvx = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
 
     address public curveLpToken;
     address public convexDepositToken;
@@ -26,7 +28,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     function vaultVersion() external pure override returns(uint256){
-        return 2;
+        return 3;
     }
 
     //initialize vault
@@ -148,11 +150,18 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         _checkpointRewards();
     }
 
+    // Extends the lock of an existing stake
+    function lockLonger(bytes32 _kek_id, uint256 new_ending_ts) external onlyOwner nonReentrant{
+        //update time
+        IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, new_ending_ts);
+
+        //checkpoint rewards
+        _checkpointRewards();
+    }
+
     //withdraw a staked position
-    function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{
-        //make sure we're checkpointed
-        IConvexWrapper(stakingToken).user_checkpoint([address(this),address(0)]);
-        
+    //frax farm transfers first before updating farm state so will checkpoint during transfer
+    function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{        
         //withdraw directly to owner(msg.sender)
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
 
@@ -161,17 +170,14 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     //withdraw a staked position
+    //frax farm transfers first before updating farm state so will checkpoint during transfer
     function withdrawLockedAndUnwrap(bytes32 _kek_id) external onlyOwner nonReentrant{
-        //make sure we're checkpointed
-        IConvexWrapper(stakingToken).user_checkpoint([address(this),address(0)]);
-
         //withdraw
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, address(this));
 
         //unwrap
-        uint256 balance = IERC20(stakingToken).balanceOf(address(this));
-        IConvexWrapper(stakingToken).withdrawAndUnwrap(balance);
-        IERC20(curveLpToken).transfer(owner,balance);
+        IConvexWrapper(stakingToken).withdrawAndUnwrap(IERC20(stakingToken).balanceOf(address(this)));
+        IERC20(curveLpToken).transfer(owner,IERC20(curveLpToken).balanceOf(address(this)));
 
         //checkpoint rewards
         _checkpointRewards();
@@ -235,6 +241,16 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IFraxFarmERC20(stakingAddress).getReward(address(this));
             //claim convex farm and forward to owner
             IConvexWrapper(stakingToken).getReward(address(this),owner);
+
+            //double check there have been no crv/cvx claims directly to this address
+            uint256 b = IERC20(crv).balanceOf(address(this));
+            if(b > 0){
+                IERC20(crv).safeTransfer(owner, b);
+            }
+            b = IERC20(cvx).balanceOf(address(this));
+            if(b > 0){
+                IERC20(cvx).safeTransfer(owner, b);
+            }
         }
 
         //process fxs fees

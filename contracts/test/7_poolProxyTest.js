@@ -59,6 +59,9 @@ contract("Vault Tests", async accounts => {
     let fpi = await IFraxFarmERC20.at("0x0a08673E3d7c454E1c6b27acD059C50Df6727FC9");
     await fpi.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check fpi: " +a));
     
+    let fraxbp = await IFraxFarmERC20.at("0x963f487796d54d2f27bA6F3Fbe91154cA103b199");
+    await fraxbp.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check fraxbp: " +a));
+    
   });
 });
 
