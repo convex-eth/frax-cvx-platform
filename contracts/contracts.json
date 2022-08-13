@@ -1,8 +1,7 @@
 {
     "system": {
         "voteProxy": "0x59CFCD384746ec3035299D90782Be065e466800B",
-        "boosterplaceholder": "0xA2cF21b157b2f203e37b616b619f438B5aa86Ee5",
-        "booster": "0xEe3Ab4e439ed52C7B8668864e2452ed23a9D67e8",
+        "booster": "0x569f5B842B5006eC17Be02B8b94510BA8e79FbCa",
         "cvx": "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
         "locker": "0x72a19342e8F1838460eBFCCEf09F6585e32db86E",
         "cvxFxs": "0xFEEf77d3f69374f66429C91d732A244f074bdf74",
@@ -15,8 +14,10 @@
         "vaultErc20Implementation": "0x86A3fBe2B4986fE3A85651Df65Def59D0FC14Bef",
         "vaultConvexImplementation": "0x709608f31AbA4fCAbae1c37115009F71E7Ed53B6",
         "vaultUniImplementation": "",
+        "vaultTempleJointImplementation": "0x6452a35E4f92584C8D1e9D843638F97FD2f96ffA",
         "rewardImplementation": "0xAFd3D38feCEbCdda6d934979d4aC7f17330a96Ca",
-        "proxyFactory": "0x66807B5598A848602734B82E432dD88DBE13fC8f"
+        "proxyFactory": "0x66807B5598A848602734B82E432dD88DBE13fC8f",
+        "templeJointManager": "0x8Fc0d62992f2cd503F766D6b7ea6208c078A3b84"
     },
     "frax": {
         "frax": "0x853d955aCEf822Db058eb8505911ED77F175b99e",
@@ -69,6 +70,30 @@
             "stakingToken": "0x7287488F8Df7dddc5f373142D4827aAF92AAC845",
             "rewardsAddress": "0x67aDC811815320833cc5A526a2F73b70BC3220dD",
             "name": "Convex Frax/Fpi"
+        },
+        {
+            "id": 5,
+            "implementation": "0x86A3fBe2B4986fE3A85651Df65Def59D0FC14Bef",
+            "stakingAddress": "0x35678017e1D252dA1CdD6745b147E3e75d1f9C27",
+            "stakingToken": "0xcB0bC7C879bb3E9CFEB9d8EFef653F33B3d242e9",
+            "rewardsAddress": "0xe878AD77F8451F83B999F8Dc1BCd57b78C445E9C",
+            "name": "Fraxswap: IQ/Frax"
+        },
+        {
+            "id": 6,
+            "implementation": "0x86A3fBe2B4986fE3A85651Df65Def59D0FC14Bef",
+            "stakingAddress": "0x24C66Ba25ca2A53bB97B452B9F45DD075b07Cf55",
+            "stakingToken": "0x0a92aC70B5A187fB509947916a8F63DD31600F80",
+            "rewardsAddress": "0x3a16408A557d2daF42549Aa1Ae9e83e81645CF12",
+            "name": "Fraxswap: PitchFXS/Frax"
+        },
+        {
+            "id": 7,
+            "implementation": "0x86A3fBe2B4986fE3A85651Df65Def59D0FC14Bef",
+            "stakingAddress": "0xE8453a2e8E97cba69365A1d727Fde3768b18d814",
+            "stakingToken": "0x750Bb20608601e4C44aCbE774fAC8F37dab67c86",
+            "rewardsAddress": "0x8a87E052887105e195cECEEA0ef7B21CE5DfF5F7",
+            "name": "Fraxswap: SYN/Frax"
         }
     ]
 }

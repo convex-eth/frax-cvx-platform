@@ -4,7 +4,7 @@ pragma solidity 0.8.10;
 interface IProxyVault {
 
     enum VaultType{
-        Erc20Baic,
+        Erc20Basic,
         UniV3,
         Convex,
         Erc20Joint

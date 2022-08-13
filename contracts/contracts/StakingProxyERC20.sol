@@ -13,11 +13,11 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
     }
 
     function vaultType() external pure override returns(VaultType){
-        return VaultType.Erc20Baic;
+        return VaultType.Erc20Basic;
     }
 
     function vaultVersion() external pure override returns(uint256){
-        return 2;
+        return 3;
     }
 
     //initialize vault
@@ -59,6 +59,15 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
             IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, IERC20(stakingToken).balanceOf(address(this)));
         }
         
+        //checkpoint rewards
+        _checkpointRewards();
+    }
+
+    // Extends the lock of an existing stake
+    function lockLonger(bytes32 _kek_id, uint256 new_ending_ts) external onlyOwner nonReentrant{
+        //update time
+        IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, new_ending_ts);
+
         //checkpoint rewards
         _checkpointRewards();
     }

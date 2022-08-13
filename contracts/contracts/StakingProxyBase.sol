@@ -28,7 +28,7 @@ contract StakingProxyBase is IProxyVault{
     }
 
     function vaultType() external virtual pure returns(VaultType){
-        return VaultType.Erc20Baic;
+        return VaultType.Erc20Basic;
     }
 
     function vaultVersion() external virtual pure returns(uint256){
