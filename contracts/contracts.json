@@ -94,6 +94,14 @@
             "stakingToken": "0x750Bb20608601e4C44aCbE774fAC8F37dab67c86",
             "rewardsAddress": "0x8a87E052887105e195cECEEA0ef7B21CE5DfF5F7",
             "name": "Fraxswap: SYN/Frax"
+        },
+        {
+            "id": 8,
+            "implementation": "0x64167F69a10Ab360a8C45b8c7db31d7752111181",
+            "stakingAddress": "0x10460d02226d6ef7B2419aE150E6377BdbB7Ef16",
+            "stakingToken": "0x6021444f1706f15465bEe85463BCc7d7cC17Fc03",
+            "rewardsAddress": "0x8F77be92a83a217dbb7EED5102D2147A5a80aAf3",
+            "name": "Temple Frax Joint"
         }
     ]
 }
