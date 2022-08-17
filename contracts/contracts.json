@@ -14,10 +14,10 @@
         "vaultErc20Implementation": "0x86A3fBe2B4986fE3A85651Df65Def59D0FC14Bef",
         "vaultConvexImplementation": "0x709608f31AbA4fCAbae1c37115009F71E7Ed53B6",
         "vaultUniImplementation": "",
-        "vaultTempleJointImplementation": "0x6452a35E4f92584C8D1e9D843638F97FD2f96ffA",
+        "vaultTempleJointImplementation": "0x64167F69a10Ab360a8C45b8c7db31d7752111181",
         "rewardImplementation": "0xAFd3D38feCEbCdda6d934979d4aC7f17330a96Ca",
         "proxyFactory": "0x66807B5598A848602734B82E432dD88DBE13fC8f",
-        "templeJointManager": "0x8Fc0d62992f2cd503F766D6b7ea6208c078A3b84"
+        "templeJointManager": "0x599113B0403E3fa613C318aF0Bf75826BeDFB9ec"
     },
     "frax": {
         "frax": "0x853d955aCEf822Db058eb8505911ED77F175b99e",

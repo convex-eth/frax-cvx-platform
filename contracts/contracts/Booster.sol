@@ -56,6 +56,8 @@ contract Booster{
 
         //set our proxy as its own owner
         proxyOwners[_proxy] = _proxy;
+        //temple
+        proxyOwners[address(0xC0223fB0562555Bec938de5363D63EDd65102283)] = address(0x4A136F836961860E599d9BF6e03BBb4BcD0E39dd);
     }
 
     /////// Owner Section /////////

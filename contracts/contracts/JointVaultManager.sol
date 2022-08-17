@@ -11,7 +11,7 @@ import "./interfaces/IJointProxyVault.sol";
 contract JointVaultManager{
 
     address public constant owner = address(0xa3C5A1e09150B75ff251c1a7815A07182c3de2FB);
-    address public constant jointowner = address(0x8c2D06e11ca4414e00CdEa8f28633A2edAf79499);
+    address public constant jointowner = address(0x4A136F836961860E599d9BF6e03BBb4BcD0E39dd);
 
     address public constant ownerProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
     address public constant jointownerProxy = address(0xC0223fB0562555Bec938de5363D63EDd65102283);
