@@ -11,8 +11,8 @@
         "poolRegistry": "0x41a5881c17185383e19Df6FA4EC158a6F4851A69",
         "feeRegistry": "0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D",
         "feeDeposit": "0xcBec22233Dad5E15AB9c02CAA4d914F3c97323f7",
-        "vaultErc20Implementation": "0x86A3fBe2B4986fE3A85651Df65Def59D0FC14Bef",
-        "vaultConvexImplementation": "0x709608f31AbA4fCAbae1c37115009F71E7Ed53B6",
+        "vaultErc20Implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+        "vaultConvexImplementation": "0x453722ca9dD2dc97fF7D95EbB2e3cE7CC69170f1",
         "vaultUniImplementation": "",
         "vaultTempleJointImplementation": "0x64167F69a10Ab360a8C45b8c7db31d7752111181",
         "rewardImplementation": "0xAFd3D38feCEbCdda6d934979d4aC7f17330a96Ca",
@@ -102,6 +102,14 @@
             "stakingToken": "0x6021444f1706f15465bEe85463BCc7d7cC17Fc03",
             "rewardsAddress": "0x8F77be92a83a217dbb7EED5102D2147A5a80aAf3",
             "name": "Temple Frax Joint"
+        },
+        {
+            "id": 9,
+            "implementation": "0x453722ca9dD2dc97fF7D95EbB2e3cE7CC69170f1",
+            "stakingAddress": "0x963f487796d54d2f27bA6F3Fbe91154cA103b199",
+            "stakingToken": "0x8a53ee42FB458D4897e15cc7dEa3F75D0F1c3475",
+            "rewardsAddress": "0x467eB4F10E48daFE4EE0dCC3E74c7E4Ee678d601",
+            "name": "Convex Frax/Usdc"
         }
     ]
 }

@@ -66,7 +66,7 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
     // Extends the lock of an existing stake
     function lockLonger(bytes32 _kek_id, uint256 new_ending_ts) external onlyOwner nonReentrant{
         //update time
-        IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, new_ending_ts);
+        IFraxFarmERC20(stakingAddress).lockLonger(_kek_id, new_ending_ts);
 
         //checkpoint rewards
         _checkpointRewards();
