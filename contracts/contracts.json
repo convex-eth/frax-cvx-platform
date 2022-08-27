@@ -110,6 +110,46 @@
             "stakingToken": "0x8a53ee42FB458D4897e15cc7dEa3F75D0F1c3475",
             "rewardsAddress": "0x467eB4F10E48daFE4EE0dCC3E74c7E4Ee678d601",
             "name": "Convex Frax/Usdc"
+        },
+        {
+            "id": 10,
+            "implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+            "stakingAddress": "0x9d46C0584C5C89e14fb1143e2414712feF36f00F",
+            "stakingToken": "0x56695c26b3Cdb528815cd22fF7B47510ab821EFd",
+            "rewardsAddress": "0x61B3a30DE613819954062695cb51865A5f844077",
+            "name": "Fraxswap Frax/Fpis"
+        },
+        {
+            "id": 11,
+            "implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+            "stakingAddress": "0x3F2E53B1A3036Fd33F3c2f3cC49daB26A88DF2e0",
+            "stakingToken": "0x03B59Bd1c8B9F6C265bA0c3421923B93f15036Fa",
+            "rewardsAddress": "0x623aF3A91878D36Bd6d7Cf17d2643377B3DD58AA",
+            "name": "Fraxswap Frax/Fxs"
+        },
+        {
+            "id": 12,
+            "implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+            "stakingAddress": "0xf562B2f33b3c90d5D273f88Cdf0CeD866E17092e",
+            "stakingToken": "0x5769071665eb8Db80e7e9226F92336Bb2897DCFA",
+            "rewardsAddress": "0x8A1C839941DE4A9ae517803d90f5A62B2a875019",
+            "name": "Fraxswap Frax/Ohm"
+        },
+        {
+            "id": 13,
+            "implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+            "stakingAddress": "0x38950D42CD549842B3Fc862a45F00eB24331F462",
+            "stakingToken": "0x5E8c1aD4c3D04f059d5c1A2Ce4593e53be270bca",
+            "rewardsAddress": "0xf6Ed53150e17C2b8e5a0f2228c17f75698Cba611",
+            "name": "Fraxswap Frax/ZZ"
+        },
+        {
+            "id": 14,
+            "implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+            "stakingAddress": "0x8875A328EaDb1e142f4021Fc2098096796a30cf8",
+            "stakingToken": "0xCCB26b5CC4e1Ce29521DA281a0107A6672bfe099",
+            "rewardsAddress": "",
+            "name": "Fraxswap Frax/Sdl"
         }
     ]
 }
