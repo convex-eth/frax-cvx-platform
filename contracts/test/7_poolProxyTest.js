@@ -63,43 +63,33 @@ contract("Proxy Check", async accounts => {
         console.log("    -->  Proxy not set!!");
       }
     }
-    // return;
 
-    // let vesper = await IFraxFarmERC20.at("0x698137C473bc1F0Ea9b85adE45Caf64ef2DF48d6");
-    // // await vesper.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check vesper: " +a));
-    // let temple = await IFraxFarmERC20.at("0x10460d02226d6ef7B2419aE150E6377BdbB7Ef16");
-    // // await temple.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check temple: " +a));
-    // let afrax = await IFraxFarmERC20.at("0x02577b426F223A6B4f2351315A19ecD6F357d65c");
-    // await afrax.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check afrax: " +a));
-    // let fpi = await IFraxFarmERC20.at("0x0a08673E3d7c454E1c6b27acD059C50Df6727FC9");
-    // await fpi.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check fpi: " +a));
+    // var farm = await IFraxFarmERC20.at("0x963f487796d54d2f27bA6F3Fbe91154cA103b199");
+    // await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
+
+    // farm = await IFraxFarmERC20.at("0x560c7668459221e33ED515D1D17c09ECda1996f5");
+    // await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
     
-    var farm = await IFraxFarmERC20.at("0x963f487796d54d2f27bA6F3Fbe91154cA103b199");
-    await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
+    // farm = await IFraxFarmERC20.at("0xF0A9b6F6593b4Bf96E1Ab13921A8a3FbFd9d4F16");
+    // await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
 
-    farm = await IFraxFarmERC20.at("0x560c7668459221e33ED515D1D17c09ECda1996f5");
-    await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
-    
-    farm = await IFraxFarmERC20.at("0xF0A9b6F6593b4Bf96E1Ab13921A8a3FbFd9d4F16");
-    await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
+    // farm = await IFraxFarmERC20.at("0xa810D1268cEF398EC26095c27094596374262826");
+    // await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
 
-    farm = await IFraxFarmERC20.at("0xa810D1268cEF398EC26095c27094596374262826");
-    await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
+    // farm = await IFraxFarmERC20.at("0xF0Ffe16810B7f412c52C1610e3BC9819A7Dcb366");
+    // await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
 
-    farm = await IFraxFarmERC20.at("0xF0Ffe16810B7f412c52C1610e3BC9819A7Dcb366");
-    await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
+    // farm = await IFraxFarmERC20.at("0xaCf54f101B86f9e55d35C0674Ebd8C854E5f80e4");
+    // await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
 
-    farm = await IFraxFarmERC20.at("0xaCf54f101B86f9e55d35C0674Ebd8C854E5f80e4");
-    await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
+    // farm = await IFraxFarmERC20.at("0x711d650Cd10dF656C2c28D375649689f137005fA");
+    // await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
 
-    farm = await IFraxFarmERC20.at("0x711d650Cd10dF656C2c28D375649689f137005fA");
-    await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
+    // farm = await IFraxFarmERC20.at("0xF7242A1cE383174802818febB36B6eebb56d5BFb");
+    // await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
 
-    farm = await IFraxFarmERC20.at("0xF7242A1cE383174802818febB36B6eebb56d5BFb");
-    await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
-
-    farm = await IFraxFarmERC20.at("0xb324b2BD8a3Dc55b04111E84d5cce0c3771F8889");
-    await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
+    // farm = await IFraxFarmERC20.at("0xb324b2BD8a3Dc55b04111E84d5cce0c3771F8889");
+    // await farm.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check " +farm.address +": " +a));
 
   });
 });

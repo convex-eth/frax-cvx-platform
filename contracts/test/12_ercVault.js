@@ -96,12 +96,15 @@ contract("Vault Tests", async accounts => {
 
 
     // let stakingToken = await IERC20.at("0xA74A725F143C9b4cc139929b6Df67405f8eC9AAe");
-    let stakingToken = await IERC20.at("0xcB0bC7C879bb3E9CFEB9d8EFef653F33B3d242e9");
+    // let stakingToken = await IERC20.at("0xcB0bC7C879bb3E9CFEB9d8EFef653F33B3d242e9");
+    let stakingToken = await IERC20.at("0x56695c26b3Cdb528815cd22fF7B47510ab821EFd");
     //frax farm
-    let stakingAddress = await IFraxFarmERC20.at("0x35678017e1D252dA1CdD6745b147E3e75d1f9C27");
+    // let stakingAddress = await IFraxFarmERC20.at("0x35678017e1D252dA1CdD6745b147E3e75d1f9C27");
+    let stakingAddress = await IFraxFarmERC20.at("0x9d46C0584C5C89e14fb1143e2414712feF36f00F");
     //get tokens
     // let lptoken = await IERC20.at("0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC");
-    let lpHolder = "0x35678017e1D252dA1CdD6745b147E3e75d1f9C27";
+    // let lpHolder = "0x35678017e1D252dA1CdD6745b147E3e75d1f9C27";
+    let lpHolder = "0x6a7efa964cf6d9ab3bc3c47ebddb853a8853c502";
     await unlockAccount(lpHolder);
     await stakingToken.transfer(userA,web3.utils.toWei("100000.0", "ether"),{from:lpHolder,gasPrice:0});
 
@@ -126,10 +129,12 @@ contract("Vault Tests", async accounts => {
     // await unlockAccount(stakingOwner);
     // await stakingAddress.toggleValidVeFXSProxy(contractList.system.voteProxy,{from:stakingOwner,gasPrice:0});
 
+    var poolcount = await poolReg.poolLength();
+    // var poolcount = 5;
+    console.log("pool count: " +poolcount);
 
     let impl = await StakingProxyERC20.new();
-    var poolcount = await poolReg.poolLength();
-    console.log("pool count: " +poolcount);
+    
     var tx = await booster.addPool(impl.address, stakingAddress.address, stakingToken.address,{from:deployer,gasPrice:0});
     console.log("pool added, gas: " +tx.receipt.gasUsed);
     await poolReg.poolLength().then(a=>console.log("new pool count: " +a));
@@ -183,7 +188,13 @@ contract("Vault Tests", async accounts => {
     await advanceTime(lockDuration + day);
     await vault.earned().then(a=>console.log("vault earned: " +JSON.stringify(a) ));
 
+    console.log("claim rewards...");
+    await vault.getReward();
+    console.log("-> vault get reward");
+
     await stakingToken.balanceOf(userA).then(a=>console.log("staking token userA: " +a));
+    await stakingToken.balanceOf(vault.address).then(a=>console.log("staking token vault: " +a));
+    await stakingToken.balanceOf(stakingAddress.address).then(a=>console.log("staking token farm: " +a));
     await vault.withdrawLocked(stakeInfo[0][0]);
     // await vault.withdrawLockedAndUnwrap(stakeInfo[0][0]);
     console.log("-> withdrawn");

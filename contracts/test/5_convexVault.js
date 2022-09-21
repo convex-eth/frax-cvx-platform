@@ -97,18 +97,25 @@ contract("Vault Tests", async accounts => {
     let feeDepo = await FeeDeposit.at(contractList.system.feeDeposit);
     let rewardMaster = await MultiRewards.at(contractList.system.rewardImplementation);
 
+    let actingUser = "0x9CE6E6B60C894d1DF9BC3D9D6cC969b79FB176B7";
+    await unlockAccount(actingUser);
+    console.log("acting user: " +actingUser);
 
     // let stakingToken = await IERC20.at("0xA74A725F143C9b4cc139929b6Df67405f8eC9AAe");
-    let stakingToken = await IERC20.at("0x8a53ee42FB458D4897e15cc7dEa3F75D0F1c3475");
+    // let stakingToken = await IERC20.at("0x8a53ee42FB458D4897e15cc7dEa3F75D0F1c3475");
+    let stakingToken = await IERC20.at("0x6a20FC1654A2167d00614332A5aFbB7EBcD9d414"); //apeusd
     let stakingwrapper = await IConvexWrapper.at(stakingToken.address);
     //frax farm
-    let stakingAddress = await IFraxFarmERC20.at("0x963f487796d54d2f27bA6F3Fbe91154cA103b199");
+    // let stakingAddress = await IFraxFarmERC20.at("0x963f487796d54d2f27bA6F3Fbe91154cA103b199");
+    let stakingAddress = await IFraxFarmERC20.at("0xa810D1268cEF398EC26095c27094596374262826"); //apeusd
     //get tokens
-    let lptoken = await IERC20.at("0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC");
-    let lpHolder = "0xcfc25170633581bf896cb6cdee170e3e3aa59503";
+    // let lptoken = await IERC20.at("0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC");
+    let lptoken = await IERC20.at("0x04b727C7e246CA70d496ecF52E6b6280f3c8077D"); //apeusd
+    // let lpHolder = "0xcfc25170633581bf896cb6cdee170e3e3aa59503";
+    let lpHolder = "0xd6e48cc0597a1ee12a8beeb88e22bfdb81777164"; //apeusd
     await unlockAccount(lpHolder);
-    await lptoken.transfer(userA,web3.utils.toWei("100000.0", "ether"),{from:lpHolder,gasPrice:0});
-
+    await lptoken.transfer(actingUser,web3.utils.toWei("100000.0", "ether"),{from:lpHolder,gasPrice:0});
+    console.log("lp tokens transfered");
     
 
     //add to gauge
@@ -137,32 +144,36 @@ contract("Vault Tests", async accounts => {
     console.log("harvested convex pool");
 
     // let impl = await StakingProxyConvex.new();
-    let impl = await StakingProxyConvex.at(contractList.system.vaultConvexImplementation);
-    var poolcount = await poolReg.poolLength();
-    console.log("pool count: " +poolcount);
-    var tx = await booster.addPool(impl.address, stakingAddress.address, stakingToken.address,{from:deployer,gasPrice:0});
-    console.log("pool added, gas: " +tx.receipt.gasUsed);
-    await poolReg.poolLength().then(a=>console.log("new pool count: " +a));
+    // let impl = await StakingProxyConvex.at(contractList.system.vaultConvexImplementation);
+    var poolcount = 16; //todo get via name
+    // // var poolcount = await poolReg.poolLength();
+    // console.log("pool count: " +poolcount);
+    // // var tx = await booster.addPool(impl.address, stakingAddress.address, stakingToken.address,{from:deployer,gasPrice:0});
+    // // console.log("pool added, gas: " +tx.receipt.gasUsed);
+    // // await poolReg.poolLength().then(a=>console.log("new pool count: " +a));
 
-    var poolinfo = await poolReg.poolInfo(poolcount);
-    console.log(poolinfo);
+    // var poolinfo = await poolReg.poolInfo(poolcount);
+    // console.log(poolinfo);
     
-    var tx = await booster.createVault(poolcount,{from:userA});
-    let vaultAddress = await poolReg.vaultMap(poolcount,userA);
+    //create vault
+    // var tx = await booster.createVault(poolcount,{from:userA});
+    
+    //get vault
+    let vaultAddress = await poolReg.vaultMap(poolcount,actingUser);
     let vault = await StakingProxyConvex.at(vaultAddress)
-    console.log("vault created " +vault.address +", gas: " +tx.receipt.gasUsed);
+    console.log("vault at " +vault.address);// +", gas: " +tx.receipt.gasUsed);
 
         
 
-    var tokenBalance = await lptoken.balanceOf(userA);
+    var tokenBalance = await lptoken.balanceOf(actingUser);
     console.log("tokenBalance: " +tokenBalance);
 
     var lockDuration = day*30;
     // var lockDuration = day*364*3;
     //stake
-    await lptoken.approve(vault.address, web3.utils.toWei("100000.0","ether"));
-    var tx = await vault.stakeLockedCurveLp(web3.utils.toWei("10000.0","ether"), lockDuration);
-    console.log("staked, gas: " +tx.receipt.gasUsed);
+    // await lptoken.approve(vault.address, web3.utils.toWei("100000.0","ether"),{from:actingUser});
+    // var tx = await vault.stakeLockedCurveLp(web3.utils.toWei("10000.0","ether"), lockDuration, {from:actingUser});
+    // console.log("staked, gas: " +tx.receipt.gasUsed);
 
     // await stakingwrapper.balanceOf(stakingAddress.address).then(a=>console.log("balanceOf stakingAddress.address: " +a));
     // await stakingwrapper.balanceOf(vault.address).then(a=>console.log("balanceOf vault: " +a));
@@ -207,26 +218,26 @@ contract("Vault Tests", async accounts => {
     await poolUtil.veFXSMultiplier(stakingAddress.address).then(a=>console.log("pool util -> veFXSMultiplier: " +a));
 
 
-    console.log("---- lock longer ---");
-    var t = getTimestampInSeconds() + (lockDuration*2);
-    var tx = await vault.lockLonger(stakeInfo[0][0], t);
-    console.log("lock longer, gas: " +tx.receipt.gasUsed);
-    var stakeInfo = await stakingAddress.lockedStakesOf(vault.address);
-    console.log("stake info: " +stakeInfo);
+    // console.log("---- lock longer ---");
+    // var t = getTimestampInSeconds() + (lockDuration*2);
+    // var tx = await vault.lockLonger(stakeInfo[0][0], t);
+    // console.log("lock longer, gas: " +tx.receipt.gasUsed);
+    // var stakeInfo = await stakingAddress.lockedStakesOf(vault.address);
+    // console.log("stake info: " +stakeInfo);
 
-    await stakingAddress.userStakedFrax(vault.address).then(a=>console.log("userStakedFrax: " +a));
-    await stakingAddress.getAllRewardTokens().then(a=>console.log("getAllRewardTokens: " +a))
-    await stakingAddress.lockedLiquidityOf(vault.address).then(a=>console.log("lockedLiquidityOf: " +a))
-    await stakingAddress.combinedWeightOf(vault.address).then(a=>console.log("combinedWeightOf: " +a))
-    await stakingAddress.veFXSMultiplier(vault.address).then(a=>console.log("veFXSMultiplier: " +a))
+    // await stakingAddress.userStakedFrax(vault.address).then(a=>console.log("userStakedFrax: " +a));
+    // await stakingAddress.getAllRewardTokens().then(a=>console.log("getAllRewardTokens: " +a))
+    // await stakingAddress.lockedLiquidityOf(vault.address).then(a=>console.log("lockedLiquidityOf: " +a))
+    // await stakingAddress.combinedWeightOf(vault.address).then(a=>console.log("combinedWeightOf: " +a))
+    // await stakingAddress.veFXSMultiplier(vault.address).then(a=>console.log("veFXSMultiplier: " +a))
 
-    await poolUtil.weightedRewardRates(stakingAddress.address).then(a=>console.log("pool util -> weightedRewardRates: " +a));
-    await poolUtil.userBoostedRewardRates(stakingAddress.address, vault.address).then(a=>console.log("pool util -> userBoostedRewardRates: " +a));
-    await poolUtil.veFXSMultiplier(stakingAddress.address).then(a=>console.log("pool util -> veFXSMultiplier: " +a));
+    // await poolUtil.weightedRewardRates(stakingAddress.address).then(a=>console.log("pool util -> weightedRewardRates: " +a));
+    // await poolUtil.userBoostedRewardRates(stakingAddress.address, vault.address).then(a=>console.log("pool util -> userBoostedRewardRates: " +a));
+    // await poolUtil.veFXSMultiplier(stakingAddress.address).then(a=>console.log("pool util -> veFXSMultiplier: " +a));
 
     //stake again with additional
     // await stakingToken.approve(vault.address, web3.utils.toWei("100000.0","ether"));
-    var tx = await vault.lockAdditionalCurveLp(stakeInfo[0][0],web3.utils.toWei("10000.0","ether"));
+    var tx = await vault.lockAdditionalCurveLp(stakeInfo[0][0],web3.utils.toWei("10000.0","ether"),{from:actingUser});
     console.log("staked additional, gas: " +tx.receipt.gasUsed);
     var stakeInfo = await stakingAddress.lockedStakesOf(vault.address);
     console.log("stake info: " +stakeInfo);
