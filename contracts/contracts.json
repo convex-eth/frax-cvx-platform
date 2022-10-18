@@ -270,6 +270,30 @@
             "stakingToken": "0x7AEF5bDC573dCbfb40EC68b0BAAB03abB846C9c6",
             "rewardsAddress": "0x325dff89825e03f52B96A5fDa94b6D8b6921D40e",
             "name": "Convex pusd/FraxBP"
-        }
+        },
+        {
+            "id": 30,
+            "implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+            "stakingAddress": "0xa632Fab76Fe013199c8271Ac22b466b9D11BFe88",
+            "stakingToken": "0x2bac101F9769AEfF63c63EFfB4189152e833649F",
+            "rewardsAddress": "0xC509eD1271Bf96E429C336fDC7529ed5d25AE257",
+            "name": "Fraxswap: PitchFxs/Fxs v2"
+          },
+          {
+            "id": 31,
+            "implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+            "stakingAddress": "0x788E44b6424A0e4160Ae4766E86640EC5a6baD5b",
+            "stakingToken": "0x832c6f546Bf34A552DeB8773216a93bf6801028c",
+            "rewardsAddress": "0x490078513cCbBFba77d49Bb6DB36c6bA2B2983B5",
+            "name": "Fraxswap: SYN/Frax v2"
+          },
+          {
+            "id": 32,
+            "implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+            "stakingAddress": "0x7af00CF8D3a8A75210a5Ed74f2254E2EC43B5B5b",
+            "stakingToken": "0x07AF6BB51d6Ad0Cf126E3eD2DeE6EaC34BF094F8",
+            "rewardsAddress": "0xb201Cd3855A034a7b8272B2384DbeD202bcd3a57",
+            "name": "Fraxswap: IQ/Frax v2"
+          }
     ]
 }
