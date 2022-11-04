@@ -10,6 +10,8 @@ interface IConvexWrapperV2{
 
   function collateralVault() external view returns(address vault);
   function convexPoolId() external view returns(uint256 _poolId);
+  function curveToken() external view returns(address);
+  function convexToken() external view returns(address);
   function balanceOf(address _account) external view returns(uint256);
   function totalBalanceOf(address _account) external view returns(uint256);
   function deposit(uint256 _amount, address _to) external;
