@@ -12,7 +12,7 @@
         "feeRegistry": "0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D",
         "feeDeposit": "0xcBec22233Dad5E15AB9c02CAA4d914F3c97323f7",
         "vaultErc20Implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
-        "vaultConvexImplementation": "0x453722ca9dD2dc97fF7D95EbB2e3cE7CC69170f1",
+        "vaultConvexImplementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
         "vaultUniImplementation": "",
         "vaultTempleJointImplementation": "0x64167F69a10Ab360a8C45b8c7db31d7752111181",
         "rewardImplementation": "0xAFd3D38feCEbCdda6d934979d4aC7f17330a96Ca",
@@ -77,7 +77,8 @@
             "stakingAddress": "0x35678017e1D252dA1CdD6745b147E3e75d1f9C27",
             "stakingToken": "0xcB0bC7C879bb3E9CFEB9d8EFef653F33B3d242e9",
             "rewardsAddress": "0xe878AD77F8451F83B999F8Dc1BCd57b78C445E9C",
-            "name": "Fraxswap: IQ/Frax"
+            "name": "Fraxswap: IQ/Frax",
+            "active": false
         },
         {
             "id": 6,
@@ -85,7 +86,8 @@
             "stakingAddress": "0x24C66Ba25ca2A53bB97B452B9F45DD075b07Cf55",
             "stakingToken": "0x0a92aC70B5A187fB509947916a8F63DD31600F80",
             "rewardsAddress": "0x3a16408A557d2daF42549Aa1Ae9e83e81645CF12",
-            "name": "Fraxswap: PitchFXS/Frax"
+            "name": "Fraxswap: PitchFXS/Frax",
+            "active": false
         },
         {
             "id": 7,
@@ -93,7 +95,8 @@
             "stakingAddress": "0xE8453a2e8E97cba69365A1d727Fde3768b18d814",
             "stakingToken": "0x750Bb20608601e4C44aCbE774fAC8F37dab67c86",
             "rewardsAddress": "0x8a87E052887105e195cECEEA0ef7B21CE5DfF5F7",
-            "name": "Fraxswap: SYN/Frax"
+            "name": "Fraxswap: SYN/Frax",
+            "active": false
         },
         {
             "id": 8,
@@ -301,7 +304,8 @@
             "stakingAddress": "0x5a92EF27f4baA7C766aee6d751f754EBdEBd9fae",
             "stakingToken": "0xb92e3fD365Fc5E038aa304Afe919FeE158359C88",
             "rewardsAddress": "0xBb0d72DD9262BB001485097B27FC64Ef2966a1a9",
-            "name": "Convex Badger/FraxBP"
+            "name": "Convex Badger/FraxBP",
+            "active": false
             },
           {
             "id": 34,
@@ -309,6 +313,23 @@
             "stakingAddress": "0xa537d64881b84faffb9Ae43c951EEbF368b71cdA",
             "stakingToken": "0x4659d5fF63A1E1EDD6D5DD9CC315e063c95947d0",
             "rewardsAddress": "0x24aADB83E284E80Bba0ece5C8890BFF6C9097a51",
+            "name": "Convex FrxEth/Eth",
+            "active": false
+          },
+          {
+            "id": 35,
+            "implementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
+            "stakingAddress": "0x5a92EF27f4baA7C766aee6d751f754EBdEBd9fae",
+            "stakingToken": "0xb92e3fD365Fc5E038aa304Afe919FeE158359C88",
+            "rewardsAddress": "0x0a952E9f66Bd93f00339895A798Fa458ea332e17",
+            "name": "Convex Badger/FraxBP"
+          },
+          {
+            "id": 36,
+            "implementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
+            "stakingAddress": "0xa537d64881b84faffb9Ae43c951EEbF368b71cdA",
+            "stakingToken": "0x4659d5fF63A1E1EDD6D5DD9CC315e063c95947d0",
+            "rewardsAddress": "0x3465B8211278505ae9C6b5ba08ECD9af951A6896",
             "name": "Convex FrxEth/Eth"
           }
     ]

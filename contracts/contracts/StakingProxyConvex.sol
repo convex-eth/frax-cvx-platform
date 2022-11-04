@@ -2,7 +2,7 @@
 pragma solidity 0.8.10;
 
 import "./interfaces/ICurveConvex.sol";
-import "./interfaces/IConvexWrapper.sol";
+import "./interfaces/IConvexWrapperV2.sol";
 import "./StakingProxyBase.sol";
 import "./interfaces/IFraxFarmERC20.sol";
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
@@ -28,7 +28,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     function vaultVersion() external pure override returns(uint256){
-        return 3;
+        return 4;
     }
 
     //initialize vault
@@ -42,7 +42,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         rewards = _rewardsAddress;
 
         //get tokens from pool info
-        (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(IConvexWrapper(_stakingToken).convexPoolId());
+        (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(IConvexWrapperV2(_stakingToken).convexPoolId());
     
         curveLpToken = _lptoken;
         convexDepositToken = _token;
@@ -61,7 +61,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IERC20(curveLpToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
             //deposit into wrapper
-            IConvexWrapper(stakingToken).deposit(_liquidity, address(this));
+            IConvexWrapperV2(stakingToken).deposit(_liquidity, address(this));
 
             //stake
             kek_id = IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
@@ -78,7 +78,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IERC20(convexDepositToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
             //stake into wrapper
-            IConvexWrapper(stakingToken).stake(_liquidity, address(this));
+            IConvexWrapperV2(stakingToken).stake(_liquidity, address(this));
 
             //stake into frax
             kek_id = IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
@@ -123,7 +123,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IERC20(curveLpToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
 
             //deposit into wrapper
-            IConvexWrapper(stakingToken).deposit(_addl_liq, address(this));
+            IConvexWrapperV2(stakingToken).deposit(_addl_liq, address(this));
 
             //add stake
             IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, _addl_liq);
@@ -140,7 +140,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IERC20(convexDepositToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
 
             //stake into wrapper
-            IConvexWrapper(stakingToken).stake(_addl_liq, address(this));
+            IConvexWrapperV2(stakingToken).stake(_addl_liq, address(this));
 
             //add stake
             IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, _addl_liq);
@@ -176,7 +176,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, address(this));
 
         //unwrap
-        IConvexWrapper(stakingToken).withdrawAndUnwrap(IERC20(stakingToken).balanceOf(address(this)));
+        IConvexWrapperV2(stakingToken).withdrawAndUnwrap(IERC20(stakingToken).balanceOf(address(this)));
         IERC20(curveLpToken).transfer(owner,IERC20(curveLpToken).balanceOf(address(this)));
 
         //checkpoint rewards
@@ -188,7 +188,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         //get list of reward tokens
         address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
         uint256[] memory stakedearned = IFraxFarmERC20(stakingAddress).earned(address(this));
-        IConvexWrapper.EarnedData[] memory convexrewards = IConvexWrapper(stakingToken).earned(address(this));
+        IConvexWrapperV2.EarnedData[] memory convexrewards = IConvexWrapperV2(stakingToken).earnedView(address(this));
 
         uint256 extraRewardsLength = IRewards(rewards).rewardTokenLength();
         token_addresses = new address[](rewardTokens.length + extraRewardsLength + convexrewards.length);
@@ -240,7 +240,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             //claim frax farm
             IFraxFarmERC20(stakingAddress).getReward(address(this));
             //claim convex farm and forward to owner
-            IConvexWrapper(stakingToken).getReward(address(this),owner);
+            IConvexWrapperV2(stakingToken).getReward(address(this),owner);
 
             //double check there have been no crv/cvx claims directly to this address
             uint256 b = IERC20(crv).balanceOf(address(this));
@@ -277,7 +277,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             //claim frax farm
             IFraxFarmERC20(stakingAddress).getReward(address(this));
             //claim convex farm and forward to owner
-            IConvexWrapper(stakingToken).getReward(address(this),owner);
+            IConvexWrapperV2(stakingToken).getReward(address(this),owner);
         }
 
         //process fxs fees
