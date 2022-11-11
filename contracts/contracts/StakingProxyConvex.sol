@@ -6,6 +6,7 @@ import "./interfaces/IConvexWrapper.sol";
 import "./StakingProxyBase.sol";
 import "./interfaces/IFraxFarmERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./interfaces/IApprovedReceivers.sol";
 
 contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -18,6 +19,8 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard {
         address(0xD533a949740bb3306d119CC777fa900bA034cd52);
     address public constant cvx =
         address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
+    address public constant receiverChecker =
+        address(69);
 
     address public curveLpToken;
     address public convexDepositToken;
@@ -333,12 +336,10 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard {
             Looks this up in the registry to verify that it is a deployed vault.
         */
         require(
-            _to ==
-                IPoolRegistry(poolRegistry).vaultMap(
-                    IProxyVault(_to).owner(),
-                    _to
-                ),
-            "Not a valid vault"
+            _to == IPoolRegistry(poolRegistry).vaultMap(IProxyVault(_to).owner(),_to) 
+            ||
+            IApprovedReceivers(receiverChecker).check(_to),
+            "!valid receiver"
         );
 
         // Claim the rewards & process appropriately
