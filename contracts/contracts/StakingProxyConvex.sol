@@ -12,6 +12,8 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
+    error ConfirmationFailed();
+
     address public constant poolRegistry = address(0x7413bFC877B5573E29f964d572f421554d8EDF86);
     address public constant convexCurveBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
     address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
@@ -197,7 +199,9 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         bytes32 _kek_id,
         address _yieldDestination,
         address _to,
-        uint256 _amount
+        uint256 _amount, 
+        bool _andConfirm,
+        address _receivingConfimer
     ) external onlyOwner nonReentrant { {
         /** 
             Only transferrable to another Convex vault
@@ -222,6 +226,17 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             _to,
             _amount
         );
+
+        /// TODO - perhaps, delegatecall our relayer to add the balance to it for the msg.sender
+        ///     This could also potentially call the arbitrum messaging inbox and redeem the txn onto L2...
+        /// TODO if not using the "whitelisted receiver" pattern, then we need to add a "confirm" function
+        ///      which will allow balances to be updated on the receiving end
+        if (_andConfirm) {
+            (bool success, ) = _receivingConfimer.call(abi.encodeWithSignature("confirmTransfer(address,address,uint256,bytes32)", address(owner), address(this), _amount), _kek_id);
+            if (!success) {
+                revert ConfirmationFailed();
+            }
+        }
     }
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
