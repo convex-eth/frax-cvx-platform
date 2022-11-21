@@ -36,12 +36,8 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     //initialize vault
-    function initialize(
-        address _owner,
-        address _stakingAddress,
-        address _stakingToken,
-        address _rewardsAddress
-    ) external override {
+    function initialize(address _owner, address _stakingAddress,
+        address _stakingToken, address _rewardsAddress) external override{
         require(owner == address(0), "already init");
 
         //set variables
@@ -52,7 +48,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         poolId = IConvexWrapper(_stakingToken).convexPoolId();
 
         //get tokens from pool info
-        (address _lptoken, address _token, , , , ) = ICurveConvex(convexCurveBooster).poolInfo(poolId);
+        (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(poolId);
 
         curveLpToken = _lptoken;
         convexDepositToken = _token;
