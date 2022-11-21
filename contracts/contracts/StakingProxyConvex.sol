@@ -22,8 +22,6 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     address public curveLpToken;
     address public convexDepositToken;
 
-    address public constant receiverChecker =
-        address(69);
     uint256 public poolId;
 
     constructor() {
@@ -202,7 +200,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         uint256 _amount, 
         bool _andConfirm,
         address _receivingConfimer
-    ) external onlyOwner nonReentrant { {
+    ) external onlyOwner nonReentrant {
         /** 
             Only transferrable to another Convex vault
             Get's the address of the owner from recipient contract.
@@ -210,9 +208,6 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         */
         require(
             _to == IPoolRegistry(poolRegistry).vaultMap(IProxyVault(_to).owner(),_to) 
-            ||
-            IApprovedReceivers(receiverChecker).check(_to),
-            "!valid receiver"
         );
 
         // Claim the rewards & process appropriately
@@ -227,12 +222,17 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             _amount
         );
 
-        /// TODO - perhaps, delegatecall our relayer to add the balance to it for the msg.sender
-        ///     This could also potentially call the arbitrum messaging inbox and redeem the txn onto L2...
         /// TODO if not using the "whitelisted receiver" pattern, then we need to add a "confirm" function
         ///      which will allow balances to be updated on the receiving end
         if (_andConfirm) {
-            (bool success, ) = _receivingConfimer.call(abi.encodeWithSignature("confirmTransfer(address,address,uint256,bytes32)", address(owner), address(this), _amount), _kek_id);
+            (bool success, ) = _receivingConfimer.call(abi.encodeWithSignature(
+                "confirmTransfer(address,address,uint256,bytes32)", 
+                    address(owner), 
+                    address(this), 
+                    _amount, 
+                    _kek_id
+                ));
+
             if (!success) {
                 revert ConfirmationFailed();
             }
