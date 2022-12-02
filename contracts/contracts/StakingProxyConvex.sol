@@ -269,130 +269,33 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard {
         _checkpointRewards();
     }
 
-    function transferLockedFrom(
-        bytes32 _kek_id,
-        address _yieldDestination,
-        address _to,
-        uint256 _amount
-    ) external isApprovedForLock(_kek_id, _amount) nonReentrant {
-        // reduce allowance if needed
-        if (kekAllowance[msg.sender][_kek_id] >= _amount) {
-            kekAllowance[msg.sender][_kek_id] -= _amount;
-        }
-
-        reduceAllowance(_kek_id, _amount);
-
-        // do the transfer
-        _transferLocked(_kek_id, _yieldDestination, _to, _amount);
-
-        emit Transfer(_to, _kek_id, _amount);
+    ////////// Lock Management Authorization //////////
+    function setAllowance(address spender, bytes32 kek_id, uint256 amount) external onlyOwner {
+        IFraxFarmERC20(stakingAddress).setAllowance(spender, kek_id, amount);
     }
-
-    function transferLocked(
-        bytes32 _kek_id,
-        address _yieldDestination,
-        address _to,
-        uint256 _amount
-    ) external onlyOwner nonReentrant {
-        // do the transfer
-        _transferLocked(_kek_id, _yieldDestination, _to, _amount);
+    function removeAllowance(address spender, bytes32 kek_id) external onlyOwner {
+        IFraxFarmERC20(stakingAddress).removeAllowance(spender, kek_id);
+    }
+    function setApprovalForAll(address spender, bool approved) external onlyOwner {
+        IFraxFarmERC20(stakingAddress).setApprovalForAll(spender, approved);
     }
 
     // transfer a locked stake to another address
-    function _transferLocked(
-        bytes32 _kek_id,
-        address _yieldDestination,
-        address _to,
-        uint256 _amount
-    ) internal {
-        //require(ownerOf(_kek_id) == address(this));
-        require(_to != address(0));
+    function transferLocked(address receiver_address, bytes32 kek_id, uint256 amount) external onlyOwner nonReentrant {
         /** 
             Only transferrable to another Convex vault
             Get's the address of the owner from recipient contract.
             Looks this up in the registry to verify that it is a deployed vault.
         */
-        require(
-            _to ==
-                IPoolRegistry(poolRegistry).vaultMap(
-                    poolId,
-                    IProxyVault(_to).owner()
-                )
-        );
+        require(_to == IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(_to).owner()));
 
         // Claim the rewards & process appropriately
         getReward(true);
 
         // Transfer the amount
-        IFraxFarmERC20(stakingAddress).transferLocked(
-            address(this),
-            _yieldDestination,
-            _kek_id,
-            _to,
-            _amount
-        );
+        IFraxFarmERC20(stakingAddress).transferLocked(receiver_address, address(this) kek_id, amount);
 
         /// @dev erc721 style `onERC721Received` hook not needed since the only valid receivers are other Convex Vaults
-    }
-
-
-    ////////// Lock Management Authorization //////////
-    event Transfer(address indexed to, bytes32 indexed kek_id, uint256 amount);
-    event Approval(address indexed to, bytes32 indexed kek_id, uint256 amount);
-    event ApprovalForAll(address indexed owner, address indexed spender, bool approved);
-
-    // spender => kek_id => uint256 (amount of lock that spender is approved for)
-    mapping(address => mapping(bytes32 => uint256)) public kekAllowance;
-    // spender => bool (true if approved)
-    mapping(address => bool) public spenderApprovalForAllLocks;
-
-    modifier isApprovedForLock(bytes32 kek_id, uint256 amount) {
-        require(_isApprovedOrOwner(kek_id, amount), "!Approved");
-        _;
-    }
-
-    function _isApprovedOrOwner(bytes32 kek_id, uint256 amount)
-        internal
-        view
-        returns (bool)
-    {
-        return (msg.sender == owner ||
-            kekAllowance[msg.sender][kek_id] >= amount ||
-            spenderApprovalForAllLocks[msg.sender]);
-            // getApproved(kek_id, msg.sender) ||
-            // isApprovedForAll(msg.sender));
-    }
-
-    // Approve `spender` to transfer `kek_id` on behalf of `owner`
-    function setAllowance(bytes32 kek_id, address spender, uint256 amount) public onlyOwner {
-        // address owner = ownerOf(kek_id); // todo check this from fraxfarm
-        require(spender != owner);
-        //require(msg.sender == owner || isApprovedForAll(msg.sender)); // why allow approval for all to manage lock approvals...?
-
-        kekAllowance[spender][kek_id] = amount;
-        emit Approval(spender, kek_id, amount);
-    }
-
-    // Revoke approval for a single kek_id
-    function removeAllowance(bytes32 kek_id, address spender) public onlyOwner {
-        require(spender != owner);
-        require(msg.sender == owner || spenderApprovalForAllLocks[msg.sender]);
-
-        kekAllowance[spender][kek_id] = 0;
-        emit Approval(spender, kek_id, 0);
-    }
-
-    // Approve or revoke `spender` to transfer any/all locks on behalf of the owner
-    function setApprovalForAll(address spender, bool approved) public onlyOwner {
-        require(spender != msg.sender);
-        spenderApprovalForAllLocks[spender] = approved; 
-        emit ApprovalForAll(msg.sender, spender, approved);
-    }
-
-    function _reduceAllowance(bytes32 kek_id, uint256 amount) private {
-        if (kekAllowance[msg.sender][kek_id] >= amount) {
-            kekAllowance[msg.sender][kek_id] -= amount;
-        } 
     }
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
