@@ -275,11 +275,16 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard {
         address _to,
         uint256 _amount
     ) external isApprovedForLock(_kek_id, _amount) nonReentrant {
+        // reduce allowance if needed
+        if (kekAllowance[msg.sender][_kek_id] >= _amount) {
+            kekAllowance[msg.sender][_kek_id] -= _amount;
+        }
+
+        reduceAllowance(_kek_id, _amount);
+
         // do the transfer
         _transferLocked(_kek_id, _yieldDestination, _to, _amount);
 
-        // remove the approval for this kek_id
-        _reduceAllowance(_kek_id, _amount);
         emit Transfer(_to, _kek_id, _amount);
     }
 
@@ -333,7 +338,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard {
 
     ////////// Lock Management Authorization //////////
     event Transfer(address indexed to, bytes32 indexed kek_id, uint256 amount);
-    event Approval(address indexed to, address indexed approved, bytes32 indexed kek_id);
+    event Approval(address indexed to, bytes32 indexed kek_id, uint256 amount);
     event ApprovalForAll(address indexed owner, address indexed spender, bool approved);
 
     // spender => kek_id => uint256 (amount of lock that spender is approved for)
@@ -342,7 +347,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard {
     mapping(address => bool) public spenderApprovalForAllLocks;
 
     modifier isApprovedForLock(bytes32 kek_id, uint256 amount) {
-        require(_isApprovedOrOwner(_kek_id, amount), "!Approved");
+        require(_isApprovedOrOwner(kek_id, amount), "!Approved");
         _;
     }
 
@@ -384,7 +389,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard {
         emit ApprovalForAll(msg.sender, spender, approved);
     }
 
-    function _reduceAllowance(bytes32 kek_id) private {
+    function _reduceAllowance(bytes32 kek_id, uint256 amount) private {
         if (kekAllowance[msg.sender][kek_id] >= amount) {
             kekAllowance[msg.sender][kek_id] -= amount;
         } 
