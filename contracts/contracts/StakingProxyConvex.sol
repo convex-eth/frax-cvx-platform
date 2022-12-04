@@ -26,11 +26,11 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     constructor() {
     }
 
-    function vaultType() external pure override returns (VaultType) {
+    function vaultType() external pure override returns (VaultType){
         return VaultType.Convex;
     }
 
-    function vaultVersion() external pure override returns (uint256) {
+    function vaultVersion() external pure override returns (uint256){
         return 4;
     }
 
@@ -68,11 +68,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     function stakeLockedCurveLp(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant returns (bytes32 kek_id){
         if(_liquidity > 0){
             //pull tokens from user
-            IERC20(curveLpToken).safeTransferFrom(
-                msg.sender,
-                address(this),
-                _liquidity
-            );
+            IERC20(curveLpToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
             //deposit into wrapper
             IConvexWrapperV2(stakingToken).deposit(_liquidity, address(this));
@@ -191,7 +187,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
         //unwrap
         IConvexWrapperV2(stakingToken).withdrawAndUnwrap(IERC20(stakingToken).balanceOf(address(this)));
-        IERC20(curveLpToken).transfer(owner, IERC20(curveLpToken).balanceOf(address(this)));
+        IERC20(curveLpToken).transfer(owner,IERC20(curveLpToken).balanceOf(address(this)));
 
         //checkpoint rewards
         _checkpointRewards();
@@ -329,5 +325,5 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         //extra rewards
         _processExtraRewards();
     }
-    
+
 }
