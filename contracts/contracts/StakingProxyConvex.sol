@@ -26,11 +26,11 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     constructor() {
     }
 
-    function vaultType() external pure override returns (VaultType){
+    function vaultType() external pure override returns(VaultType){
         return VaultType.Convex;
     }
 
-    function vaultVersion() external pure override returns (uint256){
+    function vaultVersion() external pure override returns(uint256){
         return 4;
     }
 
@@ -171,7 +171,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
     //withdraw a staked position
     //frax farm transfers first before updating farm state so will checkpoint during transfer
-    function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{
+    function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{       
         //withdraw directly to owner(msg.sender)
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
 
@@ -277,7 +277,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             //claim frax farm
             IFraxFarmERC20(stakingAddress).getReward(address(this));
             //claim convex farm and forward to owner
-            IConvexWrapperV2(stakingToken).getReward(address(this), owner);
+            IConvexWrapperV2(stakingToken).getReward(address(this),owner);
 
             //double check there have been no crv/cvx claims directly to this address
             uint256 b = IERC20(crv).balanceOf(address(this));
