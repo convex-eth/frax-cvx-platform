@@ -54,7 +54,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
         //get tokens from pool info
         (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(poolId);
-
+    
         curveLpToken = _lptoken;
         convexDepositToken = _token;
 
@@ -63,6 +63,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         IERC20(_lptoken).approve(_stakingToken, type(uint256).max);
         IERC20(_token).approve(_stakingToken, type(uint256).max);
     }
+
 
     //create a new locked state of _secs timelength with a Curve LP token
     function stakeLockedCurveLp(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant returns (bytes32 kek_id){
@@ -130,7 +131,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     function lockAdditionalCurveLp(bytes32 _kek_id, uint256 _addl_liq) external onlyOwner nonReentrant{
         if(_addl_liq > 0){
             //pull tokens from user
-            IERC20(curveLpToken).safeTransferFrom( msg.sender, address(this), _addl_liq);
+            IERC20(curveLpToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
 
             //deposit into wrapper
             IConvexWrapperV2(stakingToken).deposit(_addl_liq, address(this));
@@ -171,7 +172,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
     //withdraw a staked position
     //frax farm transfers first before updating farm state so will checkpoint during transfer
-    function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{       
+    function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{        
         //withdraw directly to owner(msg.sender)
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
 
@@ -223,7 +224,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
-    function earned() external view override returns (address[] memory token_addresses, uint256[] memory total_earned){
+    function earned() external view override returns (address[] memory token_addresses, uint256[] memory total_earned) {
         //get list of reward tokens
         address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
         uint256[] memory stakedearned = IFraxFarmERC20(stakingAddress).earned(address(this));
@@ -272,6 +273,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     //there are tokens on this vault for cases such as withdraw() also calling claim.
     //can also be used to rescue tokens on the vault
     function getReward(bool _claim) public override{
+
         //claim
         if(_claim){
             //claim frax farm
