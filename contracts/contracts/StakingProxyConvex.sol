@@ -106,7 +106,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant returns (bytes32 kek_id){
         if(_liquidity > 0){
             //pull tokens from user
-            IERC20(stakingToken).safeTransferFrom( msg.sender, address(this), _liquidity);
+            IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
             //stake
             kek_id = IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
@@ -168,7 +168,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     function lockLonger(bytes32 _kek_id, uint256 new_ending_ts) external onlyOwner nonReentrant{
         //update time
         IFraxFarmERC20(stakingAddress).lockLonger(_kek_id, new_ending_ts);
-        
+
         //checkpoint rewards
         _checkpointRewards();
     }
@@ -178,7 +178,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant{
         //withdraw directly to owner(msg.sender)
         IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
-        
+
         //checkpoint rewards
         _checkpointRewards();
     }
@@ -192,7 +192,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         //unwrap
         IConvexWrapperV2(stakingToken).withdrawAndUnwrap(IERC20(stakingToken).balanceOf(address(this)));
         IERC20(curveLpToken).transfer(owner, IERC20(curveLpToken).balanceOf(address(this)));
-        
+
         //checkpoint rewards
         _checkpointRewards();
     }
@@ -311,10 +311,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     //_claim bool is for the off chance that rewardCollectionPause is true so getReward() fails but
     //there are tokens on this vault for cases such as withdraw() also calling claim.
     //can also be used to rescue tokens on the vault
-    function getReward(bool _claim, address[] calldata _rewardTokenList)
-        external
-        override
-    {
+    function getReward(bool _claim, address[] calldata _rewardTokenList)  external override{
         //claim
         if(_claim){
             //claim frax farm
@@ -332,4 +329,5 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         //extra rewards
         _processExtraRewards();
     }
+    
 }
