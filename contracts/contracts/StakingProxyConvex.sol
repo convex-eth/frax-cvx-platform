@@ -223,11 +223,11 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     /// TODO transferLockedFrom isn't called here, but if transferLocked 
 
     // transfer a locked stake to another address
-    function transferLocked(address receiver_address, bytes32 kek_id, uint256 amount) external onlyOwner nonReentrant{
+    function transferLocked(address receiver_address, bytes32 origin_kek_id, uint256 amount, bytes32 destination_kek_id) external onlyOwner nonReentrant{
         /// @dev the vault check & rewards claiming are done in the beforeLockTransfer hook
 
         // Transfer the amount
-        IFraxFarmERC20(stakingAddress).transferLocked(receiver_address, address(this), kek_id, amount);
+        IFraxFarmERC20(stakingAddress).transferLocked(receiver_address, origin_kek_id, amount, destination_kek_id);
     }
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault

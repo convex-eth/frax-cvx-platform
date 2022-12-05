@@ -60,6 +60,5 @@ interface IFraxFarmERC20 {
     function setAllowance(address spender, bytes32 kek_id, uint256 amount) external;
     function removeAllowance(address spender, bytes32 kek_id) external;
     function setApprovalForAll(address spender, bool approved) external;
-    // function transferLockedFrom(address staker_address, address receiver_address, bytes32 kek_id, uint256 transfer_amount) external;
     function transferLocked(address receiver_address, address rewards_address, bytes32 kek_id, uint256 amount) external;
 }
