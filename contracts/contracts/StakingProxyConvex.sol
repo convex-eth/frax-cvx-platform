@@ -20,7 +20,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     address public curveLpToken;
     address public convexDepositToken;
 
-    //stores the poolId for verifying that the receiver is another convex vault
+    //the poolId for calling vaultMap in the registry to verify a receiver is a legitimate convex vault (for lock transfers)
     uint256 internal poolId;
 
     constructor() {
@@ -34,11 +34,25 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         return 4;
     }
 
+    /// @notice before transfer hook called to sender of lock - checks that receiver is a known convex vault & claims rewards
+    /// @dev required to happen because `transferFrom` would otherwise bypass the recipient check
+    function beforeLockTransfer(address from, address receiver, bytes32 kek_id, bytes memory data) external view returns (bytes4) {
+        //check that the receiver is a legitimate convex vault
+        require(_to == IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(_to).owner()));
+        
+        // claim rewards
+        getRewards(true);
+
+        return this.beforeLockTransfer.selector;
+    }
+
     function onLockReceived(address from, address to, bytes32 kek_id, bytes memory data) external override returns (bytes4) {
-        /// TODO this could be used here to call the convex wrapped staking contract and move funds over to new owner.
-        // And then if the owner of this vault is a contract, it'd also call it with this, expecting the selector returned.
-        return // if (owner.code.length > 0) {owner.onLockReceived(from,to,kek_id,data)}
-        // not this - this.onLockReceived.selector;
+        // if the owner of the vault is a contract try calling onLockReceived on it, return the selector either way
+        if (IProxyVault(to).owner().code.length > 0) {
+            return IProxyVault(to).owner().onLockReceived(from, to, kek_id, data);
+        } else {
+            return this.onLockReceived.selector;
+        }
     }
 
     //initialize vault
@@ -54,7 +68,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
         //get tokens from pool info
         (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(poolId);
-    
+
         curveLpToken = _lptoken;
         convexDepositToken = _token;
 
@@ -209,18 +223,10 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
     // transfer a locked stake to another address
     function transferLocked(address receiver_address, bytes32 kek_id, uint256 amount) external onlyOwner nonReentrant{
-        /** 
-            Only transferrable to another Convex vault
-            Get's the address of the owner from recipient contract.
-            Looks this up in the registry to verify that it is a deployed vault.
-        */
-        require(_to == IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(_to).owner()));
-
-        // Claim the rewards & process appropriately
-        getReward(true);
+        /// @dev the vault check & rewards claiming are done in the beforeLockTransfer hook
 
         // Transfer the amount
-        IFraxFarmERC20(stakingAddress).transferLocked(receiver_address, address(this) kek_id, amount);
+        IFraxFarmERC20(stakingAddress).transferLocked(receiver_address, address(this), kek_id, amount);
     }
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
