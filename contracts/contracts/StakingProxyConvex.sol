@@ -43,11 +43,13 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
         // claim rewards
         getReward(true);
+        _processExtraRewards();
 
         return this.beforeLockTransfer.selector;
     }
 
     function onLockReceived(address from, address to, bytes32 kek_id, bytes memory data) external returns (bytes4) {
+        _processExtraRewards();
         // if the owner of the vault is a contract try calling onLockReceived on it, return the selector either way
         if (IProxyVault(to).owner().code.length > 0) {
             return ITransferChecker(IProxyVault(to).owner()).onLockReceived(from, to, kek_id, data);
