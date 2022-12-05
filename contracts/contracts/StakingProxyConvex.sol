@@ -11,6 +11,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
     error ConfirmationFailed();
+    error NonVaultReceiver();
 
     address public constant poolRegistry = address(0x7413bFC877B5573E29f964d572f421554d8EDF86);
     address public constant convexCurveBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
@@ -36,20 +37,20 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
     /// @notice before transfer hook called to sender of lock - checks that receiver is a known convex vault & claims rewards
     /// @dev required to happen because `transferFrom` would otherwise bypass the recipient check
-    function beforeLockTransfer(address from, address receiver, bytes32 kek_id, bytes memory data) external view returns (bytes4) {
+    function beforeLockTransfer(address from, address receiver, bytes32 kek_id, bytes memory data) external returns (bytes4) {
         //check that the receiver is a legitimate convex vault
-        require(_to == IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(_to).owner()));
-        
+        if (receiver != ITransferChecker(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner())) revert NonVaultReceiver();
+
         // claim rewards
-        getRewards(true);
+        getReward(true);
 
         return this.beforeLockTransfer.selector;
     }
 
-    function onLockReceived(address from, address to, bytes32 kek_id, bytes memory data) external override returns (bytes4) {
+    function onLockReceived(address from, address to, bytes32 kek_id, bytes memory data) external returns (bytes4) {
         // if the owner of the vault is a contract try calling onLockReceived on it, return the selector either way
         if (IProxyVault(to).owner().code.length > 0) {
-            return IProxyVault(to).owner().onLockReceived(from, to, kek_id, data);
+            return ITransferChecker(IProxyVault(to).owner()).onLockReceived(from, to, kek_id, data);
         } else {
             return this.onLockReceived.selector;
         }
@@ -64,7 +65,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         stakingAddress = _stakingAddress;
         stakingToken = _stakingToken;
         rewards = _rewardsAddress;
-        poolId = IConvexWrapper(_stakingToken).convexPoolId();
+        poolId = IConvexWrapperV2(_stakingToken).convexPoolId();
 
         //get tokens from pool info
         (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(poolId);

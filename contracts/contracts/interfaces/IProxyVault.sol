@@ -20,3 +20,9 @@ interface IProxyVault {
     function getReward(bool _claim, address[] calldata _rewardTokenList) external;
     function earned() external view returns (address[] memory token_addresses, uint256[] memory total_earned);
 }
+
+interface ITransferChecker {
+    function vaultMap(uint256 _poolId, address _user) external returns(address);
+    function beforeLockTransfer(address from, address receiver, bytes32 kek_id, bytes memory data) external view returns (bytes4);
+    function onLockReceived(address from, address to, bytes32 kek_id, bytes memory data) external returns (bytes4);
+}
