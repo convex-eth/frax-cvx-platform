@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-interface IConvexWrapper{
+interface IConvexWrapperV2{
 
    struct EarnedData {
         address token;
@@ -21,7 +21,8 @@ interface IConvexWrapper{
   function getReward(address _account) external;
   function getReward(address _account, address _forwardTo) external;
   function rewardLength() external view returns(uint256);
-  function earned(address _account) external view returns(EarnedData[] memory claimable);
+  function earned(address _account) external returns(EarnedData[] memory claimable);
+  function earnedView(address _account) external view returns(EarnedData[] memory claimable);
   function setVault(address _vault) external;
   function user_checkpoint(address[2] calldata _accounts) external returns(bool);
 }
