@@ -331,6 +331,30 @@
             "stakingToken": "0x4659d5fF63A1E1EDD6D5DD9CC315e063c95947d0",
             "rewardsAddress": "0x3465B8211278505ae9C6b5ba08ECD9af951A6896",
             "name": "Convex FrxEth/Eth"
+          },
+          {
+            "id": 37,
+            "implementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
+            "stakingAddress": "0xF22D3C85e41Ef4b5Ac8Cb8B89a14718e290a0561",
+            "stakingToken": "0xF37007f2b9DE656115e1B977Bb1fd38A99B8a2a6",
+            "rewardsAddress": "0x62E209e8104bB44ea6935EADd5840c68dDc9891C",
+            "name": "Convex RSR/FraxBP"
+          },
+          {
+            "id": 38,
+            "implementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
+            "stakingAddress": "0x4edF7C64dAD8c256f6843AcFe56876024b54A1b6",
+            "stakingToken": "0x19f0a60f4635d3E2c48647822Eda5332BA094fd3",
+            "rewardsAddress": "0xb6D514658d5fb48DE939E208b40cb081d98b7f58",
+            "name": "Convex XAI/FraxBP"
+          },
+          {
+            "id": 39,
+            "implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+            "stakingAddress": "0x73e1e624C6d3E027b8674e6C72F104F1429FC17E",
+            "stakingToken": "0xDbe88DBAc39263c47629ebbA02b3eF4cf0752A72",
+            "rewardsAddress": "0x7A03479676D26EE8CF5649aD5Bf6befF83D506a6",
+            "name": "Fraxlend FRAX/FXS"
           }
     ]
 }

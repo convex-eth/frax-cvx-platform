@@ -51,7 +51,7 @@ const unlockAccount = async (address) => {
   });
 };
 
-contract("Vault Tests", async accounts => {
+contract("Deploy Pool(s)", async accounts => {
   it("should successfully run", async () => {
     
     let deployer = "0x947B7742C403f20e5FaCcDAc5E092C943E7D0277";
