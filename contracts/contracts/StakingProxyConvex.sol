@@ -45,7 +45,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     function beforeLockTransfer(address from, address to, bytes32 kek_id, bytes memory data) external override returns (bytes4) {
         //check that the receiver is a legitimate convex vault
         require(from == address(this) && msg.sender == stakingAddress, "invalid params");
-        if (to != ITransferChecker(poolRegistry).vaultMap(poolId, IProxyVault(to).owner())) revert NonVaultReceiver();
+        if (to != ILockReceiver(poolRegistry).vaultMap(poolId, IProxyVault(to).owner())) revert NonVaultReceiver();
         
         /// FraxFarm will execute it's getReward, so we only need to process all other rewards logic first.
         claimOnTransfer();
@@ -57,7 +57,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         // if the owner of the vault is a contract try calling onLockReceived on it, return the selector either way
         require(to == address(this) && msg.sender == stakingAddress, "invalid params");
         if (owner.code.length > 0) {
-            return ITransferChecker(owner).onLockReceived(from, to, kek_id, data);
+            return ILockReceiver(owner).onLockReceived(from, to, kek_id, data);
         } else {
             return this.onLockReceived.selector;
         }
