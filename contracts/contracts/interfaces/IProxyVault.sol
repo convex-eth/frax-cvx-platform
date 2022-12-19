@@ -23,6 +23,4 @@ interface IProxyVault {
 
 interface ITransferChecker {
     function vaultMap(uint256 _poolId, address _user) external returns(address);
-    function beforeLockTransfer(address from, address receiver, bytes32 kek_id, bytes memory data) external view returns (bytes4);
-    function onLockReceived(address from, address to, bytes32 kek_id, bytes memory data) external returns (bytes4);
 }

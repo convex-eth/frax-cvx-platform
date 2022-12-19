@@ -5,7 +5,11 @@ import "./interfaces/ICurveConvex.sol";
 import "./interfaces/IConvexWrapperV2.sol";
 import "./StakingProxyBase.sol";
 import "./interfaces/IFraxFarmERC20.sol";
+import "./interfaces/ILockReceiver.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+
+/// @notice Testing was completed in a separate repository: https://github.com/ZrowGz/frax-transfers.git
 
 contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     using SafeERC20 for IERC20;
@@ -13,7 +17,8 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     error ConfirmationFailed();
     error NonVaultReceiver();
 
-    address public constant poolRegistry = address(0x7413bFC877B5573E29f964d572f421554d8EDF86);
+    /// @dev This pool registry is the version being used - to be made settable during `initialize` call (booster)
+    address public constant poolRegistry = address(0x41a5881c17185383e19Df6FA4EC158a6F4851A69);//0x7413bFC877B5573E29f964d572f421554d8EDF86);
     address public constant convexCurveBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
     address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
     address public constant cvx = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
@@ -37,22 +42,22 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
     /// @notice before transfer hook called to sender of lock - checks that receiver is a known convex vault & claims rewards
     /// @dev required to happen because `transferFrom` would otherwise bypass the recipient check
-    function beforeLockTransfer(address from, address receiver, bytes32 kek_id, bytes memory data) external returns (bytes4) {
+    function beforeLockTransfer(address from, address to, bytes32 kek_id, bytes memory data) external override returns (bytes4) {
         //check that the receiver is a legitimate convex vault
-        if (receiver != ITransferChecker(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner())) revert NonVaultReceiver();
-
-        // claim rewards
-        getReward(true);
-        _processExtraRewards();
+        require(from == address(this) && msg.sender == stakingAddress, "invalid params");
+        if (to != ITransferChecker(poolRegistry).vaultMap(poolId, IProxyVault(to).owner())) revert NonVaultReceiver();
+        
+        /// FraxFarm will execute it's getReward, so we only need to process all other rewards logic first.
+        claimOnTransfer();
 
         return this.beforeLockTransfer.selector;
     }
 
-    function onLockReceived(address from, address to, bytes32 kek_id, bytes memory data) external returns (bytes4) {
-        _processExtraRewards();
+    function onLockReceived(address from, address to, bytes32 kek_id, bytes memory data) external override returns (bytes4) {
         // if the owner of the vault is a contract try calling onLockReceived on it, return the selector either way
-        if (IProxyVault(to).owner().code.length > 0) {
-            return ITransferChecker(IProxyVault(to).owner()).onLockReceived(from, to, kek_id, data);
+        require(to == address(this) && msg.sender == stakingAddress, "invalid params");
+        if (owner.code.length > 0) {
+            return ITransferChecker(owner).onLockReceived(from, to, kek_id, data);
         } else {
             return this.onLockReceived.selector;
         }
@@ -67,7 +72,8 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         stakingAddress = _stakingAddress;
         stakingToken = _stakingToken;
         rewards = _rewardsAddress;
-        poolId = IConvexWrapperV2(_stakingToken).convexPoolId();
+        /// @dev: this doesn't get the correct pool id for the pool registry. It's hardcoded, but should be input as a deployment from booster.
+        //poolId = IConvexWrapperV2(_stakingToken).convexPoolId(); // TODO This needs to be the poolId in the poolRegistry vaultMapLookup
 
         //get tokens from pool info
         (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(poolId);
@@ -215,6 +221,9 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     function setAllowance(address spender, bytes32 kek_id, uint256 amount) external onlyOwner{
         IFraxFarmERC20(stakingAddress).setAllowance(spender, kek_id, amount);
     }
+    function increaseAllowance(address spender, bytes32 kek_id, uint256 amount) external onlyOwner{
+        IFraxFarmERC20(stakingAddress).increaseAllowance(spender, kek_id, amount);
+    }
     function removeAllowance(address spender, bytes32 kek_id) external onlyOwner {
         IFraxFarmERC20(stakingAddress).removeAllowance(spender, kek_id);
     }
@@ -225,11 +234,38 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     /// TODO transferLockedFrom isn't called here, but if transferLocked 
 
     // transfer a locked stake to another address
-    function transferLocked(address receiver_address, bytes32 origin_kek_id, uint256 amount, bytes32 destination_kek_id) external onlyOwner nonReentrant{
-        /// @dev the vault check & rewards claiming are done in the beforeLockTransfer hook
+    function transferLocked(address receiver_address, bytes32 origin_kek_id, uint256 amount, bytes32 destination_kek_id) external onlyOwner nonReentrant returns(bytes32,bytes32){
+        /// @dev the vault check is done in the beforeLockTransfer hook
 
         // Transfer the amount
-        IFraxFarmERC20(stakingAddress).transferLocked(receiver_address, origin_kek_id, amount, destination_kek_id);
+        return(IFraxFarmERC20(stakingAddress).transferLocked(receiver_address, origin_kek_id, amount, destination_kek_id));
+    }
+
+    function claimOnTransfer() public{
+        //claim convex farm and forward to owner
+        IConvexWrapperV2(stakingToken).getReward(address(this),owner);
+
+        //double check there have been no crv/cvx claims directly to this address
+        uint256 b = IERC20(crv).balanceOf(address(this));
+        if(b > 0){
+            IERC20(crv).safeTransfer(owner, b);
+        }
+        b = IERC20(cvx).balanceOf(address(this));
+        if(b > 0){
+            IERC20(cvx).safeTransfer(owner, b);
+        }
+
+        //process fxs fees
+        _processFxs();
+
+        //get list of reward tokens
+        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
+
+        //transfer
+        _transferTokens(rewardTokens);
+
+        //extra rewards
+        _processExtraRewards();
     }
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
