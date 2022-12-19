@@ -18,7 +18,6 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     error NonVaultReceiver();
 
     /// @dev This pool registry is the version being used - to be made settable during `initialize` call (booster)
-    address public constant poolRegistry = address(0x41a5881c17185383e19Df6FA4EC158a6F4851A69);//0x7413bFC877B5573E29f964d572f421554d8EDF86);
     address public constant convexCurveBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
     address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
     address public constant cvx = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
@@ -27,6 +26,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     address public convexDepositToken;
 
     //the poolId for calling vaultMap in the registry to verify a receiver is a legitimate convex vault (for lock transfers)
+    address public poolRegistry;
     uint256 internal poolId;
 
     constructor() {
@@ -64,7 +64,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     //initialize vault
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external override{
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress, address _poolRegistry, uint256 _pid) external override{
         require(owner == address(0),"already init");
 
         //set variables
@@ -72,8 +72,10 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         stakingAddress = _stakingAddress;
         stakingToken = _stakingToken;
         rewards = _rewardsAddress;
-        /// @dev: this doesn't get the correct pool id for the pool registry. It's hardcoded, but should be input as a deployment from booster.
-        //poolId = IConvexWrapperV2(_stakingToken).convexPoolId(); // TODO This needs to be the poolId in the poolRegistry vaultMapLookup
+
+        // set the pool registry & poolId for looking up vault validity on lock transfers
+        poolRegistry = _poolRegistry;
+        poolId = _pid;
 
         //get tokens from pool info
         (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(poolId);
