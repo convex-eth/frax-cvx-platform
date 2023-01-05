@@ -2,15 +2,7 @@
 pragma solidity 0.8.10;
 
 interface IProxyVault {
-
-    enum VaultType{
-        Erc20Basic,
-        UniV3,
-        Convex,
-        Erc20Joint
-    }
-
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external;
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress, address _poolRegistry, uint256 _pid) external;
     function usingProxy() external returns(address);
     function owner() external returns(address);
     function stakingAddress() external returns(address);
@@ -23,4 +15,13 @@ interface IProxyVault {
 
 interface ITransferChecker {
     function vaultMap(uint256 _poolId, address _user) external returns(address);
+}
+
+interface IVaultType {
+    enum VaultType{
+        Erc20Basic,
+        UniV3,
+        Convex,
+        Erc20Joint
+    }
 }
