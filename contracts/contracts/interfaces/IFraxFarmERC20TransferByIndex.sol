@@ -4,7 +4,6 @@ pragma solidity >=0.8.0;
 interface IFraxFarmERC20 {
     
     struct LockedStake {
-        bytes32 kek_id;
         uint256 start_timestamp;
         uint256 liquidity;
         uint256 ending_timestamp;
@@ -22,10 +21,10 @@ interface IFraxFarmERC20 {
         );
     function lockedStakesOf(address account) external view returns (LockedStake[] memory);
     function lockedStakesOfLength(address account) external view returns (uint256);
-    function lockAdditional(bytes32 kek_id, uint256 addl_liq) external;
-    function lockLonger(bytes32 kek_id, uint256 new_ending_ts) external;
-    function stakeLocked(uint256 liquidity, uint256 secs) external returns (bytes32);
-    function withdrawLocked(bytes32 kek_id, address destination_address) external returns (uint256);
+    function lockAdditional(uint256 lockId, uint256 addl_liq) external;
+    function lockLonger(uint256 lockId, uint256 new_ending_ts) external;
+    function stakeLocked(uint256 liquidity, uint256 secs) external returns (uint256);
+    function withdrawLocked(uint256 lockId, address destination_address) external returns (uint256);
 
 
 
@@ -57,9 +56,9 @@ interface IFraxFarmERC20 {
 
     function sync() external;
 
-    function setAllowance(address spender, bytes32 kek_id, uint256 amount) external;
-    function increaseAllowance(address spender, bytes32 kek_id, uint256 amount) external;
-    function removeAllowance(address spender, bytes32 kek_id) external;
+    function setAllowance(address spender, uint256 lockId, uint256 amount) external;
+    function increaseAllowance(address spender, uint256 lockId, uint256 amount) external;
+    function removeAllowance(address spender, uint256 lockId) external;
     function setApprovalForAll(address spender, bool approved) external;
-    function transferLocked(address receiver_address, bytes32 source_kek_id, uint256 transfer_amount, bytes32 destination_kek_id) external returns(bytes32,bytes32);
+    function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external returns(uint256,uint256);
 }
