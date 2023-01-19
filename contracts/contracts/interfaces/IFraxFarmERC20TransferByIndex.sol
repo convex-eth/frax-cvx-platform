@@ -19,6 +19,7 @@ interface IFraxFarmERC20 {
             uint256 new_vefxs_multiplier,
             uint256 new_combined_weight
         );
+    function getStakeLiquidityAndEnding(address staker, uint256 locked_stake_index) external view returns (uint256,uint256);
     function lockedStakesOf(address account) external view returns (LockedStake[] memory);
     function lockedStakesOfLength(address account) external view returns (uint256);
     function lockAdditional(uint256 lockId, uint256 addl_liq) external;
