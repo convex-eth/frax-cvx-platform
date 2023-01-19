@@ -355,6 +355,14 @@
             "stakingToken": "0xDbe88DBAc39263c47629ebbA02b3eF4cf0752A72",
             "rewardsAddress": "0x7A03479676D26EE8CF5649aD5Bf6befF83D506a6",
             "name": "Fraxlend FRAX/FXS"
-          }
+          },
+          {
+            "id": 40,
+            "implementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
+            "stakingAddress": "0x9C8d9667d5726aEcA4d24171958BeE9F46861bed",
+            "stakingToken": "0xE6Aa75F98e6c105b821a2dba9Fbbd886b421F06b",
+            "rewardsAddress": "0x051f73417CBe32a32A9a8cc22fBc23c52165E498",
+            "name": "Convex SDT/FraxBP"
+        }
     ]
 }
