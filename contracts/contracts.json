@@ -363,6 +363,29 @@
             "stakingToken": "0xE6Aa75F98e6c105b821a2dba9Fbbd886b421F06b",
             "rewardsAddress": "0x051f73417CBe32a32A9a8cc22fBc23c52165E498",
             "name": "Convex SDT/FraxBP"
+        },{
+            "id": 41,
+            "implementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
+            "stakingAddress": "0x5745506D56b0088f800085b1227B3f1F7d419c89",
+            "stakingToken": "0x3199a1ed1Ad4cb1d1b57939809c8ee79eafE9934",
+            "rewardsAddress": "0x3A9Fd1660870c8cfCf2B062387BE5e7e8e2f4aAa",
+            "name": "Convex clevUSD/FraxBP"
+        },
+        {
+            "id": 42,
+            "implementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
+            "stakingAddress": "0xfB2CCc82755A734C53C8B45f260fFc2df026fe87",
+            "stakingToken": "0x227b7F44468A0EC0FDdfc3FB0cE09b294E62f875",
+            "rewardsAddress": "0x0d905307eb2700324B1185FbA68C120ea5EB87d3",
+            "name": "Convex msUSD/FraxBP"
+        },
+        {
+            "id": 43,
+            "implementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
+            "stakingAddress": "0xc96e1a26264D965078bd01eaceB129A65C09FFE7",
+            "stakingToken": "0x81b0dCDa53482A2EA9eb496342dC787643323e95",
+            "rewardsAddress": "0xbf7c04ff5Dfd896c559fe0648244961dEA19D520",
+            "name": "Convex OHM/FraxBP"
         }
     ]
 }

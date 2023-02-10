@@ -216,7 +216,10 @@ contract("Deploy Pool(s)", async accounts => {
     // await deployConvexPool("0x4edF7C64dAD8c256f6843AcFe56876024b54A1b6", "Convex XAI/FraxBP");
     // await deployERC20Pool("0x73e1e624C6d3E027b8674e6C72F104F1429FC17E", "Fraxlend FRAX/FXS");
 
-    await deployConvexPool("0x9C8d9667d5726aEcA4d24171958BeE9F46861bed", "Convex SDT/FraxBP");
+    // await deployConvexPool("0x9C8d9667d5726aEcA4d24171958BeE9F46861bed", "Convex SDT/FraxBP");
+    await deployConvexPool("0x5745506D56b0088f800085b1227B3f1F7d419c89", "Convex clevUSD/FraxBP");
+    await deployConvexPool("0xfB2CCc82755A734C53C8B45f260fFc2df026fe87", "Convex msUSD/FraxBP");
+    await deployConvexPool("0xc96e1a26264D965078bd01eaceB129A65C09FFE7", "Convex OHM/FraxBP");
 
     console.log("data:");
     console.log(JSON.stringify(deployedData, null, 4));
