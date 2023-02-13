@@ -11,6 +11,8 @@
         "poolRegistry": "0x41a5881c17185383e19Df6FA4EC158a6F4851A69",
         "feeRegistry": "0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D",
         "feeDeposit": "0xcBec22233Dad5E15AB9c02CAA4d914F3c97323f7",
+        "feeDepositV2": "0x7A527d8bB09f7D70C148aB5DE919e9BF68a0d769",
+        "feeReceiverVlCvx": "0xB9A2120F32420f0da2777Ee07BeEeA92d3D2C2B8",
         "vaultErc20Implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
         "vaultConvexImplementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
         "vaultUniImplementation": "",
