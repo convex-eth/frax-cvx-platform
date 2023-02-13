@@ -43,24 +43,30 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
     /// @notice before transfer hook called to sender of lock - checks that receiver is a known convex vault & claims rewards
     /// @dev required to happen because `transferFrom` would otherwise bypass the recipient check
-    function beforeLockTransfer(address from, address to, uint256, bytes memory) external returns (bytes4) {
+    function beforeLockTransfer(address sender, address receiver, uint256 lockId, bytes memory data) external returns (bytes4) {
         //check that the receiver is a legitimate convex vault
-        require(from == address(this) && msg.sender == stakingAddress, "invalid params");
-        if (to != ITransferChecker(poolRegistry).vaultMap(poolId, IProxyVault(to).owner())) revert NonVaultReceiver();
+        require(sender == address(this), "!Sender");
+        require(msg.sender == stakingAddress, "caller!staker");
+        if (receiver != ITransferChecker(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner())) revert NonVaultReceiver();
         
         /// FraxFarm will execute it's getReward, so we only need to process all other rewards logic first.
         claimOnTransfer();
 
-        return this.beforeLockTransfer.selector;
+        // call the owner, if is a contract
+        if (owner.code.length > 0) {
+            return ILockReceiver(owner).beforeLockTransfer(sender, receiver, lockId, data);
+        } else {
+            return ILockReceiver.beforeLockTransfer.selector;
+        }
     }
 
-    function onLockReceived(address from, address to, uint256 lockId, bytes memory data) external returns (bytes4) {
+    function onLockReceived(address sender, address receiver, uint256 lockId, bytes memory data) external returns (bytes4) {
         // if the owner of the vault is a contract try calling onLockReceived on it, return the selector either way
-        require(to == address(this) && msg.sender == stakingAddress, "invalid params");
+        require(receiver == address(this) && msg.sender == stakingAddress, "invalid after params");
         if (owner.code.length > 0) {
-            return ILockReceiver(owner).onLockReceived(from, to, lockId, data);
+            return ILockReceiver(owner).onLockReceived(sender, receiver, lockId, data);
         } else {
-            return this.onLockReceived.selector;
+            return ILockReceiver.onLockReceived.selector;
         }
     }
 
