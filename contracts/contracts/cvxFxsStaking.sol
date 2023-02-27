@@ -63,6 +63,7 @@ contract cvxFxsStaking is ReentrancyGuard{
         address _distributor
     ) public onlyOwner {
         require(rewardData[_rewardsToken].lastUpdateTime == 0);
+        require(_rewardsToken != cvxfxs && _rewardsToken != address(this), "invalid token");
 
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].lastUpdateTime = block.timestamp;
@@ -238,6 +239,7 @@ contract cvxFxsStaking is ReentrancyGuard{
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
     function recoverERC20(address _tokenAddress, uint256 _tokenAmount) external nonReentrant onlyOwner {
         require(rewardData[_tokenAddress].lastUpdateTime == 0, "Cannot withdraw reward token");
+        require(_tokenAddress != cvxfxs, "Cannot withdraw staking token");
         IERC20(_tokenAddress).safeTransfer(IBooster(IVoterProxy(vefxsProxy).operator()).rewardManager(), _tokenAmount);
         emit Recovered(_tokenAddress, _tokenAmount);
     }
