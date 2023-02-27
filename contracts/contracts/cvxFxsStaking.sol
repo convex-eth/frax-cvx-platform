@@ -188,14 +188,14 @@ contract cvxFxsStaking is ReentrancyGuard{
     }
 
     // Claim all pending rewards
-    function getReward(address _forward) public nonReentrant updateReward(msg.sender) {
+    function getReward(address _address) public nonReentrant updateReward(_address) {
         for (uint i; i < rewardTokens.length; i++) {
             address _rewardsToken = rewardTokens[i];
-            uint256 reward = rewards[msg.sender][_rewardsToken];
+            uint256 reward = rewards[_address][_rewardsToken];
             if (reward > 0) {
-                rewards[msg.sender][_rewardsToken] = 0;
-                IERC20(_rewardsToken).safeTransfer(_forward, reward);
-                emit RewardPaid(msg.sender, _rewardsToken, reward);
+                rewards[_address][_rewardsToken] = 0;
+                IERC20(_rewardsToken).safeTransfer(_address, reward);
+                emit RewardPaid(_address, _rewardsToken, reward);
             }
         }
     }
