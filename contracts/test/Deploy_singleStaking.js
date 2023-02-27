@@ -114,6 +114,7 @@ contract("deploy staking contracts", async accounts => {
 
     let fxs = await IERC20.at(contractList.frax.fxs);
     let cvx = await IERC20.at(contractList.system.cvx);
+    let cvxfxs = await IERC20.at(contractList.system.cvxFxs);
     
     let booster = await Booster.at(contractList.system.booster);
     let feeDeposit = await FeeDepositV2.at(contractList.system.feeDepositV2);
@@ -150,6 +151,14 @@ contract("deploy staking contracts", async accounts => {
 
     await staking.rewardData(fxs.address).then(a=>console.log("reward data fxs: " +JSON.stringify(a)));
     await staking.rewardData(cvx.address).then(a=>console.log("reward data cvx: " +JSON.stringify(a)));
+
+
+
+    let tokenholder = "0xd658A338613198204DCa1143Ac3F01A722b5d94A";
+    await unlockAccount(tokenholder);
+    await cvxfxs.transfer(accounts[0],web3.utils.toWei("100000.0", "ether"),{from:tokenholder,gasPrice:0});
+    await cvxfxs.balanceOf(accounts[0]).then(a=>console.log("transfered cvxfxs: " +a));
+    
   });
 });
 
