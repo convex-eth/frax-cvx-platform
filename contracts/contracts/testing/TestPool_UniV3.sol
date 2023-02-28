@@ -91,10 +91,10 @@ contract TestPool_UniV3 {
     function getAllRewardTokens() external view returns (address[] memory) {
         return rewardTokens;
     }
-    function earned(address account) external view returns(uint256){
+    function earned(address ) external pure returns(uint256){
         return 0;
     }
-    function veFXSMultiplier(address account) external view returns(uint256){
+    function veFXSMultiplier(address ) external pure returns(uint256){
         return 0;
     }
     function totalCombinedWeight() external view returns(uint256){
@@ -345,11 +345,11 @@ contract TestPool_UniV3 {
         }
     }
 
-    function getReward(address destination_address) external returns (uint256[] memory){
+    function getReward(address ) external returns (uint256[] memory){
 
     }
 
-    function getReward(address destination_address, bool claim_extras) external returns (uint256[] memory){
+    function getReward(address , bool ) external returns (uint256[] memory){
 
     }
 
@@ -377,11 +377,11 @@ contract TestPool_UniV3 {
     //     }
     // }
 
-    function proxyToggleStaker(address staker) external{
+    function proxyToggleStaker(address ) external{
 
     }
 
-    function stakerSetVeFXSProxy(address proxy) external{
+    function stakerSetVeFXSProxy(address ) external{
 
     }
 

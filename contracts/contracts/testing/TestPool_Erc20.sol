@@ -45,10 +45,10 @@ contract TestPool_Erc20 {
     function getAllRewardTokens() external view returns (address[] memory) {
         return rewardTokens;
     }
-    function earned(address account) external view returns(uint256[] memory new_earned){
+    function earned(address ) external view returns(uint256[] memory new_earned){
         new_earned = new uint256[](rewardTokens.length);
     }
-    function veFXSMultiplier(address account) external view returns(uint256){
+    function veFXSMultiplier(address ) external pure returns(uint256){
         return 0;
     }
     function totalCombinedWeight() external view returns(uint256){
@@ -218,11 +218,11 @@ contract TestPool_Erc20 {
         }
     }
 
-    function getReward(address destination_address) external returns (uint256[] memory _reward){
+    function getReward(address ) external pure returns (uint256[] memory _reward){
         _reward = new uint256[](1);
     }
 
-    function getReward(address destination_address, bool claim_extras) external returns (uint256[] memory _reward){
+    function getReward(address , bool ) external pure returns (uint256[] memory _reward){
         _reward = new uint256[](1);
     }
 
