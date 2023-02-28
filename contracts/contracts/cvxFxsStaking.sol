@@ -7,10 +7,11 @@ import "./interfaces/IVoterProxy.sol";
 import "./interfaces/IFxsDepositor.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
-contract cvxFxsStaking is ReentrancyGuard{
+contract cvxFxsStaking is ERC20, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
 
@@ -36,6 +37,7 @@ contract cvxFxsStaking is ReentrancyGuard{
     //rewards
     address[] public rewardTokens;
     mapping(address => Reward) public rewardData;
+    mapping(address => address) public rewardRedirect;
 
     // Duration that rewards are streamed over
     uint256 public constant rewardsDuration = 86400 * 7;
@@ -47,15 +49,12 @@ contract cvxFxsStaking is ReentrancyGuard{
     mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;
     mapping(address => mapping(address => uint256)) public rewards;
 
-  
-    //mappings for balance data
-    mapping(address => uint256) public balances;
-    uint256 public totalSupply;
- 
-
     /* ========== CONSTRUCTOR ========== */
 
-    constructor() {
+    constructor() ERC20(
+            "Staked CvxFxs",
+            "stkCvxFxs"
+        ){
         IERC20(fxs).approve(fxsDepositor,type(uint256).max);
     }
 
@@ -90,11 +89,11 @@ contract cvxFxsStaking is ReentrancyGuard{
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     //deposit fxs for cvxfxs and stake
-    function deposit(uint256 _amount, bool _lock) public nonReentrant updateReward(msg.sender){
+    function deposit(uint256 _amount, bool _lock) public nonReentrant{
         require(_amount > 0, 'RewardPool : Cannot deposit 0');
 
-        balances[msg.sender] += _amount;
-        totalSupply += _amount;
+        //mint will call _updateReward
+        _mint(msg.sender, _amount);
 
         //transfer fxs
         IERC20(fxs).safeTransferFrom(msg.sender, address(this), _amount);
@@ -110,12 +109,13 @@ contract cvxFxsStaking is ReentrancyGuard{
     }
 
     //deposit cvxfxs
-    function stake(uint256 _amount) public nonReentrant updateReward(msg.sender){
+    function stake(uint256 _amount) public nonReentrant{
         require(_amount > 0, 'RewardPool : Cannot stake 0');
 
-        balances[msg.sender] += _amount;
-        totalSupply += _amount;
+        //mint will call _updateReward
+        _mint(msg.sender, _amount);
 
+        //pull cvxfxs
         IERC20(cvxfxs).safeTransferFrom(msg.sender, address(this), _amount);
         
         emit Staked(msg.sender, _amount);
@@ -132,16 +132,15 @@ contract cvxFxsStaking is ReentrancyGuard{
     function stakeFor(address _for, uint256 _amount)
         external
         nonReentrant
-        updateReward(_for)
         returns(bool)
     {
         require(_amount > 0, 'RewardPool : Cannot stake 0');
         
         //give to _for
-        balances[_for] += _amount;
-        totalSupply += _amount;
+        //mint will call _updateReward
+        _mint(_for, _amount);
 
-        //take away from sender
+        //pull from sender
         IERC20(cvxfxs).safeTransferFrom(msg.sender, address(this), _amount);
         emit Staked(_for, _amount);
         
@@ -149,12 +148,13 @@ contract cvxFxsStaking is ReentrancyGuard{
     }
 
     //withdraw cvxfxs
-    function withdraw(uint256 _amount) external nonReentrant updateReward(msg.sender){
+    function withdraw(uint256 _amount) external nonReentrant{
         require(_amount > 0, 'RewardPool : Cannot withdraw 0');
 
-        balances[msg.sender] -= _amount;
-        totalSupply -= _amount;
+        //burn will call _updateReward
+        _burn(msg.sender, _amount);
 
+        //send cvxfxs
         IERC20(cvxfxs).safeTransfer(msg.sender, _amount);
 
         emit Withdrawn(msg.sender, _amount);
@@ -164,7 +164,7 @@ contract cvxFxsStaking is ReentrancyGuard{
     /* ========== VIEWS ========== */
 
     function _rewardPerToken(address _rewardsToken) internal view returns(uint256) {
-        if (totalSupply == 0) {
+        if (totalSupply() == 0) {
             return rewardData[_rewardsToken].rewardPerTokenStored;
         }
         return
@@ -173,7 +173,7 @@ contract cvxFxsStaking is ReentrancyGuard{
             (_lastTimeRewardApplicable(rewardData[_rewardsToken].periodFinish) - rewardData[_rewardsToken].lastUpdateTime)     
             * rewardData[_rewardsToken].rewardRate
             * 1e18
-            / totalSupply
+            / totalSupply()
         );
     }
 
@@ -207,13 +207,16 @@ contract cvxFxsStaking is ReentrancyGuard{
         for (uint256 i = 0; i < userRewards.length; i++) {
             address token = rewardTokens[i];
             userRewards[i].token = token;
-            userRewards[i].amount = _earned(_account, token,  balances[_account]);
+            userRewards[i].amount = _earned(_account, token,  balanceOf(_account));
         }
         return userRewards;
     }
 
-    function balanceOf(address _user) view external returns(uint256 amount) {
-        return balances[_user];
+    //set any claimed rewards to automatically go to a different address
+    //set address to zero to disable
+    function setRewardRedirect(address _to) external nonReentrant{
+        rewardRedirect[msg.sender] = _to;
+        emit RewardRedirected(msg.sender, _to);
     }
 
     // Claim all pending rewards
@@ -223,7 +226,11 @@ contract cvxFxsStaking is ReentrancyGuard{
             uint256 reward = rewards[_address][_rewardsToken];
             if (reward > 0) {
                 rewards[_address][_rewardsToken] = 0;
-                IERC20(_rewardsToken).safeTransfer(_address, reward);
+                if(rewardRedirect[_address] != address(0)){
+                    IERC20(_rewardsToken).safeTransfer(rewardRedirect[_address], reward);
+                }else{
+                    IERC20(_rewardsToken).safeTransfer(_address, reward);
+                }
                 emit RewardPaid(_address, _rewardsToken, reward);
             }
         }
@@ -272,15 +279,8 @@ contract cvxFxsStaking is ReentrancyGuard{
         emit Recovered(_tokenAddress, _tokenAmount);
     }
 
-    /* ========== MODIFIERS ========== */
-
-    modifier onlyOwner() {
-        require(IBooster(IVoterProxy(vefxsProxy).operator()).rewardManager() == msg.sender, "!owner");
-        _;
-    }
-
-    modifier updateReward(address _account) {
-        uint256 userBal = balances[_account];
+    function _updateReward(address _account) internal{
+        uint256 userBal = balanceOf(_account);
         for (uint i = 0; i < rewardTokens.length; i++) {
             address token = rewardTokens[i];
             rewardData[token].rewardPerTokenStored = _rewardPerToken(token);
@@ -290,6 +290,28 @@ contract cvxFxsStaking is ReentrancyGuard{
                 userRewardPerTokenPaid[_account][token] = rewardData[token].rewardPerTokenStored;
             }
         }
+    }
+
+    function _beforeTokenTransfer(address _from, address _to, uint256 ) internal override {
+        //checkpoint from and to, can skip if address 0 so no extra gas
+        //is used when minting burning
+        if(_from != address(0)){
+            _updateReward(_from);
+        }
+        if(_to != address(0)){
+            _updateReward(_to);
+        }
+    }
+
+    /* ========== MODIFIERS ========== */
+
+    modifier onlyOwner() {
+        require(IBooster(IVoterProxy(vefxsProxy).operator()).rewardManager() == msg.sender, "!owner");
+        _;
+    }
+
+    modifier updateReward(address _account) {
+        _updateReward(_account);
         _;
     }
 
@@ -301,4 +323,5 @@ contract cvxFxsStaking is ReentrancyGuard{
     event Recovered(address _token, uint256 _amount);
     event RewardAdded(address indexed _reward, address indexed _distributor);
     event RewardDistributorApproved(address indexed _reward, address indexed _distributor);
+    event RewardRedirected(address indexed _account, address _forward);
 }
