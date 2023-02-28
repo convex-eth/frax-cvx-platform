@@ -157,7 +157,9 @@ contract("deploy staking contracts", async accounts => {
     let tokenholder = "0xd658A338613198204DCa1143Ac3F01A722b5d94A";
     await unlockAccount(tokenholder);
     await cvxfxs.transfer(accounts[0],web3.utils.toWei("100000.0", "ether"),{from:tokenholder,gasPrice:0});
+    await fxs.transfer(accounts[0],web3.utils.toWei("100000.0", "ether"),{from:tokenholder,gasPrice:0});
     await cvxfxs.balanceOf(accounts[0]).then(a=>console.log("transfered cvxfxs: " +a));
+    await fxs.balanceOf(accounts[0]).then(a=>console.log("transfered fxs: " +a));
     
   });
 });

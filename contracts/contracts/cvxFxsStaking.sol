@@ -4,6 +4,7 @@ pragma solidity 0.8.10;
 import "./interfaces/MathUtil.sol";
 import "./interfaces/IBooster.sol";
 import "./interfaces/IVoterProxy.sol";
+import "./interfaces/IFxsDepositor.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -29,6 +30,8 @@ contract cvxFxsStaking is ReentrancyGuard{
 
     address public constant vefxsProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
     address public constant cvxfxs = address(0xFEEf77d3f69374f66429C91d732A244f074bdf74);
+    address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
+    address public constant fxsDepositor = address(0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e);
 
     //rewards
     address[] public rewardTokens;
@@ -53,6 +56,7 @@ contract cvxFxsStaking is ReentrancyGuard{
     /* ========== CONSTRUCTOR ========== */
 
     constructor() {
+        IERC20(fxs).approve(fxsDepositor,type(uint256).max);
     }
 
     /* ========== ADMIN CONFIGURATION ========== */
@@ -85,6 +89,27 @@ contract cvxFxsStaking is ReentrancyGuard{
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
+    //deposit fxs for cvxfxs and stake
+    function deposit(uint256 _amount, bool _lock) public nonReentrant updateReward(msg.sender){
+        require(_amount > 0, 'RewardPool : Cannot deposit 0');
+
+        balances[msg.sender] += _amount;
+        totalSupply += _amount;
+
+        //transfer fxs
+        IERC20(fxs).safeTransferFrom(msg.sender, address(this), _amount);
+        //deposit, cvxfxs will be returned here
+        IFxsDepositor(fxsDepositor).deposit(_amount,_lock);
+        
+        emit Staked(msg.sender, _amount);
+    }
+
+    //deposit fxs for cvxfxs and stake
+    function deposit(uint256 _amount) external{
+        deposit(_amount, false);
+    }
+
+    //deposit cvxfxs
     function stake(uint256 _amount) public nonReentrant updateReward(msg.sender){
         require(_amount > 0, 'RewardPool : Cannot stake 0');
 
@@ -96,12 +121,14 @@ contract cvxFxsStaking is ReentrancyGuard{
         emit Staked(msg.sender, _amount);
     }
 
+    //deposit all cvxfxs
     function stakeAll() external returns(bool){
         uint256 balance = IERC20(cvxfxs).balanceOf(msg.sender);
         stake(balance);
         return true;
     }
 
+    //deposit cvxfxs and accredit a different address
     function stakeFor(address _for, uint256 _amount)
         external
         nonReentrant
@@ -121,6 +148,7 @@ contract cvxFxsStaking is ReentrancyGuard{
         return true;
     }
 
+    //withdraw cvxfxs
     function withdraw(uint256 _amount) external nonReentrant updateReward(msg.sender){
         require(_amount > 0, 'RewardPool : Cannot withdraw 0');
 
