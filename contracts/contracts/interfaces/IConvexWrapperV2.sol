@@ -8,6 +8,13 @@ interface IConvexWrapperV2{
         uint256 amount;
     }
 
+   struct RewardType {
+        address reward_token;
+        address reward_pool;
+        uint128 reward_integral;
+        uint128 reward_remaining;
+    }
+
   function collateralVault() external view returns(address vault);
   function convexPoolId() external view returns(uint256 _poolId);
   function curveToken() external view returns(address);
@@ -21,6 +28,7 @@ interface IConvexWrapperV2{
   function getReward(address _account) external;
   function getReward(address _account, address _forwardTo) external;
   function rewardLength() external view returns(uint256);
+  function rewards(uint256 _index) external view returns(RewardType memory rewardInfo);
   function earned(address _account) external returns(EarnedData[] memory claimable);
   function earnedView(address _account) external view returns(EarnedData[] memory claimable);
   function setVault(address _vault) external;

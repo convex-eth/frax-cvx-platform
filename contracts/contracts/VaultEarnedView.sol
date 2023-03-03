@@ -20,7 +20,7 @@ contract VaultEarnedView{
         //get list of reward tokens
         address[] memory rewardTokens = IFraxFarmERC20(_stakingAddress).getAllRewardTokens();
         uint256[] memory stakedearned = IFraxFarmERC20(_stakingAddress).earned(_vault);
-        IConvexWrapperV2.EarnedData[] memory convexrewards = IConvexWrapperV2(_wrapper).earnedView(_vault);
+        uint256 convexrewardCnt = IConvexWrapperV2(_wrapper).rewardLength();
 
 
         uint256 extraRewardsLength;
@@ -28,8 +28,8 @@ contract VaultEarnedView{
             extraRewardsLength = IRewards(_extrarewards).rewardTokenLength();
         }
 
-        token_addresses = new address[](rewardTokens.length + extraRewardsLength + convexrewards.length);
-        total_earned = new uint256[](rewardTokens.length + extraRewardsLength + convexrewards.length);
+        token_addresses = new address[](rewardTokens.length + extraRewardsLength + convexrewardCnt);
+        total_earned = new uint256[](rewardTokens.length + extraRewardsLength + convexrewardCnt);
 
         //add any tokens that happen to be already claimed but sitting on the vault
         //(ex. withdraw claiming rewards)
@@ -47,11 +47,11 @@ contract VaultEarnedView{
         }
 
         //add convex farm earned tokens
-        for(uint256 i = 0; i < convexrewards.length; i++){
-            token_addresses[i+rewardTokens.length+extraRewardsLength] = convexrewards[i].token;
+        for(uint256 i = 0; i < convexrewardCnt; i++){
+            IConvexWrapperV2.RewardType memory rinfo = IConvexWrapperV2(_wrapper).rewards(i);
+            token_addresses[i+rewardTokens.length+extraRewardsLength] = rinfo.reward_token;
             //claimed so just look at local balance
-            // total_earned[i+rewardTokens.length+extraRewardsLength] = convexrewards[i].amount;
-            total_earned[i+rewardTokens.length+extraRewardsLength] = IERC20(convexrewards[i].token).balanceOf(_vault);
+            total_earned[i+rewardTokens.length+extraRewardsLength] = IERC20(rinfo.reward_token).balanceOf(_vault);
         }
     }
 
