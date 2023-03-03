@@ -272,6 +272,21 @@ contract("Update fee deposit", async accounts => {
     await staking.addReward(crv.address, deployer, {from:userA}).catch(a=>console.log("revert not owner: "+a))
     await staking.addReward(cvxfxs.address, deployer, {from:deployer}).catch(a=>console.log("revert dont add cvxfxs: "+a))
     await staking.addReward(staking.address, deployer, {from:deployer}).catch(a=>console.log("revert dont add self: "+a))
+    await staking.addReward(fxs.address, deployer, {from:deployer}).catch(a=>console.log("revert already added: "+a))
+
+    var crvholder = "0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2";
+    await unlockAccount(crvholder);
+    await crv.transfer(staking.address,web3.utils.toWei("100000.0", "ether"),{from:crvholder,gasPrice:0});
+    var crvbal = await crv.balanceOf(staking.address);
+    console.log("crv on staking address needs rescue: " +crvbal);
+    await crv.balanceOf(deployer).then(a=>console.log("crv on rescue manager: " +a));
+    await staking.recoverERC20(crv.address, crvbal, {from:userA}).catch(a=>console.log("revert not reward manager: " +a))
+    await staking.recoverERC20(cvx.address, web3.utils.toWei("1.0", "ether"), {from:deployer}).catch(a=>console.log("revert cant rescue rewards: " +a))
+    await staking.recoverERC20(cvxfxs.address, web3.utils.toWei("1.0", "ether"), {from:deployer}).catch(a=>console.log("revert cant rescue staking token: " +a))
+    await staking.recoverERC20(crv.address, crvbal, {from:deployer});
+    console.log("rescue called");
+    await crv.balanceOf(staking.address).then(a=>console.log("crv on staking address: " +a));
+    await crv.balanceOf(deployer).then(a=>console.log("crv on rescue manager: " +a));
     
     //add too much check
     var somenewtoken = await cvxFxsToken.new();
@@ -282,7 +297,8 @@ contract("Update fee deposit", async accounts => {
     console.log("added new token");
     await staking.notifyRewardAmount(somenewtoken.address, web3.utils.toWei("1000000000000000000000000000000000.0", "ether"), {from:deployer} ).catch(a=>console.log("reward add too much revert: " +a));
     await staking.notifyRewardAmount(somenewtoken.address, web3.utils.toWei("100000000000000000000000.0", "ether"), {from:deployer} ).catch(a=>console.log("reward add too much revert: " +a));
-    await staking.notifyRewardAmount(somenewtoken.address, web3.utils.toWei("100000000000.0", "ether"), {from:deployer} ).catch(a=>console.log("reward add too much revert: " +a));
+    await staking.notifyRewardAmount(somenewtoken.address, web3.utils.toWei("100000000000.0", "ether"), {from:userA} ).catch(a=>console.log("reward add not distrib role: " +a));
+    await staking.notifyRewardAmount(somenewtoken.address, web3.utils.toWei("100000000000.0", "ether"), {from:deployer} )
     console.log("reward notified with legit amount");
     await somenewtoken.balanceOf(staking.address).then(a=>console.log("token on staking: " +a));
 
