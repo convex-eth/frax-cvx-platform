@@ -121,8 +121,12 @@ contract("deploy staking contracts", async accounts => {
 
     let staking = await cvxFxsStaking.new({from:deployer});
     console.log("cvxfxs staking: " +staking.address);
+    contractList.system.cvxfxsStaking = staking.address;
     let feerec = await FeeReceiverCvxFxs.new(staking.address,{from:deployer})
     console.log("fee receiver: " +feerec.address);
+    contractList.system.feeReceiverCvxFxs = feerec.address;
+
+    jsonfile.writeFileSync("./contracts.json", contractList, { spaces: 4 });
 
     await staking.addReward(fxs.address,feerec.address,{from:deployer});
     await staking.addReward(cvx.address,feerec.address,{from:deployer});
