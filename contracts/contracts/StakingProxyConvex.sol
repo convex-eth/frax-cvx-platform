@@ -44,7 +44,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
     /// @notice before transfer hook called to sender of lock - checks that receiver is a known convex vault & claims rewards
     /// @dev required to happen because `transferFrom` would otherwise bypass the recipient check
-    function beforeLockTransfer(address sender, address receiver, uint256 lockId, bytes memory data) external returns (bytes4) {
+    function beforeLockTransfer(address sender, address receiver, uint256 lockId, bytes memory data) external override returns (bytes4) {
         //check that the receiver is a legitimate convex vault
         require(sender == address(this), "!Sender");
         require(msg.sender == stakingAddress, "caller!staker");
@@ -64,7 +64,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         }
     }
 
-    function onLockReceived(address sender, address receiver, uint256 lockId, bytes memory data) external returns (bytes4) {
+    function onLockReceived(address sender, address receiver, uint256 lockId, bytes memory data) external override returns (bytes4) {
         // if the owner of the vault is a contract try calling onLockReceived on it, return the selector either way
         require(receiver == address(this) && msg.sender == stakingAddress, "invalid after params");
         if (owner.code.length > 0) {
@@ -227,30 +227,30 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     ////////// Lock Management Authorization //////////
-    function setAllowance(address spender, uint256 _lockId, uint256 amount) external onlyOwner{
+    function setAllowance(address spender, uint256 _lockId, uint256 amount) external override onlyOwner{
         IFraxFarmERC20(stakingAddress).setAllowance(spender, _lockId, amount);
     }
-    function increaseAllowance(address spender, uint256 _lockId, uint256 amount) external onlyOwner{
+    function increaseAllowance(address spender, uint256 _lockId, uint256 amount) external override onlyOwner{
         IFraxFarmERC20(stakingAddress).increaseAllowance(spender, _lockId, amount);
     }
-    function removeAllowance(address spender, uint256 _lockId) external onlyOwner {
+    function removeAllowance(address spender, uint256 _lockId) external override onlyOwner {
         IFraxFarmERC20(stakingAddress).removeAllowance(spender, _lockId);
     }
-    function setApprovalForAll(address spender, bool approved) external onlyOwner {
+    function setApprovalForAll(address spender, bool approved) external override onlyOwner {
         IFraxFarmERC20(stakingAddress).setApprovalForAll(spender, approved);
     }
 
     /// TODO transferLockedFrom isn't called here, but if transferLocked 
 
     // transfer a locked stake to another address
-    function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external onlyOwner nonReentrant returns(uint256,uint256){
+    function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external override onlyOwner nonReentrant returns(uint256,uint256){
         /// @dev the vault check is done in the beforeLockTransfer hook
 
         // Transfer the amount
         return(IFraxFarmERC20(stakingAddress).transferLocked(receiver_address, sender_lock_index, transfer_amount, use_receiver_lock_index, receiver_lock_index));
     }
 
-    function claimOnTransfer() public{
+    function claimOnTransfer() public override{
         //claim convex farm and forward to owner
         IConvexWrapperV2(stakingToken).getReward(address(this),owner);
 
