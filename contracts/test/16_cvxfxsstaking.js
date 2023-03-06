@@ -217,9 +217,9 @@ contract("Update fee deposit", async accounts => {
     await staking.rewardRedirect(userA).then(a=>console.log("redirect A: " +a))
     await staking.rewardRedirect(userB).then(a=>console.log("redirect B: " +a))
 
-    await staking.getReward(userA,{from:userA});
+    await staking.methods['getReward(address)'](userA,{from:userA});
     console.log("claimed");
-    await staking.getReward(userB,{from:userC});
+    await staking.methods['getReward(address)'](userB,{from:userC});
     console.log("claimed unguarded")
 
     await fxs.balanceOf(userA).then(a=>console.log("fxs balance A: " +a))
@@ -229,7 +229,20 @@ contract("Update fee deposit", async accounts => {
     await fxs.balanceOf(userC).then(a=>console.log("fxs balance C: " +a))
     await cvx.balanceOf(userC).then(a=>console.log("cvx balance C: " +a))
 
-    await advanceTime(day);
+    await advanceTime(day/2);
+
+    await staking.getReward(userA, userB, {from:userA});
+    console.log("claimed a to b");
+    await staking.getReward(userB, userD, {from:userC}).catch(a=>console.log("revert forward not self: " +a));
+
+    await fxs.balanceOf(userA).then(a=>console.log("fxs balance A: " +a))
+    await cvx.balanceOf(userA).then(a=>console.log("cvx balance A: " +a))
+    await fxs.balanceOf(userB).then(a=>console.log("fxs balance B: " +a))
+    await cvx.balanceOf(userB).then(a=>console.log("cvx balance B: " +a))
+    await fxs.balanceOf(userC).then(a=>console.log("fxs balance C: " +a))
+    await cvx.balanceOf(userC).then(a=>console.log("cvx balance C: " +a))
+
+    await advanceTime(day/2);
 
     //transfer
     await staking.balanceOf(userB).then(a=>console.log("user B staked: " +a))
@@ -250,10 +263,10 @@ contract("Update fee deposit", async accounts => {
 
     await advanceTime(day*8);
     console.log("rewards ended");
-    await staking.getReward(userA);
-    await staking.getReward(userB);
-    await staking.getReward(userC);
-    await staking.getReward(userD);
+    await staking.methods['getReward(address)'](userA);
+    await staking.methods['getReward(address)'](userB);
+    await staking.methods['getReward(address)'](userC);
+    await staking.methods['getReward(address)'](userD);
     console.log("all claimed");
 
     await fxs.balanceOf(staking.address).then(a=>console.log("fxs left on staking: " +a))

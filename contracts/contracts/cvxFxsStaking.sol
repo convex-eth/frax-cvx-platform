@@ -236,6 +236,22 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard{
         }
     }
 
+    // Claim all pending rewards and forward
+    function getReward(address _address, address _forwardTo) public nonReentrant updateReward(_address) {
+        //if forwarding, require caller is self
+        require(msg.sender == _address, "!self");
+
+        for (uint i; i < rewardTokens.length; i++) {
+            address _rewardsToken = rewardTokens[i];
+            uint256 reward = rewards[_address][_rewardsToken];
+            if (reward > 0) {
+                rewards[_address][_rewardsToken] = 0;
+                IERC20(_rewardsToken).safeTransfer(_forwardTo, reward);
+                emit RewardPaid(_address, _rewardsToken, reward);
+            }
+        }
+    }
+
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
