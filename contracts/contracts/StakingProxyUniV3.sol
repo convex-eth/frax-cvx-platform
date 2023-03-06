@@ -24,7 +24,7 @@ contract StakingProxyUniV3 is StakingProxyBase, ReentrancyGuard{
     }
 
     //initialize vault
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external override{
+    function initialize(address _owner, address _stakingAddress, address , address _rewardsAddress) external override{
         require(owner == address(0),"already init");
 
         //set variables

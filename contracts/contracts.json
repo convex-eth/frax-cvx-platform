@@ -3,6 +3,7 @@
         "voteProxy": "0x59CFCD384746ec3035299D90782Be065e466800B",
         "booster": "0x569f5B842B5006eC17Be02B8b94510BA8e79FbCa",
         "cvx": "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
+        "cvxDistro": "0x449f2fd99174e1785CF2A1c79E665Fec3dD1DdC6",
         "locker": "0x72a19342e8F1838460eBFCCEf09F6585e32db86E",
         "cvxFxs": "0xFEEf77d3f69374f66429C91d732A244f074bdf74",
         "crv": "0xD533a949740bb3306d119CC777fa900bA034cd52",
@@ -11,13 +12,16 @@
         "poolRegistry": "0x41a5881c17185383e19Df6FA4EC158a6F4851A69",
         "feeRegistry": "0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D",
         "feeDeposit": "0xcBec22233Dad5E15AB9c02CAA4d914F3c97323f7",
+        "feeDepositV2": "0x7A527d8bB09f7D70C148aB5DE919e9BF68a0d769",
+        "feeReceiverVlCvx": "0xB9A2120F32420f0da2777Ee07BeEeA92d3D2C2B8",
         "vaultErc20Implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
         "vaultConvexImplementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
         "vaultUniImplementation": "",
         "vaultTempleJointImplementation": "0x64167F69a10Ab360a8C45b8c7db31d7752111181",
         "rewardImplementation": "0xAFd3D38feCEbCdda6d934979d4aC7f17330a96Ca",
         "proxyFactory": "0x66807B5598A848602734B82E432dD88DBE13fC8f",
-        "templeJointManager": "0x599113B0403E3fa613C318aF0Bf75826BeDFB9ec"
+        "templeJointManager": "0x599113B0403E3fa613C318aF0Bf75826BeDFB9ec",
+        "earnedViewer": "0x8261aA0d1EACCd39497e4CF5C8124173e15b4Aca"
     },
     "frax": {
         "frax": "0x853d955aCEf822Db058eb8505911ED77F175b99e",
@@ -363,6 +367,29 @@
             "stakingToken": "0xE6Aa75F98e6c105b821a2dba9Fbbd886b421F06b",
             "rewardsAddress": "0x051f73417CBe32a32A9a8cc22fBc23c52165E498",
             "name": "Convex SDT/FraxBP"
+        },{
+            "id": 41,
+            "implementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
+            "stakingAddress": "0x5745506D56b0088f800085b1227B3f1F7d419c89",
+            "stakingToken": "0x3199a1ed1Ad4cb1d1b57939809c8ee79eafE9934",
+            "rewardsAddress": "0x3A9Fd1660870c8cfCf2B062387BE5e7e8e2f4aAa",
+            "name": "Convex clevUSD/FraxBP"
+        },
+        {
+            "id": 42,
+            "implementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
+            "stakingAddress": "0xfB2CCc82755A734C53C8B45f260fFc2df026fe87",
+            "stakingToken": "0x227b7F44468A0EC0FDdfc3FB0cE09b294E62f875",
+            "rewardsAddress": "0x0d905307eb2700324B1185FbA68C120ea5EB87d3",
+            "name": "Convex msUSD/FraxBP"
+        },
+        {
+            "id": 43,
+            "implementation": "0x03fb8543E933624b45abdd31987548c0D9892F07",
+            "stakingAddress": "0xc96e1a26264D965078bd01eaceB129A65C09FFE7",
+            "stakingToken": "0x81b0dCDa53482A2EA9eb496342dC787643323e95",
+            "rewardsAddress": "0xbf7c04ff5Dfd896c559fe0648244961dEA19D520",
+            "name": "Convex OHM/FraxBP"
         }
     ]
 }
