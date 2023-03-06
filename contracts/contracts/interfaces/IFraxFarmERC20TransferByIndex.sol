@@ -22,9 +22,10 @@ interface IFraxFarmERC20 {
     function getStakeLiquidityAndEnding(address staker, uint256 locked_stake_index) external view returns (uint256,uint256);
     function lockedStakesOf(address account) external view returns (LockedStake[] memory);
     function lockedStakesOfLength(address account) external view returns (uint256);
-    function lockAdditional(uint256 lockId, uint256 addl_liq) external;
-    function lockLonger(uint256 lockId, uint256 new_ending_ts) external;
-    function stakeLocked(uint256 liquidity, uint256 secs) external returns (uint256);
+    // function lockAdditional(uint256 lockId, uint256 addl_liq) external;
+    // function lockLonger(uint256 lockId, uint256 new_ending_ts) external;
+    // function stakeLocked(uint256 liquidity, uint256 secs) external returns (uint256);
+    function manageStake(uint256 liquidity, uint256 secs, bool useTargetStakeIndex, uint256 targetIndex) external returns (uint256);
     function withdrawLocked(uint256 lockId, address destination_address) external returns (uint256);
 
 
@@ -62,4 +63,5 @@ interface IFraxFarmERC20 {
     function removeAllowance(address spender, uint256 lockId) external;
     function setApprovalForAll(address spender, bool approved) external;
     function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external returns(uint256,uint256);
+    function preTransferProcess(address from, address to) external;
 }

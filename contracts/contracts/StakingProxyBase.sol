@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import {IVaultType} from "./interfaces/IProxyVault.sol";
+import "./interfaces/IProxyVault.sol";
 import "./interfaces/IFeeRegistry.sol";
 import "./interfaces/IFraxFarmBase.sol";
 import "./interfaces/IRewards.sol";
@@ -9,7 +9,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 
-contract StakingProxyBase is IVaultType{
+contract StakingProxyBase is IProxyVault{
     using SafeERC20 for IERC20;
 
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
