@@ -7,6 +7,7 @@ import "./StakingProxyBaseTransfers.sol";
 import "./interfaces/IFraxFarmERC20TransferByIndex.sol";
 import "./interfaces/ILockReceiver.sol";
 import "./interfaces/IProxyVault.sol";
+import "./interfaces/IPoolRegistry.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
@@ -47,7 +48,8 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         //check that the receiver is a legitimate convex vault
         require(sender == address(this), "!Sender");
         require(msg.sender == stakingAddress, "caller!staker");
-        if (receiver != ITransferChecker(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner())) revert NonVaultReceiver();
+        //to be modified
+        // if (receiver != IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner())) revert NonVaultReceiver();
         
         /// FraxFarm will execute it's getReward, so we only need to process all other rewards logic first.
         claimOnTransfer();
@@ -71,7 +73,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     //initialize vault
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress, address _poolRegistry, uint256 _pid) external override{
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external override{
         require(owner == address(0),"already init");
 
         //set variables
@@ -80,13 +82,9 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         stakingToken = _stakingToken;
         rewards = _rewardsAddress;
 
-        // set the pool registry & poolId for looking up vault validity on lock transfers
-        poolRegistry = _poolRegistry;
-        poolId = _pid;
-
         //get tokens from pool info
-        (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(poolId);
-
+        (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(IConvexWrapperV2(_stakingToken).convexPoolId());
+    
         curveLpToken = _lptoken;
         convexDepositToken = _token;
 
@@ -98,7 +96,9 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
 
     //create a new locked state of _secs timelength with a Curve LP token
-    function stakeLockedCurveLp(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant returns (uint256 lockId){
+    function stakeLockedCurveLp(uint256 _liquidity, uint256 _secs, bool _useTargetStakeIndex, uint256 targetIndex) external onlyOwner nonReentrant returns (uint256 lockId){
+        console2.log("stakeLockedCurveLp", _liquidity, _secs);
+        console2.log("staker", stakingAddress);
         if(_liquidity > 0){
             //pull tokens from user
             IERC20(curveLpToken).safeTransferFrom(msg.sender, address(this), _liquidity);
@@ -107,7 +107,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IConvexWrapperV2(stakingToken).deposit(_liquidity, address(this));
 
             //stake
-            lockId = IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
+            lockId = IFraxFarmERC20(stakingAddress).manageStake(_liquidity, _secs, _useTargetStakeIndex, targetIndex);
         }
         
         //checkpoint rewards
@@ -115,7 +115,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     //create a new locked state of _secs timelength with a Convex deposit token
-    function stakeLockedConvexToken(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant returns (uint256 lockId){
+    function stakeLockedConvexToken(uint256 _liquidity, uint256 _secs, bool _useTargetStakeIndex, uint256 targetIndex) external onlyOwner nonReentrant returns (uint256 lockId){
         if(_liquidity > 0){
             //pull tokens from user
             IERC20(convexDepositToken).safeTransferFrom(msg.sender, address(this), _liquidity);
@@ -124,7 +124,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IConvexWrapperV2(stakingToken).stake(_liquidity, address(this));
 
             //stake into frax
-            lockId = IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
+            lockId = IFraxFarmERC20(stakingAddress).manageStake(_liquidity, _secs, _useTargetStakeIndex, targetIndex);
         }
         
         //checkpoint rewards
@@ -132,13 +132,13 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     //create a new locked state of _secs timelength
-    function stakeLocked(uint256 _liquidity, uint256 _secs) external onlyOwner nonReentrant returns (uint256 lockId){
+    function stakeLocked(uint256 _liquidity, uint256 _secs, bool _useTargetStakeIndex, uint256 targetIndex) external onlyOwner nonReentrant returns (uint256 lockId){
         if(_liquidity > 0){
             //pull tokens from user
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
             //stake
-            lockId = IFraxFarmERC20(stakingAddress).stakeLocked(_liquidity, _secs);
+            lockId = IFraxFarmERC20(stakingAddress).manageStake(_liquidity, _secs, _useTargetStakeIndex, targetIndex);
         }
         
         //checkpoint rewards
@@ -152,7 +152,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
 
             //add stake
-            IFraxFarmERC20(stakingAddress).lockAdditional(_lockId, _addl_liq);
+            IFraxFarmERC20(stakingAddress).manageStake(_addl_liq, 0, true, _lockId);
         }
         
         //checkpoint rewards
@@ -169,7 +169,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IConvexWrapperV2(stakingToken).deposit(_addl_liq, address(this));
 
             //add stake
-            IFraxFarmERC20(stakingAddress).lockAdditional(_lockId, _addl_liq);
+            IFraxFarmERC20(stakingAddress).manageStake(_addl_liq, 0, true, _lockId);
         }
         
         //checkpoint rewards
@@ -186,7 +186,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IConvexWrapperV2(stakingToken).stake(_addl_liq, address(this));
 
             //add stake
-            IFraxFarmERC20(stakingAddress).lockAdditional(_lockId, _addl_liq);
+            IFraxFarmERC20(stakingAddress).manageStake(_addl_liq, 0, true, _lockId);
         }
         
         //checkpoint rewards
@@ -194,9 +194,9 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     // Extends the lock of an existing stake
-    function lockLonger(uint256 _lockId, uint256 new_ending_ts) external onlyOwner nonReentrant{
+    function lockLonger(uint256 additional_secs, uint256 _targetStakeIndex) external onlyOwner nonReentrant{
         //update time
-        IFraxFarmERC20(stakingAddress).lockLonger(_lockId, new_ending_ts);
+        IFraxFarmERC20(stakingAddress).manageStake(0, additional_secs, true, _targetStakeIndex);
 
         //checkpoint rewards
         _checkpointRewards();
