@@ -122,18 +122,13 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard{
     }
 
     //deposit all cvxfxs
-    function stakeAll() external returns(bool){
+    function stakeAll() external{
         uint256 balance = IERC20(cvxfxs).balanceOf(msg.sender);
         stake(balance);
-        return true;
     }
 
     //deposit cvxfxs and accredit a different address
-    function stakeFor(address _for, uint256 _amount)
-        external
-        nonReentrant
-        returns(bool)
-    {
+    function stakeFor(address _for, uint256 _amount) external nonReentrant{
         require(_amount > 0, 'RewardPool : Cannot stake 0');
         
         //give to _for
@@ -143,8 +138,6 @@ contract cvxFxsStaking is ERC20, ReentrancyGuard{
         //pull from sender
         IERC20(cvxfxs).safeTransferFrom(msg.sender, address(this), _amount);
         emit Staked(_for, _amount);
-        
-        return true;
     }
 
     //withdraw cvxfxs

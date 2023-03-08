@@ -132,6 +132,14 @@ contract("deploy staking contracts", async accounts => {
     await staking.addReward(cvx.address,feerec.address,{from:deployer});
     console.log("added fxs and cvx as reward tokens");
 
+    let cvxdistro = await ICvxDistribution.at(contractList.system.cvxDistro);
+    await cvxdistro.setWeight("0x4f3AD55D7b884CDC48ADD1e2451A13af17887F26",0,{from:deployer}); //remove lp direct
+    await cvxdistro.setWeight(feerec.address,500,{from:deployer}); //move to single staking
+    console.log("set cvx weight")
+
+    await staking.rewardData(fxs.address).then(a=>console.log("reward data fxs: " +JSON.stringify(a)));
+    await staking.rewardData(cvx.address).then(a=>console.log("reward data cvx: " +JSON.stringify(a)));
+
     // ---  msig txs etc and testing ---
     await unlockAccount(multisig);
 
@@ -141,13 +149,6 @@ contract("deploy staking contracts", async accounts => {
     await feeDeposit.setCvxFxsReceiver(feerec.address,true,{from:multisig,gasPrice:0});
     console.log("directed feedeposit cvxfxs rewards to fee receiver");
 
-    await staking.rewardData(fxs.address).then(a=>console.log("reward data fxs: " +JSON.stringify(a)));
-    await staking.rewardData(cvx.address).then(a=>console.log("reward data cvx: " +JSON.stringify(a)));
-
-    let cvxdistro = await ICvxDistribution.at(contractList.system.cvxDistro);
-    await cvxdistro.setWeight(feerec.address,1000,{from:deployer});
-    console.log("set cvx weight")
-
     await advanceTime(4 * day);
     await fxs.balanceOf(feeDeposit.address).then(a=>console.log("fxs on fee deposit: " +a))
     await feeDeposit.distribute({from:deployer});
@@ -155,7 +156,6 @@ contract("deploy staking contracts", async accounts => {
 
     await staking.rewardData(fxs.address).then(a=>console.log("reward data fxs: " +JSON.stringify(a)));
     await staking.rewardData(cvx.address).then(a=>console.log("reward data cvx: " +JSON.stringify(a)));
-
 
 
     let tokenholder = "0xd658A338613198204DCa1143Ac3F01A722b5d94A";
