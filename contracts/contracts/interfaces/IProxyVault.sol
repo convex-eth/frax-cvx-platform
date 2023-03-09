@@ -8,7 +8,7 @@ interface IProxyVault {
         Convex,
         Erc20Joint
     }
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external;
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress, address _poolRegistry, uint256 _pid) external;
     function usingProxy() external returns(address);
     function owner() external returns(address);
     function stakingAddress() external returns(address);
