@@ -69,7 +69,8 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         }
     }
 
-    //initialize vault
+    //initialize vault 
+    /// TODO remove _rewardsAddress from initializer when making Booster changes (to include values needed for vault recipient check)
     function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external override{
         require(owner == address(0),"already init");
 
