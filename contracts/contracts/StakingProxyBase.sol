@@ -46,7 +46,7 @@ contract StakingProxyBase is IProxyVault{
     }
 
     //initialize vault
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external virtual{
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _poolRegistry, uint256 _pid) external virtual{
 
     }
 

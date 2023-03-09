@@ -16,9 +16,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
-    error ConfirmationFailed();
-    error NonVaultReceiver();
-
     /// @dev This pool registry is the version being used - to be made settable during `initialize` call (booster)
     address public constant convexCurveBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
     address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
@@ -28,8 +25,8 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     address public convexDepositToken;
 
     //the poolId for calling vaultMap in the registry to verify a receiver is a legitimate convex vault (for lock transfers)
-    // address public poolRegistry; // TODO not used for anything here - needed for the transfer check though!
-    // uint256 internal poolId;
+    address public poolRegistry;
+    uint256 public poolId;
 
     constructor() {
     }
@@ -48,8 +45,9 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         //check that the receiver is a legitimate convex vault
         require(sender == address(this), "!Sender");
         require(msg.sender == stakingAddress, "caller!staker");
-        //to be modified TODO!
-        // if (receiver != IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner())) revert NonVaultReceiver();
+        
+        //check that the receiver is a legitimate convex vault
+        require(receiver != IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner()), "!receiver");
 
         // call the owner, if is a contract
         if (owner.code.length > 0) {
@@ -70,7 +68,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     //initialize vault
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external override{
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _poolRegistry, uint256 _pid) external override{
         require(owner == address(0),"already init");
 
         //set variables
@@ -78,6 +76,10 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         stakingAddress = _stakingAddress;
         stakingToken = _stakingToken;
         // rewards = _rewardsAddress;
+
+        //set the values needed for the pre-transfer recipient vault check
+        poolRegistry = _poolRegistry;
+        poolId = _pid;
 
         //get tokens from pool info
         (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(IConvexWrapperV2(_stakingToken).convexPoolId());
