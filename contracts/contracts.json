@@ -23,7 +23,8 @@
         "templeJointManager": "0x599113B0403E3fa613C318aF0Bf75826BeDFB9ec",
         "earnedViewer": "0x8261aA0d1EACCd39497e4CF5C8124173e15b4Aca",
         "cvxfxsStaking": "0x49b4d1dF40442f0C31b1BbAEA3EDE7c38e37E31a",
-        "feeReceiverCvxFxs": "0xa1b72482cF45a6F4a0A7EE1DafFdbc66E243622a"
+        "feeReceiverCvxFxs": "0xa1b72482cF45a6F4a0A7EE1DafFdbc66E243622a",
+        "fraxWrapperFactory": "0x8952bFd1ba716cB7bdc553d503b068f4681C5808"
     },
     "frax": {
         "frax": "0x853d955aCEf822Db058eb8505911ED77F175b99e",
