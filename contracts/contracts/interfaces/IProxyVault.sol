@@ -12,7 +12,7 @@ interface IProxyVault {
     function usingProxy() external returns(address);
     function owner() external returns(address);
     function stakingAddress() external returns(address);
-    function rewards() external returns(address);
+    // function rewards() external returns(address);
     function getReward() external;
     function getReward(bool _claim) external;
     function getReward(bool _claim, address[] calldata _rewardTokenList) external;

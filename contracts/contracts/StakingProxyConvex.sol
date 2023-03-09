@@ -28,8 +28,8 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     address public convexDepositToken;
 
     //the poolId for calling vaultMap in the registry to verify a receiver is a legitimate convex vault (for lock transfers)
-    address public poolRegistry;
-    uint256 internal poolId;
+    // address public poolRegistry; // TODO not used for anything here - needed for the transfer check though!
+    // uint256 internal poolId;
 
     constructor() {
     }
@@ -50,11 +50,6 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         require(msg.sender == stakingAddress, "caller!staker");
         //to be modified TODO!
         // if (receiver != IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner())) revert NonVaultReceiver();
-        
-        /// FraxFarm will execute it's getReward, so we only need to process all other rewards logic first.
-        claimOnTransfer();
-        /// TODO or utilize the preTransferProcess on the farm - TBD re: reward token pathway
-        IFraxFarmERC20(stakingAddress).preTransferProcess(sender, receiver);
 
         // call the owner, if is a contract
         if (owner.code.length > 0) {
@@ -82,7 +77,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         owner = _owner;
         stakingAddress = _stakingAddress;
         stakingToken = _stakingToken;
-        rewards = _rewardsAddress;
+        // rewards = _rewardsAddress;
 
         //get tokens from pool info
         (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(IConvexWrapperV2(_stakingToken).convexPoolId());
@@ -111,7 +106,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         }
         
         //checkpoint rewards
-        _checkpointRewards();
+        // _checkpointRewards(); // TODO happens at the farm when interacting with it
     }
 
     //create a new locked state of _secs timelength with a Convex deposit token
@@ -128,7 +123,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         }
         
         //checkpoint rewards
-        _checkpointRewards();
+        // _checkpointRewards(); // TODO happens at the farm when interacting with it
     }
 
     //create a new locked state of _secs timelength
@@ -142,7 +137,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         }
         
         //checkpoint rewards
-        _checkpointRewards();
+        // _checkpointRewards(); // TODO happens at the farm when interacting with it
     }
 
     //add to a current lock
@@ -156,7 +151,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         }
         
         //checkpoint rewards
-        _checkpointRewards();
+        // _checkpointRewards(); // TODO happens at the farm when interacting with it
     }
 
     //add to a current lock
@@ -173,7 +168,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         }
         
         //checkpoint rewards
-        _checkpointRewards();
+        // _checkpointRewards(); // TODO happens at the farm when interacting with it
     }
 
     //add to a current lock
@@ -190,7 +185,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         }
         
         //checkpoint rewards
-        _checkpointRewards();
+        // _checkpointRewards(); // TODO happens at the farm when interacting with it
     }
 
     // Extends the lock of an existing stake
@@ -199,7 +194,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         IFraxFarmERC20(stakingAddress).manageStake(0, additional_secs, true, _targetStakeIndex);
 
         //checkpoint rewards
-        _checkpointRewards();
+        // _checkpointRewards(); // TODO happens at the farm when interacting with it
     }
 
     //withdraw a staked position
@@ -209,7 +204,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         IFraxFarmERC20(stakingAddress).withdrawLocked(_lockId, msg.sender);
 
         //checkpoint rewards
-        _checkpointRewards();
+        // _checkpointRewards(); // TODO happens at the farm when interacting with it
     }
 
     //withdraw a staked position
@@ -223,7 +218,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         IERC20(curveLpToken).transfer(owner,IERC20(curveLpToken).balanceOf(address(this)));
 
         //checkpoint rewards
-        _checkpointRewards();
+        // _checkpointRewards(); // TODO happens at the farm when interacting with it
     }
 
     ////////// Lock Management Authorization //////////
@@ -250,62 +245,35 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         return(IFraxFarmERC20(stakingAddress).transferLocked(receiver_address, sender_lock_index, transfer_amount, use_receiver_lock_index, receiver_lock_index));
     }
 
-    function claimOnTransfer() public override{
-        //claim convex farm and forward to owner
-        IConvexWrapperV2(stakingToken).getReward(address(this),owner);
-
-        //double check there have been no crv/cvx claims directly to this address
-        uint256 b = IERC20(crv).balanceOf(address(this));
-        if(b > 0){
-            IERC20(crv).safeTransfer(owner, b);
-        }
-        b = IERC20(cvx).balanceOf(address(this));
-        if(b > 0){
-            IERC20(cvx).safeTransfer(owner, b);
-        }
-
-        //process fxs fees
-        _processFxs();
-
-        //get list of reward tokens
-        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
-
-        //transfer
-        _transferTokens(rewardTokens);
-
-        //extra rewards
-        _processExtraRewards();
-    }
-
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
     function earned() external view override returns (address[] memory token_addresses, uint256[] memory total_earned) {
         //get list of reward tokens
         address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
         uint256[] memory stakedearned = IFraxFarmERC20(stakingAddress).earned(address(this));
-        IConvexWrapperV2.EarnedData[] memory convexrewards = IConvexWrapperV2(stakingToken).earnedView(address(this));
+        // IConvexWrapperV2.EarnedData[] memory convexrewards = IConvexWrapperV2(stakingToken).earnedView(address(this));
 
-        uint256 extraRewardsLength = IRewards(rewards).rewardTokenLength();
-        token_addresses = new address[](rewardTokens.length + extraRewardsLength + convexrewards.length);
-        total_earned = new uint256[](rewardTokens.length + extraRewardsLength + convexrewards.length);
+        // uint256 extraRewardsLength = IRewards(rewards).rewardTokenLength();
+        // token_addresses = new address[](rewardTokens.length + extraRewardsLength + convexrewards.length);
+        // total_earned = new uint256[](rewardTokens.length + extraRewardsLength + convexrewards.length);
 
         //add any tokens that happen to be already claimed but sitting on the vault
         //(ex. withdraw claiming rewards)
-        for(uint256 i = 0; i < rewardTokens.length; i++){
+        for(uint256 i; i < rewardTokens.length; i++){
             token_addresses[i] = rewardTokens[i];
             total_earned[i] = stakedearned[i] + IERC20(rewardTokens[i]).balanceOf(address(this));
         }
 
-        IRewards.EarnedData[] memory extraRewards = IRewards(rewards).claimableRewards(address(this));
-        for(uint256 i = 0; i < extraRewards.length; i++){
-            token_addresses[i+rewardTokens.length] = extraRewards[i].token;
-            total_earned[i+rewardTokens.length] = extraRewards[i].amount;
-        }
+        // IRewards.EarnedData[] memory extraRewards = IRewards(rewards).claimableRewards(address(this));
+        // for(uint256 i; i < extraRewards.length; i++){
+        //     token_addresses[i+rewardTokens.length] = extraRewards[i].token;
+        //     total_earned[i+rewardTokens.length] = extraRewards[i].amount;
+        // }
 
-        //add convex farm earned tokens
-        for(uint256 i = 0; i < convexrewards.length; i++){
-            token_addresses[i+rewardTokens.length+extraRewardsLength] = convexrewards[i].token;
-            total_earned[i+rewardTokens.length+extraRewardsLength] = convexrewards[i].amount;
-        }
+        // //add convex farm earned tokens
+        // for(uint256 i; i < convexrewards.length; i++){
+        //     token_addresses[i+rewardTokens.length+extraRewardsLength] = convexrewards[i].token;
+        //     total_earned[i+rewardTokens.length+extraRewardsLength] = convexrewards[i].amount;
+        // }
     }
 
     /*
@@ -333,7 +301,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             //claim frax farm
             IFraxFarmERC20(stakingAddress).getReward(address(this));
             //claim convex farm and forward to owner
-            IConvexWrapperV2(stakingToken).getReward(address(this),owner);
+            // IConvexWrapperV2(stakingToken).getReward(address(this),owner);
 
             //double check there have been no crv/cvx claims directly to this address
             uint256 b = IERC20(crv).balanceOf(address(this));
@@ -356,7 +324,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         _transferTokens(rewardTokens);
 
         //extra rewards
-        _processExtraRewards();
+        // _processExtraRewards(); // TODO No extra rewards to process - held by GaugeExtraRewardDistributor
     }
 
     //auxiliary function to supply token list(save a bit of gas + dont have to claim everything)
@@ -369,7 +337,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             //claim frax farm
             IFraxFarmERC20(stakingAddress).getReward(address(this));
             //claim convex farm and forward to owner
-            IConvexWrapperV2(stakingToken).getReward(address(this),owner);
+            // IConvexWrapperV2(stakingToken).getReward(address(this),owner);
         }
 
         //process fxs fees
@@ -379,7 +347,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         _transferTokens(_rewardTokenList);
 
         //extra rewards
-        _processExtraRewards();
+        // _processExtraRewards(); // TODO No extra rewards to process - held by GaugeExtraRewardDistributor
     }
 
 }
