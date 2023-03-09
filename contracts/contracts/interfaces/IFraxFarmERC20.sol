@@ -30,6 +30,7 @@ interface IFraxFarmERC20 {
 
 
     function periodFinish() external view returns (uint256);
+    function rewardsDuration() external view returns (uint256);
     function getAllRewardTokens() external view returns (address[] memory);
     function earned(address account) external view returns (uint256[] memory new_earned);
     function totalLiquidityLocked() external view returns (uint256);
@@ -62,4 +63,5 @@ interface IFraxFarmERC20 {
     function removeAllowance(address spender, bytes32 kek_id) external;
     function setApprovalForAll(address spender, bool approved) external;
     function transferLocked(address receiver_address, bytes32 source_kek_id, uint256 transfer_amount, bytes32 destination_kek_id) external returns(bytes32,bytes32);
+    function setRewardVars(address reward_token_address, uint256 _new_rate, address _gauge_controller_address, address _rewards_distributor_address) external;
 }
