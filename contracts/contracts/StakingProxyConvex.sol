@@ -330,7 +330,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         _transferTokens(rewardTokens);
 
         //extra rewards
-        _checkpointRewards();
+        _processExtraRewards();
     }
 
     //auxiliary function to supply token list(save a bit of gas + dont have to claim everything)
@@ -353,7 +353,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         _transferTokens(_rewardTokenList);
 
         //extra rewards
-        _checkpointRewards();
+        _processExtraRewards();
     }
 
 }
