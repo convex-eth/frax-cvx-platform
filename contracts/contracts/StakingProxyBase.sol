@@ -19,7 +19,7 @@ contract StakingProxyBase is IProxyVault{
     address public owner; //owner of the vault
     address public stakingAddress; //farming contract
     address public stakingToken; //farming token
-    // address public rewards; //extra rewards on convex
+    address public rewards; //extra rewards on convex
     address public usingProxy; //address of proxy being used
 
     uint256 public constant FEE_DENOMINATOR = 10000;
@@ -50,28 +50,34 @@ contract StakingProxyBase is IProxyVault{
 
     }
 
-    // function changeRewards(address _rewardsAddress) external onlyAdmin{
+    function changeRewards(address _rewardsAddress) external onlyAdmin{
         
-    //     //remove from old rewards and claim
-    //     if(IRewards(rewards).active()){
-    //         uint256 bal = IRewards(rewards).balanceOf(address(this));
-    //         if(bal > 0){
-    //             IRewards(rewards).withdraw(owner, bal);
-    //         }
-    //         IRewards(rewards).getReward(owner);
-    //     }
+        //remove from old rewards and claim
+        if(IRewards(rewards).active()){
+            uint256 bal = IRewards(rewards).balanceOf(address(this));
+            if(bal > 0){
+                IRewards(rewards).withdraw(owner, bal);
+            }
+            IRewards(rewards).getReward(owner);
+        }
 
-    //     //set to new rewards
-    //     rewards = _rewardsAddress;
+        //set to new rewards
+        rewards = _rewardsAddress;
 
-    //     //update balance
-    //     _checkpointRewards();
-    // }
+        //update balance
+        _checkpointRewards();
+    }
 
     //checkpoint weight on farm by calling getReward as its the lowest cost thing to do.
     function checkpointRewards() external onlyAdmin{
         //checkpoint the frax farm
         _checkpointFarm();
+    }
+
+    /// Added so vaults can checkpoint rewards in beforeLockTransfer
+    function checkpointVaultRewards() public {
+        //checkpoint the rewards contract
+        _checkpointRewards();
     }
 
     function _checkpointFarm() internal{
@@ -103,23 +109,23 @@ contract StakingProxyBase is IProxyVault{
     function setApprovalForAll(address spender, bool approved) external virtual{}
     function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external virtual returns(uint256,uint256){}
 
-    // //checkpoint and add/remove weight to convex rewards contract
-    // function _checkpointRewards() internal{
-    //     //if rewards are active, checkpoint
-    //     if(IRewards(rewards).active()){
-    //         //using liquidity shares from staking contract will handle rebasing tokens correctly
-    //         uint256 userLiq = IFraxFarmBase(stakingAddress).lockedLiquidityOf(address(this));
-    //         //get current balance of reward contract
-    //         uint256 bal = IRewards(rewards).balanceOf(address(this));
-    //         if(userLiq >= bal){
-    //             //add the difference to reward contract
-    //             IRewards(rewards).deposit(owner, userLiq - bal);
-    //         }else{
-    //             //remove the difference from the reward contract
-    //             IRewards(rewards).withdraw(owner, bal - userLiq);
-    //         }
-    //     }
-    // }
+    //checkpoint and add/remove weight to convex rewards contract
+    function _checkpointRewards() internal{
+        //if rewards are active, checkpoint
+        if(IRewards(rewards).active()){
+            //using liquidity shares from staking contract will handle rebasing tokens correctly
+            uint256 userLiq = IFraxFarmBase(stakingAddress).lockedLiquidityOf(address(this));
+            //get current balance of reward contract
+            uint256 bal = IRewards(rewards).balanceOf(address(this));
+            if(userLiq >= bal){
+                //add the difference to reward contract
+                IRewards(rewards).deposit(owner, userLiq - bal);
+            }else{
+                //remove the difference from the reward contract
+                IRewards(rewards).withdraw(owner, bal - userLiq);
+            }
+        }
+    }
 
     //apply fees to fxs and send remaining to owner
     function _processFxs() internal{
@@ -141,20 +147,20 @@ contract StakingProxyBase is IProxyVault{
         }
     }
 
-    // //get extra rewards
-    // function _processExtraRewards() internal{
-    //     if(IRewards(rewards).active()){
-    //         //check if there is a balance because the reward contract could have be activated later
-    //         //dont use _checkpointRewards since difference of 0 will still call deposit() and cost gas
-    //         uint256 bal = IRewards(rewards).balanceOf(address(this));
-    //         uint256 userLiq = IFraxFarmBase(stakingAddress).lockedLiquidityOf(address(this));
-    //         if(bal == 0 && userLiq > 0){
-    //             //bal == 0 and liq > 0 can only happen if rewards were turned on after staking
-    //             IRewards(rewards).deposit(owner,userLiq);
-    //         }
-    //         IRewards(rewards).getReward(owner);
-    //     }
-    // }
+    //get extra rewards
+    function _processExtraRewards() internal{
+        if(IRewards(rewards).active()){
+            //check if there is a balance because the reward contract could have be activated later
+            //dont use _checkpointRewards since difference of 0 will still call deposit() and cost gas
+            uint256 bal = IRewards(rewards).balanceOf(address(this));
+            uint256 userLiq = IFraxFarmBase(stakingAddress).lockedLiquidityOf(address(this));
+            if(bal == 0 && userLiq > 0){
+                //bal == 0 and liq > 0 can only happen if rewards were turned on after staking
+                IRewards(rewards).deposit(owner,userLiq);
+            }
+            IRewards(rewards).getReward(owner);
+        }
+    }
 
     //transfer other reward tokens besides fxs(which needs to have fees applied)
     function _transferTokens(address[] memory _tokens) internal{
