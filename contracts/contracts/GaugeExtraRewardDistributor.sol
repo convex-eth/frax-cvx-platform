@@ -68,7 +68,7 @@ contract GaugeExtraRewardDistributor {
         if(balance > 0){
             IERC20(cvx).transfer(farm, balance);
         }
-        IFraxFarmERC20(_farm).setRewardVars(cvx, rewardRate, address(0), address(this));
+        IFraxFarmERC20(_farm).setRewardVars(cvx, rewardRate, address(0), address(0)); //keep distributor 0 since its shared
         emit Distributed(cvx, rewardRate);
     }
 }
