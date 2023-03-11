@@ -107,7 +107,7 @@ contract StakingProxyBase is IProxyVault{
     function increaseAllowance(address spender, uint256 _lockId, uint256 amount) external virtual{}
     function removeAllowance(address spender, uint256 _lockId) external virtual{}
     function setApprovalForAll(address spender, bool approved) external virtual{}
-    function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external virtual returns(uint256,uint256){}
+    // function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external virtual returns(uint256,uint256){}
 
     //checkpoint and add/remove weight to convex rewards contract
     function _checkpointRewards() internal{

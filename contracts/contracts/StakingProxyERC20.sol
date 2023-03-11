@@ -159,7 +159,7 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
     /// @param receiver_lock_index The target destination locked stake index to send liquidity to (ignored if use_reciever_lock_index is false)
     /// @return uint256 The sender's locked stake index
     /// @return uint256 The receiver's locked stake index
-    function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external override onlyOwner nonReentrant returns(uint256,uint256){
+    function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external onlyOwner nonReentrant returns(uint256,uint256){
         return(IFraxFarmERC20(stakingAddress).transferLocked(receiver_address, sender_lock_index, transfer_amount, use_receiver_lock_index, receiver_lock_index));
     }
 

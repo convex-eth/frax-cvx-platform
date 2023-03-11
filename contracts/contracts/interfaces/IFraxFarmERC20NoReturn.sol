@@ -4,11 +4,11 @@ pragma solidity >=0.8.0;
 interface IFraxFarmERC20NoReturn {
     
     struct LockedStake {
-        bytes32 kek_id;
+        // bytes32 kek_id;
         uint256 start_timestamp;
         uint256 liquidity;
         uint256 ending_timestamp;
-        uint256 lock_multiplier; // 6 decimals of precision. 1x = 1000000
+        uint256 lock_multiplier;
     }
 
     function owner() external view returns (address);
@@ -20,11 +20,25 @@ interface IFraxFarmERC20NoReturn {
             uint256 new_vefxs_multiplier,
             uint256 new_combined_weight
         );
+    
+    // stake management & getters
+    // function lockedStakesOf(address account) external view returns (LockedStake[] memory);
+    // function lockedStakesOfLength(address account) external view returns (uint256);
+    // function lockAdditional(bytes32 kek_id, uint256 addl_liq) external;
+    // function stakeLocked(uint256 liquidity, uint256 secs) external;
+    // function withdrawLocked(bytes32 kek_id, address destination_address) external;
+    function getStakeLiquidityAndEnding(address staker, uint256 locked_stake_index) external view returns (uint256,uint256);
     function lockedStakesOf(address account) external view returns (LockedStake[] memory);
     function lockedStakesOfLength(address account) external view returns (uint256);
-    function lockAdditional(bytes32 kek_id, uint256 addl_liq) external;
-    function stakeLocked(uint256 liquidity, uint256 secs) external;
-    function withdrawLocked(bytes32 kek_id, address destination_address) external;
+    function manageStake(uint256 liquidity, uint256 secs, bool useTargetStakeIndex, uint256 targetIndex) external;
+    function withdrawLocked(uint256 lockId, address destination_address) external;
+    
+    // stake transfer functions
+    function setAllowance(address spender, uint256 lockId, uint256 amount) external;
+    function increaseAllowance(address spender, uint256 lockId, uint256 amount) external;
+    function removeAllowance(address spender, uint256 lockId) external;
+    function setApprovalForAll(address spender, bool approved) external;
+    function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external;
 
 
 
