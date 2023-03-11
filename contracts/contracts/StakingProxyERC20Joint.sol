@@ -5,8 +5,6 @@ import "./StakingProxyBase.sol";
 import "./interfaces/IFraxFarmERC20NoReturn.sol";
 import "./interfaces/IJointVaultManager.sol";
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
-import "./interfaces/ILockReceiver.sol";
-import "./interfaces/IProxyVault.sol";
 
 
 contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
@@ -77,53 +75,6 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
         _setVeFXSProxy(_proxy);
     }
 
-
-    /// @notice before transfer hook called to sender of lock - checks that receiver is a known convex vault & checkpoints extra rewards
-    /// @param sender The address sending locked stakes to receiver
-    /// @param receiver The address receiving locked stake from sender
-    /// @param lockId The lockId of the stake sender is transferring from
-    /// @param data Curently just bytes(0), emulates onERC721Received standard
-    /// @return bytes4 This function selector as bytes4
-    function beforeLockTransfer(address sender, address receiver, uint256 lockId, bytes memory data) external override returns (bytes4) {
-        //sender must be this vault
-        require(sender == address(this), "!Sender");
-        //can only be called from the staker/frax farm
-        require(msg.sender == stakingAddress, "caller!staker");
-        // TODO modify this to work as desired
-        //check that the receiver is a legitimate convex vault
-        // require(receiver == IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner()), "receiver!vault");
-        
-        /// Checkpoint rewards in both vaults
-        _checkpointRewards();
-        IProxyVault(receiver).checkpointVaultRewards();
-
-        // if the owner of the vault is a contract try calling onLockReceived on it, return the selector either way
-        if (owner.code.length > 0) {
-            return ILockReceiver(owner).beforeLockTransfer(sender, receiver, lockId, data);
-        } else {
-            return ILockReceiver.beforeLockTransfer.selector;
-        }
-    }
-
-    /// @notice onLockReceived callback - calls to the receiving vault from the farm
-    /// @param sender The address sending locked stakes to receiver
-    /// @param receiver The address receiving locked stake from sender
-    /// @param lockId The lockId of the receiver's new position
-    /// @param data Curently just bytes(0), emulates onERC721Received standard
-    /// @return bytes4 This function selector as bytes4
-    function onLockReceived(address sender, address receiver, uint256 lockId, bytes memory data) external override returns (bytes4) {
-        //sender must be this vault
-        require(receiver == address(this), "!Receiver");
-        //can only be called from the staker/frax farm
-        require(msg.sender == stakingAddress, "caller!staker");
-
-        // if the owner of the vault is a contract try calling onLockReceived on it, 
-        if (owner.code.length > 0) {
-            return ILockReceiver(owner).onLockReceived(sender, receiver, lockId, data);
-        } else {
-            return ILockReceiver.onLockReceived.selector;
-        }
-    }
 
     //create a new locked state of _secs timelength
     function stakeLocked(uint256 _liquidity, uint256 _secs, bool _useTargetStakeIndex, uint256 targetIndex) external onlyOwner nonReentrant{
