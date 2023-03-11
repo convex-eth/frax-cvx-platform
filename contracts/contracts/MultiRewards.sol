@@ -9,7 +9,8 @@ import "./interfaces/IRewards.sol";
 import "./interfaces/IRewardHook.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-
+import './interfaces/IVaultRegistry.sol';
+import './interfaces/IProxyVault.sol';
 
 
 contract MultiRewards is IRewards{
@@ -55,10 +56,15 @@ contract MultiRewards is IRewards{
     bool public active;
     bool public init;
 
+    address public immutable vaultRegistry;
+    address public immutable staker;
+
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(address _poolRegistry) {
+    constructor(address _poolRegistry, address _vaultRegistry, address _staker) {
         poolRegistry = _poolRegistry;
+        vaultRegistry = _vaultRegistry;
+        staker = _staker;
     }
 
     function initialize(uint256 _pid, bool _startActive) external{
@@ -115,7 +121,9 @@ contract MultiRewards is IRewards{
 
     function deposit(address _owner, uint256 _amount) external updateReward(msg.sender){
         //only allow registered vaults to call
-        require(IPoolRegistry(poolRegistry).vaultMap(poolId,_owner) == msg.sender, "!auth");
+        // require(IPoolRegistry(poolRegistry).vaultMap(poolId,_owner) == msg.sender, "!auth");
+        // todo - could redirect this to the VaultRegistry instead, but requires: vaultRegistry, staking, vaultOwner, & vault addy's instead
+        require(IVaultRegistry(vaultRegistry).isVault(staker, _owner, msg.sender), "!auth");
 
         balances[msg.sender] += _amount;
         totalSupply += _amount;
@@ -129,7 +137,9 @@ contract MultiRewards is IRewards{
 
     function withdraw(address _owner, uint256 _amount) external updateReward(msg.sender){
         //only allow registered vaults to call
-        require(IPoolRegistry(poolRegistry).vaultMap(poolId,_owner) == msg.sender, "!auth");
+        // require(IPoolRegistry(poolRegistry).vaultMap(poolId,_owner) == msg.sender, "!auth");
+        // todo - could redirect this to the VaultRegistry instead, but requires: vaultRegistry, staking, vaultOwner, & vault addy's instead
+        require(IVaultRegistry(vaultRegistry).isVault(staker, _owner, msg.sender), "!auth");
 
         balances[msg.sender] -= _amount;
         totalSupply -= _amount;

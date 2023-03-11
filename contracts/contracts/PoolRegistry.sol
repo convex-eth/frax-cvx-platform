@@ -13,7 +13,8 @@ contract PoolRegistry {
     address public rewardImplementation;
     bool public rewardsStartActive;
     PoolInfo[] public poolInfo;
-    mapping(uint256 => mapping(address => address)) public vaultMap; //pool -> user -> vault
+    /// TODO vaultMap *could* be deprecated in favor of the VaultRegistry, but requires some slight refactoring in MultiRewards to handle this
+    // mapping(uint256 => mapping(address => address)) public vaultMap; //pool -> user -> vault
     mapping(uint256 => address[]) public poolVaultList; //pool -> vault array
     
     struct PoolInfo {
@@ -116,7 +117,8 @@ contract PoolRegistry {
 
     //clone a new user vault
     function addUserVault(uint256 _pid, address _user) external onlyOperator returns(address vault, address stakingAddress, address stakingToken, address rewards){
-        require(vaultMap[_pid][_user] == address(0), "already exists");
+        /// @dev - Users may need to be able to have multiple vaults due to max_locked_stakes limitation on the Farm
+        // require(vaultMap[_pid][_user] == address(0), "already exists");
 
         PoolInfo storage pool = poolInfo[_pid];
         require(pool.active > 0, "!active");
@@ -124,9 +126,9 @@ contract PoolRegistry {
         //create
         vault = IProxyFactory(proxyFactory).clone(pool.implementation);
         //add to user map
-        vaultMap[_pid][_user] = vault;
+        // vaultMap[_pid][_user] = vault; // todo could remove this d/t using vault registry (see note in VaultRegistry)
         //add to pool vault list
-        poolVaultList[_pid].push(vault);
+        poolVaultList[_pid].push(vault); // todo relevant to this pool registry, so no need to store in vault registry
 
         //return values
         stakingAddress = pool.stakingAddress;

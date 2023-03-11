@@ -4,10 +4,11 @@ pragma solidity 0.8.10;
 
 import "./interfaces/IStaker.sol";
 import "./interfaces/IPoolRegistry.sol";
-import "./interfaces/IProxyVault.sol";
+import {IProxyVault} from "./interfaces/IProxyVault.sol";
 import "./interfaces/IProxyOwner.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import './interfaces/IVaultRegistry.sol';
 
 
 /*
@@ -24,6 +25,7 @@ contract Booster{
     address public immutable proxy;
     address public immutable poolRegistry;
     address public immutable feeRegistry;
+    address public vaultRegistry;
     address public owner;
     address public pendingOwner;
     address public poolManager;
@@ -124,6 +126,12 @@ contract Booster{
     function setPoolManager(address _pmanager) external onlyOwner{
         poolManager = _pmanager;
         emit PoolManagerChanged(_pmanager);
+    }
+
+    function setVaultRegistry(address _vaultRegistry) external onlyOwner{
+        require(vaultRegistry == address(0), "vaultReg already set!");
+        vaultRegistry = _vaultRegistry;
+        emit VaultRegistryChanged(_vaultRegistry);
     }
     
     //shutdown this contract.
@@ -269,6 +277,9 @@ contract Booster{
     	//create minimal proxy vault for specified pool
         (address vault, address stakeAddress, address stakeToken, address rewards) = IPoolRegistry(poolRegistry).addUserVault(_pid, msg.sender);
 
+        //register the vault in the vaultRegistry - this could alternatively be done in the pool registry
+        IVaultRegistry(vaultRegistry).activateUserVault(stakeAddress, msg.sender, vault);
+
     	//make voterProxy call proxyToggleStaker(vault) on the pool's stakingAddress to set it as a proxied child
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("proxyToggleStaker(address)")), vault);
         _proxyCall(stakeAddress,data);
@@ -319,4 +330,5 @@ contract Booster{
     event DelegateSet(address indexed _address);
     event FeesClaimed(uint256 _amount);
     event Recovered(address indexed _token, uint256 _amount);
+    event VaultRegistryChanged(address indexed _address);
 }
