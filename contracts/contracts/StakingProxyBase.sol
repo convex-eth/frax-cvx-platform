@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import "./interfaces/IProxyVault.sol";
-import "./interfaces/IFeeRegistry.sol";
-import "./interfaces/IFraxFarmBase.sol";
-import "./interfaces/IRewards.sol";
+import './interfaces/IProxyVault.sol';
+import './interfaces/IFeeRegistry.sol';
+import './interfaces/IFraxFarmBase.sol';
+import './interfaces/IRewards.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import "./interfaces/IProxyVault.sol";
-import "./interfaces/ILockReceiver.sol";
-// import "./interfaces/IPoolRegistry.sol";
+import './interfaces/ILockReceiver.sol';
+import './interfaces/IVaultRegistry.sol';
 
 
 contract StakingProxyBase is IProxyVault{
@@ -18,6 +17,7 @@ contract StakingProxyBase is IProxyVault{
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
     address public constant vefxsProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
     address public constant feeRegistry = address(0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D); //fee registry
+    address public constant poolRegistry = address(0x7413bFC877B5573E29f964d572f421554d8EDF86);
 
     address public owner; //owner of the vault
     address public stakingAddress; //farming contract
@@ -27,11 +27,8 @@ contract StakingProxyBase is IProxyVault{
 
     uint256 public constant FEE_DENOMINATOR = 10000;
 
-    //the poolId for calling vaultMap in the registry to verify a receiver is a legitimate convex vault (for lock transfers)
-    /// TODO update the pre transfer vault check mechanism
-    address public constant poolRegistry = address(0x7413bFC877B5573E29f964d572f421554d8EDF86);
-    // address public poolRegistry;
-    // uint256 public poolId;
+    //vaultRegistry is where all transferrable vault addresses are stored
+    address public vaultRegistry;
 
     constructor() {
     }
@@ -70,11 +67,11 @@ contract StakingProxyBase is IProxyVault{
         require(sender == address(this), "!Sender");
         //can only be called from the staker/frax farm
         require(msg.sender == stakingAddress, "caller!staker");
-        // TODO modify this to work as desired
+
         //check that the receiver is a legitimate convex vault
-        // require(receiver == IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner()), "receiver!vault");
+        require(IVaultRegistry(vaultRegistry).isVault(stakingAddress, IProxyVault(receiver).owner(), receiver), "receiver!vault");
         
-        /// Checkpoint rewards in both vaults
+        //checkpoint rewards in both vaults
         _checkpointRewards();
         IProxyVault(receiver).checkpointVaultRewards();
 

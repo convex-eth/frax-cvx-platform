@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/ICurveConvex.sol";
 import "./interfaces/IConvexWrapperV2.sol";
 import "./interfaces/IFraxFarmERC20.sol";
+import './interfaces/IBooster.sol';
 
 
 contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
@@ -45,6 +46,9 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     
         curveLpToken = _lptoken;
         convexDepositToken = _token;
+
+        //set the vault registry - could be done as an immutable var
+        vaultRegistry = IBooster(msg.sender).vaultRegistry();
 
         //set infinite approvals
         IERC20(_stakingToken).approve(_stakingAddress, type(uint256).max);
