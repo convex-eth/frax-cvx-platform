@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-    /** @notice
-        There needs to be an immutable list of all Convex Vaults ever deployed for a given staking contract.
+    /** 
+        @title Vaut Registry
+        @author ZrowGz at Pitch Foundation for Convex
+        @notice There needs to be an immutable list of all Convex Vaults ever deployed for a given staking contract.
         This is because transfers from one vault to another:
           - must be verifiably convex vaults
           - may not originate from the same pool id
@@ -24,14 +26,14 @@ pragma solidity 0.8.10;
     */
 
 contract VaultRegistry {
-    // farm -> owner -> vault -> bool
+    /// @notice Storage of all active transferrable Convex Vaults: farm -> owner -> vault -> bool
     mapping(address=>mapping(address=>mapping(address=>bool))) private stakerOwnerVaultMap;
     
-    // a booster should be allowed to write this when vault is created
-    // if booster is upgraded but the same farms are used, a new booster may need to be able to write to this
-    // address public booster;
+    /// @notice Booster address -> booster state (true == allowed), activates vault during vault deployment/creation
+    /// @dev if booster is upgraded but the same farm(s) are used, a new booster may need to be able to write to this as well
     mapping(address=>bool) public isBooster;
 
+    /// @notice Owner grants permissions to boosters, which are able to activate vaults as belonging to the Convex Ecosystem
     address public owner;
 
     constructor() {//address _booster) {
@@ -39,12 +41,19 @@ contract VaultRegistry {
         // setBooster(_booster, true); // can do this after to use immutable vars to save users gas
     }
 
+    /// @notice Allows owner to activate (or deactivate) boosters, granting the address permission
+    /// @param _booster The address to grant permissions to
+    /// @param _isActive The status of the _booster's permissions (true == active)
     function setBooster(address _booster, bool _isActive) public {
         require(msg.sender == owner, "!owner");
         isBooster[_booster] = _isActive;
     }
 
-    //set the user's vault to true - this will always be a vault, so no need to be able to disable it
+    /// @notice Set's the user's vault to true - this will always be a vault, so no need to be able to disable it
+    /// @param _staker The FraxFarm staking contract address
+    /// @param _vaultOwner The owner of the vault to activate
+    /// @param _vault The address of the vault being deployed by a valid Convex Booster
+    /// @dev Only callable by a registered Booster - todo could be changed to pool registry...
     function activateUserVault(address _staker, address _vaultOwner, address _vault) external {
         require(isBooster[msg.sender], "!booster");
 
@@ -52,6 +61,11 @@ contract VaultRegistry {
         stakerOwnerVaultMap[_staker][_vaultOwner][_vault] = true;
     }
 
+    /// @notice Looks up whether a vault is active or not for a given vault owner within a given staking contract/frax farm
+    /// @param _staker The FraxFarm staking contract address
+    /// @param _vaultOwner The owner of the vault to look up
+    /// @param _vault The address of the vault being verified as a valid Convex Vault
+    /// @return bool True if it is a Convex ecosystem vault, False if it is not
     function isVault(address _staker, address _vaultOwner, address _vault) external view returns (bool) {
         return(stakerOwnerVaultMap[_staker][_vaultOwner][_vault]);
     }
