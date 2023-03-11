@@ -1,25 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "./StakingProxyBase.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/ICurveConvex.sol";
 import "./interfaces/IConvexWrapperV2.sol";
-import "./StakingProxyBase.sol";
-import "./interfaces/IFraxFarmERC20TransferByIndex.sol";
+import "./interfaces/IFraxFarmERC20.sol";
 import "./interfaces/ILockReceiver.sol";
 import "./interfaces/IProxyVault.sol";
-import "./interfaces/IPoolRegistry.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+// import "./interfaces/IPoolRegistry.sol";
 
-
-/// @notice Testing was completed in a separate repository: https://github.com/ZrowGz/frax-transfers.git
 
 contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
-    error ConfirmationFailed();
-    error NonVaultReceiver();
-
-    /// @dev This pool registry is the version being used - to be made settable during `initialize` call (booster)
     address public constant convexCurveBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
     address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
     address public constant cvx = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
@@ -28,10 +22,10 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     address public convexDepositToken;
 
     //the poolId for calling vaultMap in the registry to verify a receiver is a legitimate convex vault (for lock transfers)
-    /// NOTE this address needs to be updated to the pool registry used
+    /// TODO update the pre transfer vault check mechanism
     address public constant poolRegistry = address(0x7413bFC877B5573E29f964d572f421554d8EDF86);
-    // address public poolRegistry; // TODO not used for anything here - needed for the transfer check though!
-    // uint256 internal poolId;
+    // address public poolRegistry;
+    // uint256 public poolId;
 
     constructor() {
     }
@@ -42,37 +36,6 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
 
     function vaultVersion() external pure override returns(uint256){
         return 4;
-    }
-
-    /// @notice before transfer hook called to sender of lock - checks that receiver is a known convex vault & claims rewards
-    /// @dev required to happen because `transferFrom` would otherwise bypass the recipient check
-    function beforeLockTransfer(address sender, address receiver, uint256 lockId, bytes memory data) external override returns (bytes4) {
-        //check that the receiver is a legitimate convex vault
-        require(sender == address(this), "!Sender");
-        require(msg.sender == stakingAddress, "caller!staker");
-        //to be modified TODO! (see PR 5)
-        // if (receiver != IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner())) revert NonVaultReceiver();
-        
-        /// Checkpoint rewards in both vaults
-        _checkpointRewards();
-        IProxyVault(receiver).checkpointVaultRewards();
-
-        // call the owner, if is a contract
-        if (owner.code.length > 0) {
-            return ILockReceiver(owner).beforeLockTransfer(sender, receiver, lockId, data);
-        } else {
-            return ILockReceiver.beforeLockTransfer.selector;
-        }
-    }
-
-    function onLockReceived(address sender, address receiver, uint256 lockId, bytes memory data) external override returns (bytes4) {
-        // if the owner of the vault is a contract try calling onLockReceived on it, return the selector either way
-        require(receiver == address(this) && msg.sender == stakingAddress, "invalid after params");
-        if (owner.code.length > 0) {
-            return ILockReceiver(owner).onLockReceived(sender, receiver, lockId, data);
-        } else {
-            return ILockReceiver.onLockReceived.selector;
-        }
     }
 
     //initialize vault 
@@ -97,6 +60,52 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         IERC20(_token).approve(_stakingToken, type(uint256).max);
     }
 
+    /// @notice before transfer hook called to sender of lock - checks that receiver is a known convex vault & checkpoints extra rewards
+    /// @param sender The address sending locked stakes to receiver
+    /// @param receiver The address receiving locked stake from sender
+    /// @param lockId The lockId of the stake sender is transferring from
+    /// @param data Curently just bytes(0), emulates onERC721Received standard
+    /// @return bytes4 This function selector as bytes4
+    function beforeLockTransfer(address sender, address receiver, uint256 lockId, bytes memory data) external override returns (bytes4) {
+        //sender must be this vault
+        require(sender == address(this), "!Sender");
+        //can only be called from the staker/frax farm
+        require(msg.sender == stakingAddress, "caller!staker");
+        // TODO modify this to work as desired
+        //check that the receiver is a legitimate convex vault
+        // require(receiver == IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner()), "receiver!vault");
+        
+        /// Checkpoint rewards in both vaults
+        _checkpointRewards();
+        IProxyVault(receiver).checkpointVaultRewards();
+
+        // if the owner of the vault is a contract try calling onLockReceived on it, return the selector either way
+        if (owner.code.length > 0) {
+            return ILockReceiver(owner).beforeLockTransfer(sender, receiver, lockId, data);
+        } else {
+            return ILockReceiver.beforeLockTransfer.selector;
+        }
+    }
+
+    /// @notice onLockReceived callback - calls to the receiving vault from the farm
+    /// @param sender The address sending locked stakes to receiver
+    /// @param receiver The address receiving locked stake from sender
+    /// @param lockId The lockId of the receiver's new position
+    /// @param data Curently just bytes(0), emulates onERC721Received standard
+    /// @return bytes4 This function selector as bytes4
+    function onLockReceived(address sender, address receiver, uint256 lockId, bytes memory data) external override returns (bytes4) {
+        //sender must be this vault
+        require(receiver == address(this), "!Receiver");
+        //can only be called from the staker/frax farm
+        require(msg.sender == stakingAddress, "caller!staker");
+
+        // if the owner of the vault is a contract try calling onLockReceived on it, 
+        if (owner.code.length > 0) {
+            return ILockReceiver(owner).onLockReceived(sender, receiver, lockId, data);
+        } else {
+            return ILockReceiver.onLockReceived.selector;
+        }
+    }
 
     //create a new locked state of _secs timelength with a Curve LP token
     function stakeLockedCurveLp(uint256 _liquidity, uint256 _secs, bool _useTargetStakeIndex, uint256 targetIndex) external onlyOwner nonReentrant returns (uint256 lockId){
@@ -139,7 +148,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
             //stake
-            lockId = IFraxFarmERC20(stakingAddress).manageStake(_liquidity, _secs, _useTargetStakeIndex, targetIndex);
+            lockId = IFraxFarmERC20(stakingAddress).manageStake(IERC20(stakingToken).balanceOf(address(this)), _secs, _useTargetStakeIndex, targetIndex);
         }
         
         //checkpoint rewards
@@ -153,7 +162,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
 
             //add stake
-            IFraxFarmERC20(stakingAddress).manageStake(_addl_liq, 0, true, _lockId);
+            IFraxFarmERC20(stakingAddress).manageStake(IERC20(stakingToken).balanceOf(address(this)), 0, true, _lockId);
         }
         
         //checkpoint rewards
@@ -204,10 +213,9 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     //withdraw a staked position
-    //frax farm transfers first before updating farm state so will checkpoint during transfer
-    function withdrawLocked(uint256 _lockId) external onlyOwner nonReentrant{        
+    function withdrawLocked(uint256 _lockId) external onlyOwner nonReentrant returns (uint256 _liquidity){        
         //withdraw directly to owner(msg.sender)
-        IFraxFarmERC20(stakingAddress).withdrawLocked(_lockId, msg.sender);
+        _liquidity = IFraxFarmERC20(stakingAddress).withdrawLocked(_lockId, msg.sender);
 
         //checkpoint rewards
         _checkpointRewards();
@@ -227,7 +235,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         _checkpointRewards();
     }
 
-    ////////// Lock Management Authorization //////////
+    ////////// Lock Allowance & TransferFrom Authorization //////////
     function setAllowance(address spender, uint256 _lockId, uint256 amount) external override onlyOwner{
         IFraxFarmERC20(stakingAddress).setAllowance(spender, _lockId, amount);
     }
@@ -241,13 +249,17 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         IFraxFarmERC20(stakingAddress).setApprovalForAll(spender, approved);
     }
 
-    /// TODO transferLockedFrom isn't called here, but if transferLocked 
-
-    // transfer a locked stake to another address
+    /// @notice Transfer a locked stake, or portion of a locked stake to reciever_address, which must also be a Convex Vault
+    /// @param receiver_address The addresss receiving the locked stake
+    /// @param sender_lock_index The index of this vault's locked stake to send some or all of
+    /// @param transfer_amount The amount of the underlying locked asset to transfer to the receiver
+    /// @param use_receiver_lock_index Whether to target a specific locked stake to transfer the liquidity to
+    /// @dev Can only send to an index if that stake's ending_timestamp is >= the sent ending timestamp - otherwise creates new stake
+    /// @dev To prevent dust attacks, there is a max_locked_stakes limit set on the farm, which if hit, new stakes cannot be created (but if previously used, they can be reused)
+    /// @param receiver_lock_index The target destination locked stake index to send liquidity to (ignored if use_reciever_lock_index is false)
+    /// @return uint256 The sender's locked stake index
+    /// @return uint256 The receiver's locked stake index
     function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external override onlyOwner nonReentrant returns(uint256,uint256){
-        /// @dev the vault check is done in the beforeLockTransfer hook
-
-        // Transfer the amount
         return(IFraxFarmERC20(stakingAddress).transferLocked(receiver_address, sender_lock_index, transfer_amount, use_receiver_lock_index, receiver_lock_index));
     }
 
