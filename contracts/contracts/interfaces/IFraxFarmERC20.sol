@@ -60,6 +60,7 @@ interface IFraxFarmERC20 {
     function vefxs_boost_scale_factor() external view returns(uint256);
     function vefxs_per_frax_for_max_boost() external view returns(uint256);
     function getProxyFor(address addr) external view returns (address);
+    function setRewardVars(address reward_token_address, uint256 _new_rate, address _gauge_controller_address, address _rewards_distributor_address) external;
 
     function sync() external;
 }
