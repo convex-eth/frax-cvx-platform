@@ -33,10 +33,9 @@ interface IFraxFarmERC20 {
     function removeAllowance(address spender, uint256 lockId) external;
     function setApprovalForAll(address spender, bool approved) external;
     function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external returns(uint256,uint256);
-    function preTransferProcess(address from, address to) external;
-
 
     function periodFinish() external view returns (uint256);
+    function rewardsDuration() external view returns (uint256);
     function getAllRewardTokens() external view returns (address[] memory);
     function earned(address account) external view returns (uint256[] memory new_earned);
     function totalLiquidityLocked() external view returns (uint256);
