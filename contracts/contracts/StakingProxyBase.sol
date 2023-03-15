@@ -7,6 +7,9 @@ import "./interfaces/IFraxFarmBase.sol";
 import "./interfaces/IRewards.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import "./interfaces/IProxyVault.sol";
+import "./interfaces/ILockReceiver.sol";
+// import "./interfaces/IPoolRegistry.sol";
 
 
 contract StakingProxyBase is IProxyVault{
@@ -23,6 +26,12 @@ contract StakingProxyBase is IProxyVault{
     address public usingProxy; //address of proxy being used
 
     uint256 public constant FEE_DENOMINATOR = 10000;
+
+    //the poolId for calling vaultMap in the registry to verify a receiver is a legitimate convex vault (for lock transfers)
+    /// TODO update the pre transfer vault check mechanism
+    address public constant poolRegistry = address(0x7413bFC877B5573E29f964d572f421554d8EDF86);
+    // address public poolRegistry;
+    // uint256 public poolId;
 
     constructor() {
     }
@@ -50,6 +59,53 @@ contract StakingProxyBase is IProxyVault{
 
     }
 
+    /// @notice before transfer hook called to sender of lock - checks that receiver is a known convex vault & checkpoints extra rewards
+    /// @param sender The address sending locked stakes to receiver
+    /// @param receiver The address receiving locked stake from sender
+    /// @param lockId The lockId of the stake sender is transferring from
+    /// @param data Curently just bytes(0), emulates onERC721Received standard
+    /// @return bytes4 This function selector as bytes4
+    function beforeLockTransfer(address sender, address receiver, uint256 lockId, bytes memory data) external returns (bytes4) {
+        //sender must be this vault
+        require(sender == address(this), "!Sender");
+        //can only be called from the staker/frax farm
+        require(msg.sender == stakingAddress, "caller!staker");
+        // TODO modify this to work as desired
+        //check that the receiver is a legitimate convex vault
+        // require(receiver == IPoolRegistry(poolRegistry).vaultMap(poolId, IProxyVault(receiver).owner()), "receiver!vault");
+        
+        /// Checkpoint rewards in both vaults
+        _checkpointRewards();
+        IProxyVault(receiver).checkpointVaultRewards();
+
+        // if the owner of the vault is a contract try calling onLockReceived on it, return the selector either way
+        if (owner.code.length > 0) {
+            return ILockReceiver(owner).beforeLockTransfer(sender, receiver, lockId, data);
+        } else {
+            return ILockReceiver.beforeLockTransfer.selector;
+        }
+    }
+
+    /// @notice onLockReceived callback - calls to the receiving vault from the farm
+    /// @param sender The address sending locked stakes to receiver
+    /// @param receiver The address receiving locked stake from sender
+    /// @param lockId The lockId of the receiver's new position
+    /// @param data Curently just bytes(0), emulates onERC721Received standard
+    /// @return bytes4 This function selector as bytes4
+    function onLockReceived(address sender, address receiver, uint256 lockId, bytes memory data) external returns (bytes4) {
+        //sender must be this vault
+        require(receiver == address(this), "!Receiver");
+        //can only be called from the staker/frax farm
+        require(msg.sender == stakingAddress, "caller!staker");
+
+        // if the owner of the vault is a contract try calling onLockReceived on it, 
+        if (owner.code.length > 0) {
+            return ILockReceiver(owner).onLockReceived(sender, receiver, lockId, data);
+        } else {
+            return ILockReceiver.onLockReceived.selector;
+        }
+    }
+
     function changeRewards(address _rewardsAddress) external onlyAdmin{
         
         //remove from old rewards and claim
@@ -74,6 +130,12 @@ contract StakingProxyBase is IProxyVault{
         _checkpointFarm();
     }
 
+    /// Added so vaults can checkpoint rewards in beforeLockTransfer
+    function checkpointVaultRewards() public {
+        //checkpoint the rewards contract
+        _checkpointRewards();
+    }
+
     function _checkpointFarm() internal{
         //claim rewards to local vault as a means to checkpoint
         IFraxFarmBase(stakingAddress).getReward(address(this));
@@ -90,12 +152,14 @@ contract StakingProxyBase is IProxyVault{
         usingProxy = _proxyAddress;
     }
 
-
     function getReward() external virtual{}
     function getReward(bool _claim) external virtual{}
     function getReward(bool _claim, address[] calldata _rewardTokenList) external virtual{}
     function earned() external view virtual returns (address[] memory token_addresses, uint256[] memory total_earned){}
-
+    function setAllowance(address spender, uint256 _lockId, uint256 amount) external virtual{}
+    function increaseAllowance(address spender, uint256 _lockId, uint256 amount) external virtual{}
+    function removeAllowance(address spender, uint256 _lockId) external virtual{}
+    function setApprovalForAll(address spender, bool approved) external virtual{}
 
     //checkpoint and add/remove weight to convex rewards contract
     function _checkpointRewards() internal{
@@ -162,4 +226,5 @@ contract StakingProxyBase is IProxyVault{
             }
         }
     }
+
 }

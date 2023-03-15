@@ -4,7 +4,7 @@ pragma solidity 0.8.10;
 
 import "./interfaces/IStaker.sol";
 import "./interfaces/IPoolRegistry.sol";
-import "./interfaces/IProxyVault.sol";
+import {IProxyVault} from "./interfaces/IProxyVault.sol";
 import "./interfaces/IProxyOwner.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';

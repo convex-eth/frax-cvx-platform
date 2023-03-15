@@ -4,11 +4,10 @@ pragma solidity >=0.8.0;
 interface IFraxFarmERC20 {
     
     struct LockedStake {
-        bytes32 kek_id;
         uint256 start_timestamp;
         uint256 liquidity;
         uint256 ending_timestamp;
-        uint256 lock_multiplier; // 6 decimals of precision. 1x = 1000000
+        uint256 lock_multiplier;
     }
 
     function owner() external view returns (address);
@@ -20,14 +19,20 @@ interface IFraxFarmERC20 {
             uint256 new_vefxs_multiplier,
             uint256 new_combined_weight
         );
+    
+    // stake management & getters
+    function getStakeLiquidityAndEnding(address staker, uint256 locked_stake_index) external view returns (uint256,uint256);
     function lockedStakesOf(address account) external view returns (LockedStake[] memory);
     function lockedStakesOfLength(address account) external view returns (uint256);
-    function lockAdditional(bytes32 kek_id, uint256 addl_liq) external;
-    function lockLonger(bytes32 kek_id, uint256 new_ending_ts) external;
-    function stakeLocked(uint256 liquidity, uint256 secs) external returns (bytes32);
-    function withdrawLocked(bytes32 kek_id, address destination_address) external returns (uint256);
+    function manageStake(uint256 liquidity, uint256 secs, bool useTargetStakeIndex, uint256 targetIndex) external returns (uint256);
+    function withdrawLocked(uint256 lockId, address destination_address) external returns (uint256);
 
-
+    // stake transfer functions
+    function setAllowance(address spender, uint256 lockId, uint256 amount) external;
+    function increaseAllowance(address spender, uint256 lockId, uint256 amount) external;
+    function removeAllowance(address spender, uint256 lockId) external;
+    function setApprovalForAll(address spender, bool approved) external;
+    function transferLocked(address receiver_address, uint256 sender_lock_index, uint256 transfer_amount, bool use_receiver_lock_index, uint256 receiver_lock_index) external returns(uint256,uint256);
 
     function periodFinish() external view returns (uint256);
     function rewardsDuration() external view returns (uint256);
@@ -55,7 +60,7 @@ interface IFraxFarmERC20 {
     function vefxs_boost_scale_factor() external view returns(uint256);
     function vefxs_per_frax_for_max_boost() external view returns(uint256);
     function getProxyFor(address addr) external view returns (address);
+    function setRewardVars(address reward_token_address, uint256 _new_rate, address _gauge_controller_address, address _rewards_distributor_address) external;
 
     function sync() external;
-    function setRewardVars(address reward_token_address, uint256 _new_rate, address _gauge_controller_address, address _rewards_distributor_address) external;
 }
