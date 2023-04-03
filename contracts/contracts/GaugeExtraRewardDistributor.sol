@@ -51,7 +51,7 @@ contract GaugeExtraRewardDistributor {
 
         //get last period update from farm and figure out period
         uint256 duration = IFraxFarmERC20(_farm).rewardsDuration();
-        uint256 periodLength = ((block.timestamp + duration) / duration) - IFraxFarmERC20(_farm).periodFinish();
+        uint256 periodLength = ((block.timestamp + duration) / duration * duration) - IFraxFarmERC20(_farm).periodFinish();
 
         //reward tokens on farms are constant so dont need to loop, just distribute crv and cvx
         uint256 balance = IERC20(crv).balanceOf(address(this));
