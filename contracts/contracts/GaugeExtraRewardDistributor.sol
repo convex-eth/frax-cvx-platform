@@ -42,7 +42,7 @@ contract GaugeExtraRewardDistributor {
     }
 
     // Add a new reward token to be distributed to stakers
-    function distributeReward(address _farm) external{
+    function distributeReward(address _farm) external returns(uint256 weeks_elapsed, uint256 reward_tally){
         //only allow farm to call
         require(msg.sender == farm);
         
@@ -52,21 +52,22 @@ contract GaugeExtraRewardDistributor {
         //get last period update from farm and figure out period
         uint256 duration = IFraxFarmERC20(_farm).rewardsDuration();
         uint256 periodLength = ((block.timestamp + duration) / duration * duration) - IFraxFarmERC20(_farm).periodFinish();
+        weeks_elapsed = (periodLength/duration)+1;
 
         //reward tokens on farms are constant so dont need to loop, just distribute crv and cvx
-        uint256 balance = IERC20(crv).balanceOf(address(this));
+        reward_tally = IERC20(crv).balanceOf(address(this));
         uint256 rewardRate = IERC20(crv).balanceOf(address(this)) / periodLength;
-        if(balance > 0){
-            IERC20(crv).transfer(farm, balance);
+        if(reward_tally > 0){
+            IERC20(crv).transfer(farm, reward_tally);
         }
-        //if balance is 0, still need to call so reward rate is set to 0
+        //if reward_tally is 0, still need to call so reward rate is set to 0
         IFraxFarmERC20(_farm).setRewardVars(crv, rewardRate, address(0), address(this));
         emit Distributed(crv, rewardRate);
 
-        balance = IERC20(cvx).balanceOf(address(this));
+        reward_tally = IERC20(cvx).balanceOf(address(this));
         rewardRate = IERC20(cvx).balanceOf(address(this)) / periodLength;
-        if(balance > 0){
-            IERC20(cvx).transfer(farm, balance);
+        if(reward_tally > 0){
+            IERC20(cvx).transfer(farm, reward_tally);
         }
         IFraxFarmERC20(_farm).setRewardVars(cvx, rewardRate, address(0), address(0)); //keep distributor 0 since its shared
         emit Distributed(cvx, rewardRate);
