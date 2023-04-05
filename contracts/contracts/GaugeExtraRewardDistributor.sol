@@ -56,7 +56,7 @@ contract GaugeExtraRewardDistributor {
 
         //reward tokens on farms are constant so dont need to loop, just distribute crv and cvx
         reward_tally = IERC20(crv).balanceOf(address(this));
-        uint256 rewardRate = IERC20(crv).balanceOf(address(this)) / periodLength;
+        uint256 rewardRate = reward_tally / periodLength;
         if(reward_tally > 0){
             IERC20(crv).transfer(farm, reward_tally);
         }
@@ -65,7 +65,7 @@ contract GaugeExtraRewardDistributor {
         emit Distributed(crv, rewardRate);
 
         reward_tally = IERC20(cvx).balanceOf(address(this));
-        rewardRate = IERC20(cvx).balanceOf(address(this)) / periodLength;
+        rewardRate = reward_tally / periodLength;
         if(reward_tally > 0){
             IERC20(cvx).transfer(farm, reward_tally);
         }

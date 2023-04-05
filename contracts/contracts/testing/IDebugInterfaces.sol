@@ -98,6 +98,7 @@ interface ICurveGaugeDebug {
 interface IWalletCheckerDebug{
     function approveWallet(address) external;
     function check(address) external view returns (bool);
+    function owner() external view returns(address);
 }
 
 interface IVoteStarter{

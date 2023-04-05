@@ -58,4 +58,5 @@ interface IFraxFarmERC20 {
 
     function sync() external;
     function setRewardVars(address reward_token_address, uint256 _new_rate, address _gauge_controller_address, address _rewards_distributor_address) external;
+    function changeTokenManager(address reward_token_address, address new_manager_address) external;
 }

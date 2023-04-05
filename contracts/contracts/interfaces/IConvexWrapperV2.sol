@@ -15,10 +15,12 @@ interface IConvexWrapperV2{
         uint128 reward_remaining;
     }
 
+  function distroContract() external view returns(address distro);
   function collateralVault() external view returns(address vault);
   function convexPoolId() external view returns(uint256 _poolId);
   function curveToken() external view returns(address);
   function convexToken() external view returns(address);
+  function rewardRedirect(address _account) external view returns(address);
   function balanceOf(address _account) external view returns(uint256);
   function totalBalanceOf(address _account) external view returns(uint256);
   function deposit(uint256 _amount, address _to) external;
@@ -33,4 +35,6 @@ interface IConvexWrapperV2{
   function earnedView(address _account) external view returns(EarnedData[] memory claimable);
   function setVault(address _vault) external;
   function user_checkpoint(address[2] calldata _accounts) external returns(bool);
+  function setDistributor(address _vault, address _distro) external;
+  function sealDistributor() external;
 }
