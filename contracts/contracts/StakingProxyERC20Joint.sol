@@ -34,7 +34,7 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
     }
 
     function vaultVersion() external pure override returns(uint256){
-        return 1;
+        return 2;
     }
 
     //initialize vault
@@ -116,7 +116,7 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
 
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
-    function earned() external view override returns (address[] memory token_addresses, uint256[] memory total_earned) {
+    function earned() external override returns (address[] memory token_addresses, uint256[] memory total_earned) {
         //get list of reward tokens
         address[] memory rewardTokens = IFraxFarmERC20NoReturn(stakingAddress).getAllRewardTokens();
         uint256[] memory stakedearned = IFraxFarmERC20NoReturn(stakingAddress).earned(address(this));

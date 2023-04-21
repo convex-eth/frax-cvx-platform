@@ -34,7 +34,7 @@ interface IConvexWrapperV2{
   function earned(address _account) external returns(EarnedData[] memory claimable);
   function earnedView(address _account) external view returns(EarnedData[] memory claimable);
   function setVault(address _vault) external;
-  function user_checkpoint(address[2] calldata _accounts) external returns(bool);
+  function user_checkpoint(address _account) external returns(bool);
   function setDistributor(address _vault, address _distro) external;
   function sealDistributor() external;
 }

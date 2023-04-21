@@ -94,7 +94,7 @@ contract StakingProxyBase is IProxyVault{
     function getReward() external virtual{}
     function getReward(bool _claim) external virtual{}
     function getReward(bool _claim, address[] calldata _rewardTokenList) external virtual{}
-    function earned() external view virtual returns (address[] memory token_addresses, uint256[] memory total_earned){}
+    function earned() external virtual returns (address[] memory token_addresses, uint256[] memory total_earned){}
 
 
     //checkpoint and add/remove weight to convex rewards contract

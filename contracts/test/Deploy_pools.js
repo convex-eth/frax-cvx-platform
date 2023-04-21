@@ -32,13 +32,32 @@ const IFraxRewardDistributor = artifacts.require("IFraxRewardDistributor");
 const ICurveConvex = artifacts.require("ICurveConvex");
 
 
-const unlockAccount = async (address) => {
+// const unlockAccount = async (address) => {
+//   return new Promise((resolve, reject) => {
+//     web3.currentProvider.send(
+//       {
+//         jsonrpc: "2.0",
+//         method: "evm_unlockUnknownAccount",
+//         params: [address],
+//         id: new Date().getTime(),
+//       },
+//       (err, result) => {
+//         if (err) {
+//           return reject(err);
+//         }
+//         return resolve(result);
+//       }
+//     );
+//   });
+// };
+
+const addAccount = async (address) => {
   return new Promise((resolve, reject) => {
     web3.currentProvider.send(
       {
         jsonrpc: "2.0",
-        method: "evm_unlockUnknownAccount",
-        params: [address],
+        method: "evm_addAccount",
+        params: [address, "passphrase"],
         id: new Date().getTime(),
       },
       (err, result) => {
@@ -49,6 +68,73 @@ const unlockAccount = async (address) => {
       }
     );
   });
+};
+
+const unlockAccount = async (address) => {
+  await addAccount(address);
+  return new Promise((resolve, reject) => {
+    web3.currentProvider.send(
+      {
+        jsonrpc: "2.0",
+        method: "personal_unlockAccount",
+        params: [address, "passphrase"],
+        id: new Date().getTime(),
+      },
+      (err, result) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(result);
+      }
+    );
+  });
+};
+
+const send = payload => {
+  if (!payload.jsonrpc) payload.jsonrpc = '2.0';
+  if (!payload.id) payload.id = new Date().getTime();
+
+  return new Promise((resolve, reject) => {
+    web3.currentProvider.send(payload, (error, result) => {
+      if (error) return reject(error);
+
+      return resolve(result);
+    });
+  });
+};
+
+/**
+ *  Mines a single block in Ganache (evm_mine is non-standard)
+ */
+const mineBlock = () => send({ method: 'evm_mine' });
+
+/**
+ *  Gets the time of the last block.
+ */
+const currentTime = async () => {
+  const { timestamp } = await web3.eth.getBlock('latest');
+  return timestamp;
+};
+
+/**
+ *  Increases the time in the EVM.
+ *  @param seconds Number of seconds to increase the time by
+ */
+const fastForward = async seconds => {
+  // It's handy to be able to be able to pass big numbers in as we can just
+  // query them from the contract, then send them back. If not changed to
+  // a number, this causes much larger fast forwards than expected without error.
+  if (BN.isBN(seconds)) seconds = seconds.toNumber();
+
+  // And same with strings.
+  if (typeof seconds === 'string') seconds = parseFloat(seconds);
+
+  await send({
+    method: 'evm_increaseTime',
+    params: [seconds],
+  });
+
+  await mineBlock();
 };
 
 contract("Deploy Pool(s)", async accounts => {
@@ -87,7 +173,7 @@ contract("Deploy Pool(s)", async accounts => {
     let feeDepo = await FeeDeposit.at(contractList.system.feeDeposit);
     let rewardMaster = await MultiRewards.at(contractList.system.rewardImplementation);
 
-
+    // await unlockAccount(deployer);
     var deployedData = [];
 
     const deployConvexPool = async (stakingAddress, targetname) => {
@@ -113,12 +199,14 @@ contract("Deploy Pool(s)", async accounts => {
 
       //if vault is 0
       //set vault back to staking address
-      if(currentVault == addressZero){
-        await wrapper.setVault(stakingAddress,{from:deployer});
-        currentVault = await wrapper.collateralVault();
-        console.log("set vault: " +currentVault);
-        assert(currentVault == farm.address, "vault doesnt match")
-      }
+      // if(currentVault == addressZero){
+      //   await wrapper.setVault(stakingAddress,{from:deployer});
+      //   currentVault = await wrapper.collateralVault();
+      //   console.log("set vault: " +currentVault);
+      //   assert(currentVault == farm.address, "vault doesnt match")
+      // }
+
+      //TODO: check that distro has been made
 
       //assert proxy
       var proxy = await farm.getProxyFor(contractList.system.voteProxy);
@@ -217,9 +305,13 @@ contract("Deploy Pool(s)", async accounts => {
     // await deployERC20Pool("0x73e1e624C6d3E027b8674e6C72F104F1429FC17E", "Fraxlend FRAX/FXS");
 
     // await deployConvexPool("0x9C8d9667d5726aEcA4d24171958BeE9F46861bed", "Convex SDT/FraxBP");
-    await deployConvexPool("0x5745506D56b0088f800085b1227B3f1F7d419c89", "Convex clevUSD/FraxBP");
-    await deployConvexPool("0xfB2CCc82755A734C53C8B45f260fFc2df026fe87", "Convex msUSD/FraxBP");
-    await deployConvexPool("0xc96e1a26264D965078bd01eaceB129A65C09FFE7", "Convex OHM/FraxBP");
+    // await deployConvexPool("0x5745506D56b0088f800085b1227B3f1F7d419c89", "Convex clevUSD/FraxBP");
+    // await deployConvexPool("0xfB2CCc82755A734C53C8B45f260fFc2df026fe87", "Convex msUSD/FraxBP");
+    // await deployConvexPool("0xc96e1a26264D965078bd01eaceB129A65C09FFE7", "Convex OHM/FraxBP");
+
+
+    await deployConvexPool("0x4c9AD8c53d0a001E7fF08a3E5E26dE6795bEA5ac", "Convex eUSD/FraxBP");
+    await deployConvexPool("0xd600A3E4F57E718A7ad6A0cbb10c2A92c57827e6", "Convex STG/FraxBP");
 
     console.log("data:");
     console.log(JSON.stringify(deployedData, null, 4));

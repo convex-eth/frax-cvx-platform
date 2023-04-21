@@ -90,7 +90,7 @@ contract StakingProxyUniV3 is StakingProxyBase, ReentrancyGuard{
 
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
-    function earned() external view override returns (address[] memory token_addresses, uint256[] memory total_earned) {
+    function earned() external override returns (address[] memory token_addresses, uint256[] memory total_earned) {
         //get list of reward tokens
         address[] memory rewardTokens = IFraxFarmUniV3(stakingAddress).getAllRewardTokens();
         uint256[] memory stakedearned = IFraxFarmUniV3(stakingAddress).earned(address(this));
