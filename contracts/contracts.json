@@ -395,6 +395,22 @@
             "stakingToken": "0x81b0dCDa53482A2EA9eb496342dC787643323e95",
             "rewardsAddress": "0xbf7c04ff5Dfd896c559fe0648244961dEA19D520",
             "name": "Convex OHM/FraxBP"
+        },
+        {
+            "id": 44,
+            "implementation": "0x2243Cad54AA410aE2BEB351bEC117cc0822AF139",
+            "stakingAddress": "0x4c9AD8c53d0a001E7fF08a3E5E26dE6795bEA5ac",
+            "stakingToken": "0x49BF6f9B860fAF73B0b515c06Be1Bcbf4A0db3dF",
+            "rewardsAddress": "0x32791df95565661450EEE7778f0Cc6C2ad04466b",
+            "name": "Convex eUSD/FraxBP"
+        },
+        {
+            "id": 45,
+            "implementation": "0x2243Cad54AA410aE2BEB351bEC117cc0822AF139",
+            "stakingAddress": "0xd600A3E4F57E718A7ad6A0cbb10c2A92c57827e6",
+            "stakingToken": "0xAe1bA2Cf0eBF00C5052309992d7B6c94e3EfcBEf",
+            "rewardsAddress": "0x1EAd5B37A822775243909a87c2c106c26d863543",
+            "name": "Convex STG/FraxBP"
         }
     ]
 }
