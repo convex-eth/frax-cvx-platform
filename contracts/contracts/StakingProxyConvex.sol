@@ -28,7 +28,7 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     function vaultVersion() external pure override returns(uint256){
-        return 5;
+        return 6;
     }
 
     //initialize vault
@@ -209,9 +209,9 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
         }
 
         //add convex farm earned tokens (new farms get crv/cvx distributed through the farm so start from index 2)
-        for(uint256 i = 2; i < convexrewards.length; i++){
-            token_addresses[i+rewardTokens.length+extraRewardsLength] = convexrewards[i].token;
-            total_earned[i+rewardTokens.length+extraRewardsLength] = convexrewards[i].amount;
+        for(uint256 i = 0; i < convexExtraRewards; i++){
+            token_addresses[i+rewardTokens.length+extraRewardsLength] = convexrewards[i+2].token; //offset to skip crv/cvx
+            total_earned[i+rewardTokens.length+extraRewardsLength] = convexrewards[i+2].amount; //offset to skip crv/cvx
         }
     }
 
