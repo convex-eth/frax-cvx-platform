@@ -16,7 +16,8 @@
         "feeReceiverVlCvx": "0xB9A2120F32420f0da2777Ee07BeEeA92d3D2C2B8",
         "vaultErc20Implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
         "vaultConvexImplementation_v4": "0x03fb8543E933624b45abdd31987548c0D9892F07",
-        "vaultConvexImplementation": "0x2243Cad54AA410aE2BEB351bEC117cc0822AF139",
+        "vaultConvexImplementation_v5": "0x2243Cad54AA410aE2BEB351bEC117cc0822AF139",
+        "vaultConvexImplementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
         "vaultUniImplementation": "",
         "vaultTempleJointImplementation": "0x64167F69a10Ab360a8C45b8c7db31d7752111181",
         "rewardImplementation": "0xAFd3D38feCEbCdda6d934979d4aC7f17330a96Ca",
@@ -411,6 +412,14 @@
             "stakingToken": "0xAe1bA2Cf0eBF00C5052309992d7B6c94e3EfcBEf",
             "rewardsAddress": "0x1EAd5B37A822775243909a87c2c106c26d863543",
             "name": "Convex STG/FraxBP"
+        },
+        {
+            "id": 46,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x7838d18AD75372061a1e71e1499b7E90832c1508",
+            "stakingToken": "0x57Fb068BDa27351EF0913113264Ce3EF4EeA3316",
+            "rewardsAddress": "0xf61154cD63C3e24902744410a2D72F44D81AC7db",
+            "name": "Convex UZD/FraxBP"
         }
     ]
 }

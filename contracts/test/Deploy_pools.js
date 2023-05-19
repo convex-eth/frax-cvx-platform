@@ -310,8 +310,11 @@ contract("Deploy Pool(s)", async accounts => {
     // await deployConvexPool("0xc96e1a26264D965078bd01eaceB129A65C09FFE7", "Convex OHM/FraxBP");
 
 
-    await deployConvexPool("0x4c9AD8c53d0a001E7fF08a3E5E26dE6795bEA5ac", "Convex eUSD/FraxBP");
-    await deployConvexPool("0xd600A3E4F57E718A7ad6A0cbb10c2A92c57827e6", "Convex STG/FraxBP");
+    // await deployConvexPool("0x4c9AD8c53d0a001E7fF08a3E5E26dE6795bEA5ac", "Convex eUSD/FraxBP");
+    // await deployConvexPool("0xd600A3E4F57E718A7ad6A0cbb10c2A92c57827e6", "Convex STG/FraxBP");
+
+
+    await deployConvexPool("0x7838d18AD75372061a1e71e1499b7E90832c1508", "Convex UZD/FraxBP");
 
     console.log("data:");
     console.log(JSON.stringify(deployedData, null, 4));
