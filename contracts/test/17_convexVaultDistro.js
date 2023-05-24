@@ -19,6 +19,7 @@ const IConvexWrapperV2 = artifacts.require("IConvexWrapperV2");
 const ICvxLocker = artifacts.require("ICvxLocker");
 const FeeDeposit = artifacts.require("FeeDeposit");
 const GaugeExtraRewardDistributor = artifacts.require("GaugeExtraRewardDistributor");
+const IConvexWrapperFactory = artifacts.require("IConvexWrapperFactory");
 
 const IVPool = artifacts.require("IVPool");
 const IExchange = artifacts.require("IExchange");
@@ -26,6 +27,7 @@ const IERC20 = artifacts.require("IERC20");
 
 const IFraxGaugeController = artifacts.require("IFraxGaugeController");
 const IFraxRewardDistributor = artifacts.require("IFraxRewardDistributor");
+const IFraxFarmFactory = artifacts.require("IFraxFarmFactory");
 
 const ICurveConvex = artifacts.require("ICurveConvex");
 
@@ -194,10 +196,14 @@ contract("Vault Tests", async accounts => {
     await unlockAccount(actingUser);
     console.log("acting user: " +actingUser);
 
+
+
+
+
      //frax farm
-    let stakingAddress = await IFraxFarmERC20_V2.at("0x4c9AD8c53d0a001E7fF08a3E5E26dE6795bEA5ac"); //eusd/fraxbp
-    let lptoken = await IERC20.at("0xAEda92e6A3B1028edc139A4ae56Ec881f3064D4F"); //eusd/fraxbp
-    let lpHolder = "0x8605dc0C339a2e7e85EEA043bD29d42DA2c6D784"; //eusd/fraxbp
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x4c9AD8c53d0a001E7fF08a3E5E26dE6795bEA5ac"); //eusd/fraxbp
+    // let lptoken = await IERC20.at("0xAEda92e6A3B1028edc139A4ae56Ec881f3064D4F"); //eusd/fraxbp
+    // let lpHolder = "0x8605dc0C339a2e7e85EEA043bD29d42DA2c6D784"; //eusd/fraxbp
 
     //STG/fraxbp
     // let stakingAddress = await IFraxFarmERC20_V2.at("0xd600A3E4F57E718A7ad6A0cbb10c2A92c57827e6");
@@ -206,9 +212,55 @@ contract("Vault Tests", async accounts => {
 
     //uzd/fraxbp
     // let stakingAddress = await IFraxFarmERC20_V2.at("0x7677D1AADcd42dC40E758115FfDE5e1E10B7f30b");
-    // let lptoken = await IERC20.at("0x68934F60758243eafAf4D2cFeD27BF8010bede3a");
-    // let lpHolder = "0xBdCA4F610e7101Cc172E2135ba025737B99AbD30";
+    let lptoken = await IERC20.at("0x68934F60758243eafAf4D2cFeD27BF8010bede3a");
+    let lpHolder = "0xBdCA4F610e7101Cc172E2135ba025737B99AbD30";
+    let convexPoolId = 158;
 
+    let convexwrapperfactory = await IConvexWrapperFactory.at(contractList.system.fraxWrapperFactory);
+    let wrapperowner = await convexwrapperfactory.owner();
+    await unlockAccount(wrapperowner);
+    console.log("wrapper fractory owner: " +wrapperowner);
+
+    ///A ----- create from factory
+
+    //update wrapper to latest
+    // let wrapperimpl = "0x5Bb5BCcf21fb0fb985FA8F9A7AAAa1E1bD6d7AB6";//await ConvexStakingWrapperFrax.new({from:deployer});
+    // // let wrapperimpl = await ConvexStakingWrapperFrax.new({from:deployer});
+    // await convexwrapperfactory.setImplementation(wrapperimpl,{from:wrapperowner});
+    // console.log("updated wrapper implementation");
+
+
+    // let wrapperaddress = await convexwrapperfactory.CreateWrapper.call(convexPoolId,{from:wrapperowner,gasPrice:0});
+    // await convexwrapperfactory.CreateWrapper(convexPoolId,{from:wrapperowner,gasPrice:0});
+    // console.log("created convex wrapper at: " +wrapperaddress);
+
+    // let fraxfarmfactory = await IFraxFarmFactory.at("0x5dff3d062bEC839a20029F19edCa90eD981b2c0e");
+
+    // let farmowner = deployer;
+    // let rewardTokens = [fxs.address,crv.address,cvx.address];
+    // let rewardManagers = [deployer,deployer,deployer];
+    // let rewardRates = [10000,0,0];
+    // let gaugeController = [addressZero,addressZero,addressZero];
+    // let rewardDistros = ["0x278dC748edA1d8eFEf1aDFB518542612b49Fcd34", addressZero, addressZero];
+    // let farmtoken = wrapperaddress;
+
+    // let farmaddress = await fraxfarmfactory.createFXBPStableFarm.call(farmowner,rewardTokens, rewardManagers, rewardRates, gaugeController, rewardDistros, farmtoken ,{from:deployer});
+    // console.log("farmaddress: " +farmaddress);
+    // await fraxfarmfactory.createFXBPStableFarm(farmowner,rewardTokens, rewardManagers, rewardRates, gaugeController, rewardDistros, farmtoken ,{from:deployer});
+    // console.log("farm created");
+    // let stakingAddress = await IFraxFarmERC20_V2.at(farmaddress);
+
+    //B ---- test deployed farm
+
+
+    let stakingAddress = await IFraxFarmERC20_V2.at("0xb8ebc210BCF78be8Ef3F09Dd0d8e85Fa5e252e86");
+
+
+    /////////////////////////////////////////////////////
+
+    let AddToGauge = false;
+    let CallSetVault = false;
+    let CallSetDistroManagers = false;
 
     let tokenaddy = await stakingAddress.stakingToken();
     let stakingToken = await IERC20.at(tokenaddy);
@@ -225,17 +277,37 @@ contract("Vault Tests", async accounts => {
     // console.log("staked on booster");
     // return;
 
+    await stakingAddress.sync().catch(a=>console.log("sync fail: " +a));
 
     let fxsholder = "0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0";
     await unlockAccount(fxsholder);
     await fxs.transfer(stakingAddress.address,web3.utils.toWei("100000.0", "ether"),{from:fxsholder,gasPrice:0});
     console.log("fxs transfered to farm");
     
+    // await stakingAddress.sync();
+    // console.log("synced");
+
+    // await crv.balanceOf(stakingAddress.address).then(a=>console.log("farm crv: " +a));
+    // await cvx.balanceOf(stakingAddress.address).then(a=>console.log("farm cvx: " +a));
+    // await stakingAddress.rewardRates(0).then(a=>console.log("reward rate(0): " +a))
+    // await stakingAddress.rewardRates(1).then(a=>console.log("reward rate(1): " +a))
+    // await stakingAddress.rewardRates(2).then(a=>console.log("reward rate(2): " +a))
+
+    // // return;    
 
     //setup distro and manager
-    // await stakingwrapper.setVault(stakingAddress.address,{from:deployer});
+    if(CallSetVault){
+      await stakingwrapper.setVault(stakingAddress.address,{from:wrapperowner});
+    }else{
+      console.log("\n***** wrapper setVault already called\n")
+    }
+
     var distro = await stakingwrapper.distroContract();
     console.log("set vault, distro: " +distro)
+    if (distro == addressZero){
+      console.log("\n !!!!! distro 0x0, setVault not called !!!!");
+      return;
+    }
 
     //overwrite with test distro
     // let testdistro = await GaugeExtraRewardDistributor.new();
@@ -273,12 +345,17 @@ contract("Vault Tests", async accounts => {
 
     var farmOwner = await stakingAddress.owner();
     await unlockAccount(farmOwner);
-    // await stakingAddress.changeTokenManager(crv.address, distro, {from:farmOwner, gasPrice:0});
-    // await stakingAddress.changeTokenManager(cvx.address, distro, {from:farmOwner, gasPrice:0});
-    // console.log("set token managers")
-    // await stakingAddress.setRewardVars(crv.address, 0, addressZero, distro, {from:farmOwner, gasPrice:0});
-    // await stakingAddress.setRewardVars(cvx.address, 0, addressZero, distro, {from:farmOwner, gasPrice:0});
-    // console.log("set rewards vars and distributor")
+    if(CallSetDistroManagers){
+      await stakingAddress.changeTokenManager(crv.address, distro, {from:farmOwner, gasPrice:0});
+      await stakingAddress.changeTokenManager(cvx.address, distro, {from:farmOwner, gasPrice:0});
+      console.log("set token managers")
+      await stakingAddress.setRewardVars(crv.address, 0, addressZero, distro, {from:farmOwner, gasPrice:0});
+      await stakingAddress.setRewardVars(cvx.address, 0, addressZero, distro, {from:farmOwner, gasPrice:0});
+      console.log("set rewards vars and distributor")
+    }
+    else{
+      console.log("\n***** using current token managers\n")
+    }
 
     //add to gauge
     console.log("add gauge and vote");
@@ -287,14 +364,19 @@ contract("Vault Tests", async accounts => {
     // await advanceTime(day*14);
     // await stakingAddress.sync();
     // console.log("synced");
-    // await controller.add_gauge(stakingAddress.address,0,0,{from:fraxadmin,gasPrice:0});
-    // var fxsrewardsdistro = await IFraxRewardDistributor.at(contractList.frax.rewardDistributor);
-    // await fxsrewardsdistro.setGaugeState(stakingAddress.address, false, true, {from:fraxadmin, gasPrice:0});
-    // console.log("added to reward whitelist");
-    // var fpigauge = "0x0a08673E3d7c454E1c6b27acD059C50Df6727FC9"
-    // await booster.voteGaugeWeight(controller.address, [fpigauge], [0], {from:multisig, gasPrice:0});
-    // await booster.voteGaugeWeight(controller.address, [stakingAddress.address], [1000], {from:multisig, gasPrice:0});
-    console.log("voted");
+    if(AddToGauge){
+      await controller.add_gauge(stakingAddress.address,0,0,{from:fraxadmin,gasPrice:0});
+      var fxsrewardsdistro = await IFraxRewardDistributor.at(contractList.frax.rewardDistributor);
+      await fxsrewardsdistro.setGaugeState(stakingAddress.address, false, true, {from:fraxadmin, gasPrice:0});
+      console.log("added to reward whitelist");
+      var fpigauge = "0x0a08673E3d7c454E1c6b27acD059C50Df6727FC9"
+      // await booster.voteGaugeWeight(controller.address, [fpigauge], [0], {from:multisig, gasPrice:0});
+      // await booster.voteGaugeWeight(controller.address, [stakingAddress.address], [1000], {from:multisig, gasPrice:0});
+      console.log("voted");
+    }else{
+      console.log("\n***** skip add gauge \n")
+    }
+
     await stakingAddress.periodFinish().then(a=>console.log("period finish: " +a))
     await getTimestampInSeconds().then(a=>console.log("time: " +a))
     var t = await getTimestampInSeconds();
@@ -334,7 +416,13 @@ contract("Vault Tests", async accounts => {
     //temp: set valid proxy
     var stakingOwner = await stakingAddress.owner();
     await unlockAccount(stakingOwner);
-    // await stakingAddress.toggleValidVeFXSProxy(contractList.system.voteProxy,{from:stakingOwner,gasPrice:0});
+    var currentProxy = await stakingAddress.getProxyFor(contractList.system.voteProxy);
+    if(currentProxy == addressZero){
+      console.log("forcing vefxs proxy toggle...");
+      await stakingAddress.toggleValidVeFXSProxy(contractList.system.voteProxy,{from:stakingOwner,gasPrice:0});
+    }else{
+      console.log("\n*** proxy already correctly set ***\n")
+    }
     await stakingAddress.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check: " +a));
 
     //harvest convex pool
@@ -388,6 +476,47 @@ contract("Vault Tests", async accounts => {
     await poolUtil.weightedRewardRates(stakingAddress.address).then(a=>console.log("pool util -> weightedRewardRates: " +a));
     await poolUtil.userBoostedRewardRates(stakingAddress.address, vault.address).then(a=>console.log("pool util -> userBoostedRewardRates: " +a));
     await poolUtil.veFXSMultiplier(stakingAddress.address).then(a=>console.log("pool util -> veFXSMultiplier: " +a));
+
+    let uzdholder = "0x68934F60758243eafAf4D2cFeD27BF8010bede3a";
+    let uzd = await IERC20.at("0xb40b6608B2743E691C9B54DdBDEe7bf03cd79f1c");
+    await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("\n\nuzd balance on wrapper: " +a))
+    await stakingwrapper.rewards(2).then(a=>console.log("rewards(2): " +JSON.stringify(a)));
+    
+    await unlockAccount(uzdholder);
+    await uzd.transfer(stakingwrapper.address,web3.utils.toWei("0.000342456783453782", "ether"),{from:uzdholder,gasPrice:0});
+    console.log("uzd transfered to wrapper");
+    await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("uzd balance on wrapper: " +a))
+    await stakingwrapper.earned.call(vault.address).then(a=>console.log("stakingwrapper earned: " +JSON.stringify(a) ));
+    await vault.earned.call().then(a=>console.log("vault earned: " +JSON.stringify(a) ));
+
+    await uzd.transfer(stakingwrapper.address,web3.utils.toWei("0.000342456783453781", "ether"),{from:uzdholder,gasPrice:0});
+    console.log("uzd transfered to wrapper");
+    await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("uzd balance on wrapper: " +a))
+    await stakingwrapper.user_checkpoint(actingUser);
+    console.log("checkpoint actingUser");
+    
+    await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("uzd balance on wrapper: " +a))
+    await stakingwrapper.rewards(2).then(a=>console.log("rewards(2): " +JSON.stringify(a)));
+    
+    await stakingwrapper.earned.call(vault.address).then(a=>console.log("stakingwrapper earned: " +JSON.stringify(a) ));
+    await vault.earned.call().then(a=>console.log("vault earned: " +JSON.stringify(a) ));
+    // return;
+    // await unlockAccount(stakingwrapper.address);
+    // await uzd.transfer(deployer,web3.utils.toWei("0.000342456783453781", "ether"),{from:stakingwrapper.address,gasPrice:0});
+    // await stakingwrapper.user_checkpoint(actingUser);
+    // console.log("checkpoint actingUser");
+
+    // await uzd.transfer(stakingwrapper.address,web3.utils.toWei("0.010342456783453781", "ether"),{from:uzdholder,gasPrice:0});
+    // console.log("uzd transfered back to wrapper");
+
+    // await stakingwrapper.user_checkpoint(actingUser);
+    // console.log("checkpoint actingUser");
+    // await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("uzd balance on wrapper: " +a))
+    // await stakingwrapper.rewards(2).then(a=>console.log("rewards(2): " +JSON.stringify(a)));
+    
+    // await stakingwrapper.earned.call(vault.address).then(a=>console.log("stakingwrapper earned: " +JSON.stringify(a) ));
+    // await vault.earned.call().then(a=>console.log("vault earned: " +JSON.stringify(a) ));
+    // return;
 
     // await advanceTime(day*10);
     // await vault.withdrawLockedAndUnwrap(stakeInfo[0][0],{from:actingUser});
@@ -444,6 +573,7 @@ contract("Vault Tests", async accounts => {
       await stakingAddress.periodFinish().then(a=>console.log("periodFinish: " +a))
       await crv.balanceOf(stakingAddress.address).then(a=>console.log("crv on farm: " +a))
       await cvx.balanceOf(stakingAddress.address).then(a=>console.log("cvx on farm: " +a))
+      await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
       await stakingAddress.rewardRates(0).then(a=>console.log("reward rate(0): " +a))
       await stakingAddress.rewardRates(1).then(a=>console.log("reward rate(1): " +a))
       await stakingAddress.rewardRates(2).then(a=>console.log("reward rate(2): " +a))
@@ -465,9 +595,11 @@ contract("Vault Tests", async accounts => {
       await stakingAddress.rewardRates(2).then(a=>console.log("reward rate(2): " +a))
       await crv.balanceOf(stakingAddress.address).then(a=>console.log("crv on farm: " +a))
       await cvx.balanceOf(stakingAddress.address).then(a=>console.log("cvx on farm: " +a))
+      await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
       
       await crv.balanceOf(actingUser).then(a=>console.log("user A crv: " +a));
       await cvx.balanceOf(actingUser).then(a=>console.log("user A cvx: " +a));
+      await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
       await stakingAddress.earned(vault.address).then(a=>console.log("farm.earned(vault): " +a[1]));
       await stakingAddress.lastUpdateTime().then(a=>console.log("lastUpdateTime: " +a))
       await stakingAddress.rewardsPerToken().then(a=>console.log("rewardsPerToken(1): " +a[1]))
@@ -480,6 +612,7 @@ contract("Vault Tests", async accounts => {
 
       await crv.balanceOf(actingUser).then(a=>console.log("user A crv: " +a));
       await cvx.balanceOf(actingUser).then(a=>console.log("user A cvx: " +a));
+      await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
       await poolUtil.weightedRewardRates(stakingAddress.address).then(a=>console.log("pool util -> weightedRewardRates: " +a));
       await poolUtil.userBoostedRewardRates(stakingAddress.address, vault.address).then(a=>console.log("pool util -> userBoostedRewardRates: " +a));
       await curvebooster.earmarkRewards(poolid,{from:userC});
@@ -496,8 +629,10 @@ contract("Vault Tests", async accounts => {
       console.log("time until period ends: " +(pf - t) );
       await crv.balanceOf(stakingAddress.address).then(a=>console.log("crv on farm: " +a))
       await cvx.balanceOf(stakingAddress.address).then(a=>console.log("cvx on farm: " +a))
+      await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
       await crv.balanceOf(actingUser).then(a=>console.log("user A crv: " +a));
       await cvx.balanceOf(actingUser).then(a=>console.log("user A cvx: " +a));
+      await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
       await advanceTime(day*7*cnt);
       await getTimestampInSeconds().then(a=>console.log("current time: " +a))
       // await stakingAddress.sync();
@@ -521,9 +656,11 @@ contract("Vault Tests", async accounts => {
       await stakingAddress.rewardRates(2).then(a=>console.log("reward rate(2): " +a))
       await crv.balanceOf(stakingAddress.address).then(a=>console.log("crv on farm: " +a))
       await cvx.balanceOf(stakingAddress.address).then(a=>console.log("cvx on farm: " +a))
+      await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
       
       await crv.balanceOf(actingUser).then(a=>console.log("user A crv: " +a));
       await cvx.balanceOf(actingUser).then(a=>console.log("user A cvx: " +a));
+      await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
       await poolUtil.weightedRewardRates(stakingAddress.address).then(a=>console.log("pool util -> weightedRewardRates: " +a));
       await poolUtil.userBoostedRewardRates(stakingAddress.address, vault.address).then(a=>console.log("pool util -> userBoostedRewardRates: " +a));
       await curvebooster.earmarkRewards(poolid,{from:userC});

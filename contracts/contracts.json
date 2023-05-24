@@ -419,7 +419,24 @@
             "stakingAddress": "0x7838d18AD75372061a1e71e1499b7E90832c1508",
             "stakingToken": "0x57Fb068BDa27351EF0913113264Ce3EF4EeA3316",
             "rewardsAddress": "0xf61154cD63C3e24902744410a2D72F44D81AC7db",
+            "name": "Convex UZD/FraxBP",
+            "active": false
+        },
+        {
+            "id": 47,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0xb8ebc210BCF78be8Ef3F09Dd0d8e85Fa5e252e86",
+            "stakingToken": "0xaa236bd1302755937Aa46D6f3423655BbC654B02",
+            "rewardsAddress": "0x99803901A0D6011414137F8f043928fbE9e79B90",
             "name": "Convex UZD/FraxBP"
+        },
+        {
+            "id": 48,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x39cd4db6460d8B5961F73E997E86DdbB7Ca4D5F6",
+            "stakingToken": "0xa5B6f8Ec4122c5Fe0dBc4Ead8Bfe66A412aE427C",
+            "rewardsAddress": "0x8C1337c11B0843191aaf74349C4e0022C6e7A75b",
+            "name": "Convex COIL/FraxBP"
         }
     ]
 }
