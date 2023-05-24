@@ -50,8 +50,10 @@ contract VaultEarnedView{
         for(uint256 i = 0; i < convexrewardCnt; i++){
             IConvexWrapperV2.RewardType memory rinfo = IConvexWrapperV2(_wrapper).rewards(i);
             token_addresses[i+rewardTokens.length+extraRewardsLength] = rinfo.reward_token;
-            //claimed so just look at local balance
-            total_earned[i+rewardTokens.length+extraRewardsLength] = IERC20(rinfo.reward_token).balanceOf(_vault);
+            if(rinfo.reward_token != address(0)){
+                //claimed so just look at local balance
+                total_earned[i+rewardTokens.length+extraRewardsLength] = IERC20(rinfo.reward_token).balanceOf(_vault);
+            }
         }
     }
 
