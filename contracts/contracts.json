@@ -437,6 +437,30 @@
             "stakingToken": "0xa5B6f8Ec4122c5Fe0dBc4Ead8Bfe66A412aE427C",
             "rewardsAddress": "0x8C1337c11B0843191aaf74349C4e0022C6e7A75b",
             "name": "Convex COIL/FraxBP"
+        },
+        {
+            "id": 49,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x67CC47cF82785728DD5E3AE9900873a074328658",
+            "stakingToken": "0xb6F63cc2066e7626fA47fCC37E78Df9fe89F1663",
+            "rewardsAddress": "0xab4aa614e43A3e752F75C1C39E85C23997AF5D63",
+            "name": "Convex crvUSD/Frax"
+        },
+        {
+            "id": 50,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x2A5b8C7DFE489CeB00ec80524C0bA0C1b78433A9",
+            "stakingToken": "0x5385AE7dC08F5C3799691E5b387cB01108B76627",
+            "rewardsAddress": "0xa859a54b0FD70283FE2A41931A6c78Ca5673D1d4",
+            "name": "Convex USDP/FRAX"
+        },
+        {
+            "id": 51,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x7b8848f10A016341c9B2427e8541C19F31C2D243",
+            "stakingToken": "0xa3ae006Cc863423F690ca01C2a8F692B97c93c3b",
+            "rewardsAddress": "0x73995Ca3687dFF8C2AB8c56F0262F6125b8b6B5a",
+            "name": "Convex swETH/frxETH"
         }
     ]
 }

@@ -1,6 +1,7 @@
 config.json
 node_modules
 stats.json
+contracts/package-lock.json
 contracts/build
 contracts/.secret
 contracts/.etherscanApi

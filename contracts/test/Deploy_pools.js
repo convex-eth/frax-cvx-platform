@@ -173,7 +173,9 @@ contract("Deploy Pool(s)", async accounts => {
     let feeDepo = await FeeDeposit.at(contractList.system.feeDeposit);
     let rewardMaster = await MultiRewards.at(contractList.system.rewardImplementation);
 
-    // await unlockAccount(deployer);
+    if(accounts[0] != deployer){
+      await unlockAccount(deployer);
+    }
     var deployedData = [];
 
     const deployConvexPool = async (stakingAddress, targetname) => {
@@ -314,7 +316,19 @@ contract("Deploy Pool(s)", async accounts => {
     // await deployConvexPool("0xd600A3E4F57E718A7ad6A0cbb10c2A92c57827e6", "Convex STG/FraxBP");
 
 
-    await deployConvexPool("0x7838d18AD75372061a1e71e1499b7E90832c1508", "Convex UZD/FraxBP");
+    // await deployConvexPool("0x7838d18AD75372061a1e71e1499b7E90832c1508", "Convex UZD/FraxBP");
+
+    // await shutdownPool(46); //shutdown old uzd pool
+
+    // await deployConvexPool("0xb8ebc210BCF78be8Ef3F09Dd0d8e85Fa5e252e86", "Convex UZD/FraxBP");
+    // await deployConvexPool("0x39cd4db6460d8B5961F73E997E86DdbB7Ca4D5F6", "Convex COIL/FraxBP");
+
+
+    await deployConvexPool("0x67CC47cF82785728DD5E3AE9900873a074328658", "Convex crvUSD/Frax");
+    await deployConvexPool("0x2A5b8C7DFE489CeB00ec80524C0bA0C1b78433A9", "Convex USDP/FRAX");
+    await deployConvexPool("0x7b8848f10A016341c9B2427e8541C19F31C2D243", "Convex swETH/frxETH");
+
+    
 
     console.log("data:");
     console.log(JSON.stringify(deployedData, null, 4));

@@ -24,6 +24,7 @@ const IConvexWrapperFactory = artifacts.require("IConvexWrapperFactory");
 const IVPool = artifacts.require("IVPool");
 const IExchange = artifacts.require("IExchange");
 const IERC20 = artifacts.require("IERC20");
+const ERC20 = artifacts.require("ERC20");
 
 const IFraxGaugeController = artifacts.require("IFraxGaugeController");
 const IFraxRewardDistributor = artifacts.require("IFraxRewardDistributor");
@@ -212,9 +213,28 @@ contract("Vault Tests", async accounts => {
 
     //uzd/fraxbp
     // let stakingAddress = await IFraxFarmERC20_V2.at("0x7677D1AADcd42dC40E758115FfDE5e1E10B7f30b");
-    let lptoken = await IERC20.at("0x68934F60758243eafAf4D2cFeD27BF8010bede3a");
-    let lpHolder = "0xBdCA4F610e7101Cc172E2135ba025737B99AbD30";
-    let convexPoolId = 158;
+    // let lptoken = await IERC20.at("0x68934F60758243eafAf4D2cFeD27BF8010bede3a");
+    // let lpHolder = "0xBdCA4F610e7101Cc172E2135ba025737B99AbD30";
+    // let convexPoolId = 158;
+
+    //frax usdp
+    // let lptoken = await IERC20.at("0xFC2838a17D8e8B1D5456E0a351B0708a09211147");
+    // let lpHolder = "0xfb860600F1bE1f1c72A89B2eF5CAF345aff7D39d";
+    // let convexPoolId = 169;
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x2A5b8C7DFE489CeB00ec80524C0bA0C1b78433A9");
+
+    //frax crvusd
+    // let lptoken = await IERC20.at("0x0CD6f267b2086bea681E922E19D40512511BE538");
+    // let lpHolder = "0x96424E6b5eaafe0c3B36CA82068d574D44BE4e3c";
+    // let convexPoolId = 187;
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x67CC47cF82785728DD5E3AE9900873a074328658");
+
+    //sweth/frxeth
+    let lptoken = await IERC20.at("0xe49AdDc2D1A131c6b8145F0EBa1C946B7198e0BA");
+    let lpHolder = "0xE6A9fd148Ad624a5A8700c6366e23E3cD308DFcB";
+    let convexPoolId = 186;
+    let stakingAddress = await IFraxFarmERC20_V2.at("0x7b8848f10A016341c9B2427e8541C19F31C2D243");
+
 
     let convexwrapperfactory = await IConvexWrapperFactory.at(contractList.system.fraxWrapperFactory);
     let wrapperowner = await convexwrapperfactory.owner();
@@ -253,7 +273,8 @@ contract("Vault Tests", async accounts => {
     //B ---- test deployed farm
 
 
-    let stakingAddress = await IFraxFarmERC20_V2.at("0xb8ebc210BCF78be8Ef3F09Dd0d8e85Fa5e252e86");
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x2A5b8C7DFE489CeB00ec80524C0bA0C1b78433A9");
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x67CC47cF82785728DD5E3AE9900873a074328658");
 
 
     /////////////////////////////////////////////////////
@@ -261,21 +282,28 @@ contract("Vault Tests", async accounts => {
     let AddToGauge = false;
     let CallSetVault = false;
     let CallSetDistroManagers = false;
+    let PullLpTokenCount = "20.0";
+    let LpTokenCount = "10.0";
 
     let tokenaddy = await stakingAddress.stakingToken();
     let stakingToken = await IERC20.at(tokenaddy);
     let stakingwrapper = await IConvexWrapperV2.at(stakingToken.address);
    
+
+    console.log("\n----- Starting Tests ------\n");
+    console.log("staking address: " +stakingAddress.address);
+
+    //get stakingToken
+    var wrappertoken = await ERC20.at(tokenaddy);
+    console.log("wrapper at: " +stakingwrapper.address);
+    await wrappertoken.name().then(a=>console.log("token name: " +a))
+    console.log("\n\n");
+    
     //get tokens
     await unlockAccount(lpHolder);
-    await lptoken.transfer(actingUser,web3.utils.toWei("100000.0", "ether"),{from:lpHolder,gasPrice:0});
+    await lptoken.transfer(actingUser,web3.utils.toWei(PullLpTokenCount, "ether"),{from:lpHolder,gasPrice:0});
     console.log("lp tokens transfered");
 
-    // await lptoken.approve(curvebooster.address, web3.utils.toWei("100000.0","ether"),{from:actingUser});
-    // console.log("approved to booster")
-    // await curvebooster.deposit(158,web3.utils.toWei("100000.0","ether"), true,{from:actingUser});
-    // console.log("staked on booster");
-    // return;
 
     await stakingAddress.sync().catch(a=>console.log("sync fail: " +a));
 
@@ -333,7 +361,7 @@ contract("Vault Tests", async accounts => {
     console.log("approved to wrapper")
     await stakingwrapper.user_checkpoint(addressZero);
     console.log("checkpoint address(0)");
-    await stakingwrapper.deposit(web3.utils.toWei("100000.0","ether"), actingUser,{from:actingUser});
+    await stakingwrapper.deposit(web3.utils.toWei(LpTokenCount,"ether"), actingUser,{from:actingUser});
     console.log("deposited to wrapper");
     var wrapperbal = await stakingwrapper.balanceOf(actingUser);
     console.log("balance to unwrap: " +wrapperbal)
@@ -430,8 +458,8 @@ contract("Vault Tests", async accounts => {
     await curvebooster.earmarkRewards(poolid,{from:userC});
     console.log("harvested convex pool " +poolid);
 
-    let impl = await StakingProxyConvex.new();
-    // let impl = await StakingProxyConvex.at(contractList.system.vaultConvexImplementation);
+    // let impl = await StakingProxyConvex.new();
+    let impl = await StakingProxyConvex.at(contractList.system.vaultConvexImplementation);
 
     var poolcount = await poolReg.poolLength();
     console.log("pool count: " +poolcount);
@@ -459,8 +487,8 @@ contract("Vault Tests", async accounts => {
     var lockDuration = day*7;
     // var lockDuration = day*364*3;
     //stake
-    await lptoken.approve(vault.address, web3.utils.toWei("100000.0","ether"),{from:actingUser});
-    var tx = await vault.stakeLockedCurveLp(web3.utils.toWei("10000.0","ether"), lockDuration, {from:actingUser});
+    await lptoken.approve(vault.address, web3.utils.toWei("1000000000.0","ether"),{from:actingUser});
+    var tx = await vault.stakeLockedCurveLp(web3.utils.toWei(LpTokenCount,"ether"), lockDuration, {from:actingUser});
     console.log("staked, gas: " +tx.receipt.gasUsed);
 
     var stakeInfo = await stakingAddress.lockedStakesOf(vault.address);
@@ -477,29 +505,30 @@ contract("Vault Tests", async accounts => {
     await poolUtil.userBoostedRewardRates(stakingAddress.address, vault.address).then(a=>console.log("pool util -> userBoostedRewardRates: " +a));
     await poolUtil.veFXSMultiplier(stakingAddress.address).then(a=>console.log("pool util -> veFXSMultiplier: " +a));
 
-    let uzdholder = "0x68934F60758243eafAf4D2cFeD27BF8010bede3a";
-    let uzd = await IERC20.at("0xb40b6608B2743E691C9B54DdBDEe7bf03cd79f1c");
-    await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("\n\nuzd balance on wrapper: " +a))
-    await stakingwrapper.rewards(2).then(a=>console.log("rewards(2): " +JSON.stringify(a)));
+    // let uzdholder = "0x68934F60758243eafAf4D2cFeD27BF8010bede3a";
+    // let uzd = await IERC20.at("0xb40b6608B2743E691C9B54DdBDEe7bf03cd79f1c");
+    // await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("\n\nuzd balance on wrapper: " +a))
+    // await stakingwrapper.rewards(2).then(a=>console.log("rewards(2): " +JSON.stringify(a)));
     
-    await unlockAccount(uzdholder);
-    await uzd.transfer(stakingwrapper.address,web3.utils.toWei("0.000342456783453782", "ether"),{from:uzdholder,gasPrice:0});
-    console.log("uzd transfered to wrapper");
-    await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("uzd balance on wrapper: " +a))
-    await stakingwrapper.earned.call(vault.address).then(a=>console.log("stakingwrapper earned: " +JSON.stringify(a) ));
-    await vault.earned.call().then(a=>console.log("vault earned: " +JSON.stringify(a) ));
+    // await unlockAccount(uzdholder);
+    // await uzd.transfer(stakingwrapper.address,web3.utils.toWei("0.000342456783453782", "ether"),{from:uzdholder,gasPrice:0});
+    // console.log("uzd transfered to wrapper");
+    // await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("uzd balance on wrapper: " +a))
+    // await stakingwrapper.earned.call(vault.address).then(a=>console.log("stakingwrapper earned: " +JSON.stringify(a) ));
+    // await vault.earned.call().then(a=>console.log("vault earned: " +JSON.stringify(a) ));
 
-    await uzd.transfer(stakingwrapper.address,web3.utils.toWei("0.000342456783453781", "ether"),{from:uzdholder,gasPrice:0});
-    console.log("uzd transfered to wrapper");
-    await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("uzd balance on wrapper: " +a))
-    await stakingwrapper.user_checkpoint(actingUser);
-    console.log("checkpoint actingUser");
+    // await uzd.transfer(stakingwrapper.address,web3.utils.toWei("0.000342456783453781", "ether"),{from:uzdholder,gasPrice:0});
+    // console.log("uzd transfered to wrapper");
+    // await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("uzd balance on wrapper: " +a))
+    // await stakingwrapper.user_checkpoint(actingUser);
+    // console.log("checkpoint actingUser");
     
-    await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("uzd balance on wrapper: " +a))
-    await stakingwrapper.rewards(2).then(a=>console.log("rewards(2): " +JSON.stringify(a)));
+    // await uzd.balanceOf(stakingwrapper.address).then(a=>console.log("uzd balance on wrapper: " +a))
+    // await stakingwrapper.rewards(2).then(a=>console.log("rewards(2): " +JSON.stringify(a)));
     
-    await stakingwrapper.earned.call(vault.address).then(a=>console.log("stakingwrapper earned: " +JSON.stringify(a) ));
-    await vault.earned.call().then(a=>console.log("vault earned: " +JSON.stringify(a) ));
+    // await stakingwrapper.earned.call(vault.address).then(a=>console.log("stakingwrapper earned: " +JSON.stringify(a) ));
+    // await vault.earned.call().then(a=>console.log("vault earned: " +JSON.stringify(a) ));
+
     // return;
     // await unlockAccount(stakingwrapper.address);
     // await uzd.transfer(deployer,web3.utils.toWei("0.000342456783453781", "ether"),{from:stakingwrapper.address,gasPrice:0});
@@ -554,7 +583,7 @@ contract("Vault Tests", async accounts => {
 
     //stake again with additional
     // await stakingToken.approve(vault.address, web3.utils.toWei("100000.0","ether"));
-    var tx = await vault.lockAdditionalCurveLp(stakeInfo[0][0],web3.utils.toWei("10000.0","ether"),{from:actingUser});
+    var tx = await vault.lockAdditionalCurveLp(stakeInfo[0][0],web3.utils.toWei(LpTokenCount,"ether"),{from:actingUser});
     console.log("staked additional, gas: " +tx.receipt.gasUsed);
     var stakeInfo = await stakingAddress.lockedStakesOf(vault.address);
     console.log("stake info: " +stakeInfo);
@@ -573,7 +602,7 @@ contract("Vault Tests", async accounts => {
       await stakingAddress.periodFinish().then(a=>console.log("periodFinish: " +a))
       await crv.balanceOf(stakingAddress.address).then(a=>console.log("crv on farm: " +a))
       await cvx.balanceOf(stakingAddress.address).then(a=>console.log("cvx on farm: " +a))
-      await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
+      // await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
       await stakingAddress.rewardRates(0).then(a=>console.log("reward rate(0): " +a))
       await stakingAddress.rewardRates(1).then(a=>console.log("reward rate(1): " +a))
       await stakingAddress.rewardRates(2).then(a=>console.log("reward rate(2): " +a))
@@ -595,11 +624,11 @@ contract("Vault Tests", async accounts => {
       await stakingAddress.rewardRates(2).then(a=>console.log("reward rate(2): " +a))
       await crv.balanceOf(stakingAddress.address).then(a=>console.log("crv on farm: " +a))
       await cvx.balanceOf(stakingAddress.address).then(a=>console.log("cvx on farm: " +a))
-      await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
+      // await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
       
       await crv.balanceOf(actingUser).then(a=>console.log("user A crv: " +a));
       await cvx.balanceOf(actingUser).then(a=>console.log("user A cvx: " +a));
-      await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
+      // await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
       await stakingAddress.earned(vault.address).then(a=>console.log("farm.earned(vault): " +a[1]));
       await stakingAddress.lastUpdateTime().then(a=>console.log("lastUpdateTime: " +a))
       await stakingAddress.rewardsPerToken().then(a=>console.log("rewardsPerToken(1): " +a[1]))
@@ -612,7 +641,7 @@ contract("Vault Tests", async accounts => {
 
       await crv.balanceOf(actingUser).then(a=>console.log("user A crv: " +a));
       await cvx.balanceOf(actingUser).then(a=>console.log("user A cvx: " +a));
-      await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
+      // await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
       await poolUtil.weightedRewardRates(stakingAddress.address).then(a=>console.log("pool util -> weightedRewardRates: " +a));
       await poolUtil.userBoostedRewardRates(stakingAddress.address, vault.address).then(a=>console.log("pool util -> userBoostedRewardRates: " +a));
       await curvebooster.earmarkRewards(poolid,{from:userC});
@@ -629,10 +658,10 @@ contract("Vault Tests", async accounts => {
       console.log("time until period ends: " +(pf - t) );
       await crv.balanceOf(stakingAddress.address).then(a=>console.log("crv on farm: " +a))
       await cvx.balanceOf(stakingAddress.address).then(a=>console.log("cvx on farm: " +a))
-      await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
+      // await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
       await crv.balanceOf(actingUser).then(a=>console.log("user A crv: " +a));
       await cvx.balanceOf(actingUser).then(a=>console.log("user A cvx: " +a));
-      await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
+      // await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
       await advanceTime(day*7*cnt);
       await getTimestampInSeconds().then(a=>console.log("current time: " +a))
       // await stakingAddress.sync();
@@ -656,11 +685,11 @@ contract("Vault Tests", async accounts => {
       await stakingAddress.rewardRates(2).then(a=>console.log("reward rate(2): " +a))
       await crv.balanceOf(stakingAddress.address).then(a=>console.log("crv on farm: " +a))
       await cvx.balanceOf(stakingAddress.address).then(a=>console.log("cvx on farm: " +a))
-      await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
+      // await uzd.balanceOf(distro).then(a=>console.log("uzd on distro: " +a));
       
       await crv.balanceOf(actingUser).then(a=>console.log("user A crv: " +a));
       await cvx.balanceOf(actingUser).then(a=>console.log("user A cvx: " +a));
-      await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
+      // await uzd.balanceOf(actingUser).then(a=>console.log("user A uzd: " +a));
       await poolUtil.weightedRewardRates(stakingAddress.address).then(a=>console.log("pool util -> weightedRewardRates: " +a));
       await poolUtil.userBoostedRewardRates(stakingAddress.address, vault.address).then(a=>console.log("pool util -> userBoostedRewardRates: " +a));
       await curvebooster.earmarkRewards(poolid,{from:userC});
