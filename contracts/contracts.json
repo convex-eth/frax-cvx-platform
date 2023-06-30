@@ -461,6 +461,78 @@
             "stakingToken": "0xa3ae006Cc863423F690ca01C2a8F692B97c93c3b",
             "rewardsAddress": "0x73995Ca3687dFF8C2AB8c56F0262F6125b8b6B5a",
             "name": "Convex swETH/frxETH"
+        },
+        {
+            "id": 52,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0xDA0622cBa8cC821ee0d4AfA366Df95E948b43297",
+            "stakingToken": "0x194aA54376886dAd3d08e71F47D189A88251D8Da",
+            "rewardsAddress": "0x4Fb3ba89e76C03d005F5e84c0F3299AfEf7c7566",
+            "name": "Convex Crv/frxETH"
+        },
+        {
+            "id": 53,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0xb01BaB994b52A37a231551f00a1B7cAcd43bc8C9",
+            "stakingToken": "0x5B31bf2988E5388Edae2960504d96Bc142742dCb",
+            "rewardsAddress": "0xad12c451E778724468FD530BFA83A88d4019c9c2",
+            "name": "Convex CVX/frxETH"
+        },
+        {
+            "id": 54,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x56790e4A08eD17aa3b7b4B1b23A6a84D731Fd77e",
+            "stakingToken": "0x8A59781B415288f9E633b948618726CB6E47e980",
+            "rewardsAddress": "0xB3ACAEA73D722Dec9cB22f044C26b5eC534ef8ae",
+            "name": "Convex alETH/frxETH"
+        },
+        {
+            "id": 55,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x854B98dC1F76c92b22F75d1f33D23FEb64D8087F",
+            "stakingToken": "0x75A439b3F8106428b86198D8c306c57E9e7Bb3dC",
+            "rewardsAddress": "0x4f44122Df58c9a89A4470709668668f0dabF7B0E",
+            "name": "Convex ankrETH/frxETH"
+        },
+        {
+            "id": 56,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x16e55917849aC7fA4341470FA3A22bB503D5cACD",
+            "stakingToken": "0x4e9D8323603E69c1310E5e04Db172bD5aB07df95",
+            "rewardsAddress": "0xE732EaFE935Ea0E8FC10A691eEa50C648bc21c1d",
+            "name": "Convex cbETH/frxETH"
+        },
+        {
+            "id": 57,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x719505cB97DF15565255eb1bDe65586271dB873C",
+            "stakingToken": "0xE0c65F74728Ff26219C6adddCEfB215484bb08DF",
+            "rewardsAddress": "0x844216cEc69c29FE9452c720Db8e95D575E957c9",
+            "name": "Convex rETH/frxETH"
+        },
+        {
+            "id": 58,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0xd79Ae34eD6D11A235629A48aeA9F661a241faD4f",
+            "stakingToken": "0x44b51F7F92D761Cf2FC46011AD6b74Ce56447924",
+            "rewardsAddress": "0xf839604fA569d6FF4f23a6421Efb82B6E964809a",
+            "name": "Convex sETH/frxETH"
+        },
+        {
+            "id": 59,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x68921998fbc43B360D3cF14a03aF4273CB0cFA44",
+            "stakingToken": "0xc2eC3d1209FD1Fc512950825f34281EaF9aB13A2",
+            "rewardsAddress": "0x1DD8C2627DeA4dc62DD8f25322fE473975a183FF",
+            "name": "Convex stETH/frxETH"
+        },
+        {
+            "id": 60,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x107a33019910E57533Ad4F75762d6A958630cA3d",
+            "stakingToken": "0xFD2d7847E0f450d8B00d3D697D720C687E622a7B",
+            "rewardsAddress": "0xB95b3CCf5dDE7099E211dd2ECA3cA4952f2Fa4d3",
+            "name": "Convex ZUSD/FraxBP"
         }
     ]
 }

@@ -324,11 +324,23 @@ contract("Deploy Pool(s)", async accounts => {
     // await deployConvexPool("0x39cd4db6460d8B5961F73E997E86DdbB7Ca4D5F6", "Convex COIL/FraxBP");
 
 
-    await deployConvexPool("0x67CC47cF82785728DD5E3AE9900873a074328658", "Convex crvUSD/Frax");
-    await deployConvexPool("0x2A5b8C7DFE489CeB00ec80524C0bA0C1b78433A9", "Convex USDP/FRAX");
-    await deployConvexPool("0x7b8848f10A016341c9B2427e8541C19F31C2D243", "Convex swETH/frxETH");
+    // await deployConvexPool("0x67CC47cF82785728DD5E3AE9900873a074328658", "Convex crvUSD/Frax");
+    // await deployConvexPool("0x2A5b8C7DFE489CeB00ec80524C0bA0C1b78433A9", "Convex USDP/FRAX");
+    // await deployConvexPool("0x7b8848f10A016341c9B2427e8541C19F31C2D243", "Convex swETH/frxETH");
 
     
+
+    await deployConvexPool("0xDA0622cBa8cC821ee0d4AfA366Df95E948b43297", "Convex Crv/frxETH");
+    await deployConvexPool("0xb01BaB994b52A37a231551f00a1B7cAcd43bc8C9", "Convex CVX/frxETH");
+    await deployConvexPool("0x56790e4A08eD17aa3b7b4B1b23A6a84D731Fd77e", "Convex alETH/frxETH");
+    await deployConvexPool("0x854B98dC1F76c92b22F75d1f33D23FEb64D8087F", "Convex ankrETH/frxETH");
+    await deployConvexPool("0x16e55917849aC7fA4341470FA3A22bB503D5cACD", "Convex cbETH/frxETH");
+    await deployConvexPool("0x719505cB97DF15565255eb1bDe65586271dB873C", "Convex rETH/frxETH");
+    await deployConvexPool("0xd79Ae34eD6D11A235629A48aeA9F661a241faD4f", "Convex sETH/frxETH");
+    await deployConvexPool("0x68921998fbc43B360D3cF14a03aF4273CB0cFA44", "Convex stETH/frxETH");
+    await deployConvexPool("0x107a33019910E57533Ad4F75762d6A958630cA3d", "Convex ZUSD/FraxBP");
+
+
 
     console.log("data:");
     console.log(JSON.stringify(deployedData, null, 4));

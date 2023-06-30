@@ -175,7 +175,8 @@ contract("Update fee deposit", async accounts => {
    
     let staking = await cvxFxsStaking.at(contractList.system.cvxfxsStaking);
     let feerec = await FeeReceiverCvxFxs.new(staking.address,{from:deployer})
-
+    let feeDeposit = await FeeDepositV2.at(contractList.system.feeDepositV2);
+    
     // await cvx.balanceOf(owner).then(a=>console.log("cvx on wallet: " +a))
 
     //get crv and cvxcrv
@@ -187,6 +188,16 @@ contract("Update fee deposit", async accounts => {
     // await cvxfxs.transfer(userA,web3.utils.toWei("100000.0", "ether"),{from:cvxfxsholder,gasPrice:0});
     // await fxs.transfer(userA,web3.utils.toWei("100000.0", "ether"),{from:fxsholder,gasPrice:0});
     // console.log("receive fxs and cvxfxs");
+    let tokenholder = "0xd658A338613198204DCa1143Ac3F01A722b5d94A";
+    await unlockAccount(tokenholder);
+    await cvxfxs.transfer(accounts[0],web3.utils.toWei("100000.0", "ether"),{from:tokenholder,gasPrice:0});
+    await fxs.transfer(accounts[0],web3.utils.toWei("100000.0", "ether"),{from:tokenholder,gasPrice:0});
+    await cvxfxs.balanceOf(accounts[0]).then(a=>console.log("transfered cvxfxs: " +a));
+    await fxs.balanceOf(accounts[0]).then(a=>console.log("transfered fxs: " +a));
+    await advanceTime(4 * day);
+    await fxs.balanceOf(feeDeposit.address).then(a=>console.log("fxs on fee deposit: " +a))
+    await feeDeposit.distribute({from:deployer});
+    console.log("distributed");
 
 
     //stake/deposit/deposit with lock
