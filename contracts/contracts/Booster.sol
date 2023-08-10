@@ -28,6 +28,7 @@ contract Booster{
     address public pendingOwner;
     address public poolManager;
     address public rewardManager;
+    address public voteDelegate;
     address public feeclaimer;
     bool public isShutdown;
     address public feeQueue;
@@ -45,14 +46,15 @@ contract Booster{
         owner = msg.sender;
         rewardManager = msg.sender;
         poolManager = msg.sender;
+        voteDelegate = msg.sender;
 
 
         //TODO: consider moving to a module so dont have to set everything again if upgraded
         feeclaimer = address(0);//msg.sender;
         feeClaimMap[address(0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872)][fxs] = true;
         emit FeeClaimPairSet(address(0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872), fxs, true);
-        feeQueue = address(0x4f3AD55D7b884CDC48ADD1e2451A13af17887F26);//stash for cvxfxs convex pool
-        emit FeeQueueChanged(address(0x4f3AD55D7b884CDC48ADD1e2451A13af17887F26));
+        feeQueue = address(0xa1b72482cF45a6F4a0A7EE1DafFdbc66E243622a);
+        emit FeeQueueChanged(address(0xa1b72482cF45a6F4a0A7EE1DafFdbc66E243622a));
 
         //set our proxy as its own owner
         proxyOwners[_proxy] = _proxy;
@@ -188,11 +190,25 @@ contract Booster{
         }
     }
 
-    //set voting delegate
+    //set snapshot voting delegate
     function setDelegate(address _delegateContract, address _delegate, bytes32 _space) external onlyOwner{
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setDelegate(bytes32,address)")), _space, _delegate);
         _proxyCall(_delegateContract,data);
         emit DelegateSet(_delegate);
+    }
+
+    //set on chain governance voting delegate
+    function setOnChainDelegate(address _delegateContract, address _delegate) external onlyOwner{
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("delegate(address)")), _delegate);
+        _proxyCall(_delegateContract,data);
+        voteDelegate = _delegate;
+        emit OnChainDelegateSet(_delegate);
+    }
+
+    function castVote(address _votingContract, uint256 _proposalId, bool _support) external{
+        require(msg.sender == voteDelegate, "!voteDelegate");
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("castVote(uint256,uint8)")), _proposalId, _support?uint8(1):uint8(0));
+        _proxyCall(_votingContract,data);
     }
 
     //recover tokens on this contract
@@ -317,6 +333,7 @@ contract Booster{
     event PoolManagerChanged(address indexed _address);
     event Shutdown();
     event DelegateSet(address indexed _address);
+    event OnChainDelegateSet(address indexed _address);
     event FeesClaimed(uint256 _amount);
     event Recovered(address indexed _token, uint256 _amount);
 }

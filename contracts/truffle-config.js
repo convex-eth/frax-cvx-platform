@@ -55,28 +55,28 @@ module.exports = {
       port: 8545,
       network_id: "56",
       gas: 6721975,
-      gasPrice: 100000000000
+      gasPrice: 1000000000
     },
     ganachecli: {
       host: "127.0.0.1",
       port: 8545,
       network_id: "1",
       gas: 6721975,
-      gasPrice: 100000000000
+      gasPrice: 1000000000
     },
     uitest: {
       host: "127.0.0.1",
       port: 8545,
       network_id: "1",
       gas: 6721975,
-      gasPrice: 100000000000
+      gasPrice: 1000000000
     },
     debug: {
       host: "127.0.0.1",
       port: 8545,
       network_id: "1",
       gas: 6721975,
-      gasPrice: 100000000000
+      gasPrice: 1000000000
     },
   },
 

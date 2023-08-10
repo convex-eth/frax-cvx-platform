@@ -1,7 +1,7 @@
 {
     "system": {
         "voteProxy": "0x59CFCD384746ec3035299D90782Be065e466800B",
-        "booster": "0x569f5B842B5006eC17Be02B8b94510BA8e79FbCa",
+        "booster": "0x2B8b301B90Eb8801f1eEFe73285Eec117D2fFC95",
         "cvx": "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
         "cvxDistro": "0x449f2fd99174e1785CF2A1c79E665Fec3dD1DdC6",
         "locker": "0x72a19342e8F1838460eBFCCEf09F6585e32db86E",
@@ -36,6 +36,9 @@
         "gaugeController": "0x3669C421b77340B2979d1A00a792CC2ee0FcE737",
         "rewardDistributor": "0x278dC748edA1d8eFEf1aDFB518542612b49Fcd34",
         "vefxsRewardDistro": "0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872",
+        "alpha": "",
+        "omega": "0x953791D7C5ac8Ce5fb23BBBF88963DA37a95FE7a",
+        "delegation": "0x6B83c4f3a6729Fb7D5e19b720092162DF439f567",
         "walletChecker": "0x53c13BA8834a1567474b19822aAD85c6F90D9f9F"
     },
     "pools": [
