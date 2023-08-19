@@ -230,11 +230,17 @@ contract("Vault Tests", async accounts => {
     // let stakingAddress = await IFraxFarmERC20_V2.at("0x67CC47cF82785728DD5E3AE9900873a074328658");
 
     //sweth/frxeth
-    let lptoken = await IERC20.at("0xe49AdDc2D1A131c6b8145F0EBa1C946B7198e0BA");
-    let lpHolder = "0xE6A9fd148Ad624a5A8700c6366e23E3cD308DFcB";
-    let convexPoolId = 186;
-    let stakingAddress = await IFraxFarmERC20_V2.at("0x7b8848f10A016341c9B2427e8541C19F31C2D243");
+    // let lptoken = await IERC20.at("0xe49AdDc2D1A131c6b8145F0EBa1C946B7198e0BA");
+    // let lpHolder = "0xE6A9fd148Ad624a5A8700c6366e23E3cD308DFcB";
+    // let convexPoolId = 186;
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x7b8848f10A016341c9B2427e8541C19F31C2D243");
 
+
+    //crv/frxeth
+    let lptoken = await IERC20.at("0xc34993c9aDf6a5AB3b4cA27dC71b9c7894A53974");
+    let lpHolder = "0x266cE172a1180134cf6C7836C516bd6A58b1f619";
+    let convexPoolId = 162;
+    let stakingAddress = await IFraxFarmERC20_V2.at("0xDA0622cBa8cC821ee0d4AfA366Df95E948b43297");
 
     let convexwrapperfactory = await IConvexWrapperFactory.at(contractList.system.fraxWrapperFactory);
     let wrapperowner = await convexwrapperfactory.owner();

@@ -197,56 +197,21 @@ contract("Vault Tests", async accounts => {
     await unlockAccount(actingUser);
     console.log("acting user: " +actingUser);
 
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x2816Ab1F4Db656602b6B0041c006652A4F5D0437");
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x76CF35aB1450D3A6c84EdDB8A960A5F65B76e706");
+    let stakingAddress = await IFraxFarmERC20_V2.at("0x5684d5566bb438D8Ef7B3C1E5da9450cD19C1b9f");
+    let tokenaddy = await stakingAddress.stakingToken();
+    let stakingToken = await IERC20.at(tokenaddy);
+    let stakingwrapper = await IConvexWrapperV2.at(stakingToken.address);
+    let convexPoolId = Number(await stakingwrapper.convexPoolId());
+    console.log("convex pool id: " +convexPoolId);
+    let lptoken = await IERC20.at( await stakingwrapper.curveToken() );
+    console.log("curve lp: " +lptoken.address);
+    let convexinfo = await curvebooster.poolInfo( convexPoolId );
+    console.log("convexinfo: " +JSON.stringify(convexinfo));
+    let lpHolder = convexinfo._gauge;
+    console.log("curve gauge/token holder: " +lpHolder);
 
-
-
-
-     //frax farm
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0x4c9AD8c53d0a001E7fF08a3E5E26dE6795bEA5ac"); //eusd/fraxbp
-    // let lptoken = await IERC20.at("0xAEda92e6A3B1028edc139A4ae56Ec881f3064D4F"); //eusd/fraxbp
-    // let lpHolder = "0x8605dc0C339a2e7e85EEA043bD29d42DA2c6D784"; //eusd/fraxbp
-
-    //STG/fraxbp
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0xd600A3E4F57E718A7ad6A0cbb10c2A92c57827e6");
-    // let lptoken = await IERC20.at("0x9de1c3D446237ab9BaFF74127eb4F303802a2683");
-    // let lpHolder = "0x8133e6B0B2420bBa10574A6668ea275f5E7Ed253";
-
-    //uzd/fraxbp
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0x7677D1AADcd42dC40E758115FfDE5e1E10B7f30b");
-    // let lptoken = await IERC20.at("0x68934F60758243eafAf4D2cFeD27BF8010bede3a");
-    // let lpHolder = "0xBdCA4F610e7101Cc172E2135ba025737B99AbD30";
-    // let convexPoolId = 158;
-
-    //frax usdp
-    // let lptoken = await IERC20.at("0xFC2838a17D8e8B1D5456E0a351B0708a09211147");
-    // let lpHolder = "0xfb860600F1bE1f1c72A89B2eF5CAF345aff7D39d";
-    // let convexPoolId = 169;
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0x2A5b8C7DFE489CeB00ec80524C0bA0C1b78433A9");
-
-    //frax crvusd
-    // let lptoken = await IERC20.at("0x0CD6f267b2086bea681E922E19D40512511BE538");
-    // let lpHolder = "0x96424E6b5eaafe0c3B36CA82068d574D44BE4e3c";
-    // let convexPoolId = 187;
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0x67CC47cF82785728DD5E3AE9900873a074328658");
-
-    //sweth/frxeth
-    // let lptoken = await IERC20.at("0xe49AdDc2D1A131c6b8145F0EBa1C946B7198e0BA");
-    // let lpHolder = "0xE6A9fd148Ad624a5A8700c6366e23E3cD308DFcB";
-    // let convexPoolId = 186;
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0x7b8848f10A016341c9B2427e8541C19F31C2D243");
-
-
-    //crv/frxeth
-    // let lptoken = await IERC20.at("0xc34993c9aDf6a5AB3b4cA27dC71b9c7894A53974");
-    // let lpHolder = "0x266cE172a1180134cf6C7836C516bd6A58b1f619";
-    // let convexPoolId = 162;
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0xDA0622cBa8cC821ee0d4AfA366Df95E948b43297");
-
-    //ZUSD/FraxBP
-    let lptoken = await IERC20.at("0x400d4C984779A747462e88373c3fE369EF9F5b50");
-    let lpHolder = "0xAff9104E58D0123632F392d16b2a6E0db79c1363";
-    let convexPoolId = 196;
-    let stakingAddress = await IFraxFarmERC20_V2.at("0x107a33019910E57533Ad4F75762d6A958630cA3d");
 
     let convexwrapperfactory = await IConvexWrapperFactory.at(contractList.system.fraxWrapperFactory);
     let wrapperowner = await convexwrapperfactory.owner();
@@ -297,9 +262,9 @@ contract("Vault Tests", async accounts => {
     let PullLpTokenCount = "20.0";
     let LpTokenCount = "10.0";
 
-    let tokenaddy = await stakingAddress.stakingToken();
-    let stakingToken = await IERC20.at(tokenaddy);
-    let stakingwrapper = await IConvexWrapperV2.at(stakingToken.address);
+    // let tokenaddy = await stakingAddress.stakingToken();
+    // let stakingToken = await IERC20.at(tokenaddy);
+    // let stakingwrapper = await IConvexWrapperV2.at(stakingToken.address);
    
 
     console.log("\n----- Starting Tests ------\n");

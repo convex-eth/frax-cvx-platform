@@ -536,6 +536,22 @@
             "stakingToken": "0xFD2d7847E0f450d8B00d3D697D720C687E622a7B",
             "rewardsAddress": "0xB95b3CCf5dDE7099E211dd2ECA3cA4952f2Fa4d3",
             "name": "Convex ZUSD/FraxBP"
+        },
+        {
+            "id": 61,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x2816Ab1F4Db656602b6B0041c006652A4F5D0437",
+            "stakingToken": "0x09bFD0c760E4a1bFc970cdaAAD240307C917Aa6c",
+            "rewardsAddress": "0x3835806C69558bb3876d9E7cF7a0f4Ca268E41eB",
+            "name": "Convex msETH/frxEth"
+        },
+        {
+            "id": 62,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x5684d5566bb438D8Ef7B3C1E5da9450cD19C1b9f",
+            "stakingToken": "0xDf9BB26ba5a05fcFc2637dC763AA4eb735911568",
+            "rewardsAddress": "0x8424A6D43905eDdBc1d4d05AAafA556245fb1f5C",
+            "name": "Convex GRAI/FraxBP"
         }
     ]
 }
