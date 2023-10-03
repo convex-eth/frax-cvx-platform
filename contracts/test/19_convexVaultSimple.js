@@ -199,7 +199,9 @@ contract("Vault Tests", async accounts => {
 
     // let stakingAddress = await IFraxFarmERC20_V2.at("0x2816Ab1F4Db656602b6B0041c006652A4F5D0437");
     // let stakingAddress = await IFraxFarmERC20_V2.at("0x76CF35aB1450D3A6c84EdDB8A960A5F65B76e706");
-    let stakingAddress = await IFraxFarmERC20_V2.at("0x5684d5566bb438D8Ef7B3C1E5da9450cD19C1b9f");
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x5684d5566bb438D8Ef7B3C1E5da9450cD19C1b9f");
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0xB4fdD7444E1d86b2035c97124C46b1528802DA35");
+    let stakingAddress = await IFraxFarmERC20_V2.at("0x95AB2a2F6e701873cEA0070dAc735589D089f6Bc");
     let tokenaddy = await stakingAddress.stakingToken();
     let stakingToken = await IERC20.at(tokenaddy);
     let stakingwrapper = await IConvexWrapperV2.at(stakingToken.address);

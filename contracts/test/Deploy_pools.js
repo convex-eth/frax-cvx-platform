@@ -344,8 +344,12 @@ contract("Deploy Pool(s)", async accounts => {
     // await deployConvexPool("0x107a33019910E57533Ad4F75762d6A958630cA3d", "Convex ZUSD/FraxBP");
 
 
-    await deployConvexPool("0x2816Ab1F4Db656602b6B0041c006652A4F5D0437", "Convex msETH/frxEth");
-    await deployConvexPool("0x5684d5566bb438D8Ef7B3C1E5da9450cD19C1b9f", "Convex GRAI/FraxBP");
+    // await deployConvexPool("0x2816Ab1F4Db656602b6B0041c006652A4F5D0437", "Convex msETH/frxEth");
+    // await deployConvexPool("0x5684d5566bb438D8Ef7B3C1E5da9450cD19C1b9f", "Convex GRAI/FraxBP");
+
+
+    await deployConvexPool("0xB4fdD7444E1d86b2035c97124C46b1528802DA35", "Convex frxEth/Weth");
+    await deployConvexPool("0x95AB2a2F6e701873cEA0070dAc735589D089f6Bc", "Convex mkUSD/FraxBP");
 
 
 
