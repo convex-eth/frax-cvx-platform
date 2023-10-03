@@ -1,9 +1,13 @@
 {
     "system": {
+        "deployer": "0x947B7742C403f20e5FaCcDAc5E092C943E7D0277",
+        "multisig": "0xa3C5A1e09150B75ff251c1a7815A07182c3de2FB",
+        "treasury": "0x1389388d01708118b497f59521f6943Be2541bb7",
         "voteProxy": "0x59CFCD384746ec3035299D90782Be065e466800B",
         "booster": "0x2B8b301B90Eb8801f1eEFe73285Eec117D2fFC95",
         "cvx": "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
         "cvxDistro": "0x449f2fd99174e1785CF2A1c79E665Fec3dD1DdC6",
+        "cvxDistroPoolHook": "0x723f9Aa67FDD9B0e375eF8553eB2AFC28eCD4a96",
         "locker": "0x72a19342e8F1838460eBFCCEf09F6585e32db86E",
         "cvxFxs": "0xFEEf77d3f69374f66429C91d732A244f074bdf74",
         "crv": "0xD533a949740bb3306d119CC777fa900bA034cd52",
@@ -25,7 +29,9 @@
         "templeJointManager": "0x599113B0403E3fa613C318aF0Bf75826BeDFB9ec",
         "earnedViewer": "0x9Ce7c648244F111CCd338Cc5e269C5961ad9B308",
         "cvxfxsStaking": "0x49b4d1dF40442f0C31b1BbAEA3EDE7c38e37E31a",
+        "feeReceiverPlatform": "0xD60D80D9c184D4f02fF1711844Aaa4E94BEc36cf",
         "feeReceiverCvxFxs": "0xa1b72482cF45a6F4a0A7EE1DafFdbc66E243622a",
+        "vefxsShareReceiver": "0x31c5E6D1891d2Af49dEc041D41a3A663E03F8F24",
         "fraxWrapperFactory": "0x8952bFd1ba716cB7bdc553d503b068f4681C5808"
     },
     "frax": {
