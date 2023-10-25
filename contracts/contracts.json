@@ -18,7 +18,8 @@
         "feeDeposit": "0xcBec22233Dad5E15AB9c02CAA4d914F3c97323f7",
         "feeDepositV2": "0x7A527d8bB09f7D70C148aB5DE919e9BF68a0d769",
         "feeReceiverVlCvx": "0xB9A2120F32420f0da2777Ee07BeEeA92d3D2C2B8",
-        "vaultErc20Implementation": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+        "vaultErc20Implementation_v4": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
+        "vaultErc20Implementation": "",
         "vaultConvexImplementation_v4": "0x03fb8543E933624b45abdd31987548c0D9892F07",
         "vaultConvexImplementation_v5": "0x2243Cad54AA410aE2BEB351bEC117cc0822AF139",
         "vaultConvexImplementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
@@ -574,6 +575,14 @@
             "stakingToken": "0xd529a0FD4249f0b48171140873b1b13a1ad5286d",
             "rewardsAddress": "0x34a8785a09FC939e3C2D45033CA38Cc2a59b71A1",
             "name": "Convex mkUSD/FraxBP"
+        },
+        {
+            "id": 65,
+            "implementation": "0x7D54C53e6940E88a7ac1970490DAFbBF85D982f4",
+            "stakingAddress": "0x50Cde910D1f8b6C787b7903d23082542593E0710",
+            "stakingToken": "0xAD059ccF041e344eA52A3152Bbf654c605d68473",
+            "rewardsAddress": "0x0775de6370806c4DE4667f146B65c1dceaaB2A83",
+            "name": "Convex triSDT/FraxBP"
         }
     ]
 }
