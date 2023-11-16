@@ -33,7 +33,8 @@
         "feeReceiverPlatform": "0xD60D80D9c184D4f02fF1711844Aaa4E94BEc36cf",
         "feeReceiverCvxFxs": "0xa1b72482cF45a6F4a0A7EE1DafFdbc66E243622a",
         "vefxsShareReceiver": "0x31c5E6D1891d2Af49dEc041D41a3A663E03F8F24",
-        "fraxWrapperFactory": "0x8952bFd1ba716cB7bdc553d503b068f4681C5808"
+        "fraxWrapperFactory": "0x8952bFd1ba716cB7bdc553d503b068f4681C5808",
+        "treasuryManager": "0xeB8121b44a290eE16981D87B92fc16b2366dE6B3"
     },
     "frax": {
         "frax": "0x853d955aCEf822Db058eb8505911ED77F175b99e",
