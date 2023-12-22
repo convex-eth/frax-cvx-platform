@@ -9,4 +9,5 @@ interface IBooster {
    function owner() external returns(address);
    function rewardManager() external returns(address);
    function isShutdown() external returns(bool);
+   function createVault(uint256 _pid) external returns (address);
 }

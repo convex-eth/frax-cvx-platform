@@ -14,6 +14,9 @@ contract VaultEarnedView{
 
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
     function earned(address _stakingAddress, address _wrapper, address _extrarewards, address _vault) external returns (address[] memory token_addresses, uint256[] memory total_earned) {
+        //simulate frax pool sync
+        try IFraxFarmERC20(_stakingAddress).sync(){}catch{}
+
         //simulate claim on wrapper
         IConvexWrapperV2(_wrapper).getReward(_vault);
 
