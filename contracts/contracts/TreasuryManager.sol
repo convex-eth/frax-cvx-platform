@@ -109,7 +109,7 @@ contract TreasuryManager{
     }
 
     function calc_withdraw_one_coin(uint256 _amount) external view returns(uint256){
-        uint256 tokenOut = ICurveExchange(exchange).calc_withdraw_one_coin(_amount, 1);
+        uint256 tokenOut = ICurveExchange(exchange).calc_withdraw_one_coin(_amount, int128(1));
         tokenOut = tokenOut * slippage / 1e18;
         return tokenOut;
     }
@@ -167,7 +167,7 @@ contract TreasuryManager{
         IConvexStaking(lprewards).withdrawAndUnwrap(_amount, true);
 
         //remove from LP with treasury as receiver
-        ICurveExchange(exchange).remove_liquidity_one_coin(IERC20(exchange).balanceOf(address(this)), 1, _minAmountOut, treasury);
+        ICurveExchange(exchange).remove_liquidity_one_coin(IERC20(exchange).balanceOf(address(this)), int128(1), _minAmountOut, treasury);
 
         uint256 bal = IERC20(crv).balanceOf(address(this));
         if(bal > 0){

@@ -56,6 +56,7 @@ interface IFraxFarmERC20_V2 {
     function vefxs_max_multiplier() external view returns(uint256);
     function vefxs_boost_scale_factor() external view returns(uint256);
     function vefxs_per_frax_for_max_boost() external view returns(uint256);
+    function lock_time_for_max_multiplier() external view returns(uint256);
     function getProxyFor(address addr) external view returns (address);
 
     function sync() external;
