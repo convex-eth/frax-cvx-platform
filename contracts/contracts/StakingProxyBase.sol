@@ -5,6 +5,7 @@ import "./interfaces/IProxyVault.sol";
 import "./interfaces/IFeeRegistry.sol";
 import "./interfaces/IFraxFarmBase.sol";
 import "./interfaces/IRewards.sol";
+import "./interfaces/IPoolRegistry.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
@@ -15,6 +16,7 @@ contract StakingProxyBase is IProxyVault{
     address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
     address public constant vefxsProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
     address public constant feeRegistry = address(0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D); //fee registry
+    address public constant poolRegistry = address(0x41a5881c17185383e19Df6FA4EC158a6F4851A69); //pool registry
 
     address public owner; //owner of the vault
     address public stakingAddress; //farming contract
@@ -23,6 +25,7 @@ contract StakingProxyBase is IProxyVault{
     address public usingProxy; //address of proxy being used
 
     uint256 public constant FEE_DENOMINATOR = 10000;
+    mapping(address => bool) internal usedRewards;
 
     constructor() {
     }
@@ -46,8 +49,11 @@ contract StakingProxyBase is IProxyVault{
     }
 
     //initialize vault
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external virtual{
-
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) public virtual{
+        owner = _owner;
+        stakingAddress = _stakingAddress;
+        stakingToken = _stakingToken;
+        rewards = _rewardsAddress;
     }
 
     function changeRewards(address _rewardsAddress) external onlyAdmin{
@@ -60,6 +66,9 @@ contract StakingProxyBase is IProxyVault{
             }
             IRewards(rewards).getReward(owner);
         }
+
+        //register old reward contracts
+        usedRewards[rewards] = true;
 
         //set to new rewards
         rewards = _rewardsAddress;
@@ -161,5 +170,25 @@ contract StakingProxyBase is IProxyVault{
                 }
             }
         }
+    }
+
+    //allow arbitrary calls. some targets are blocked
+    function execute(
+        address _to,
+        bytes calldata _data
+    ) external onlyOwner returns (bool, bytes memory) {
+        //fully block fxs, staking token(lp etc), and rewards
+        require(_to != fxs && _to != stakingToken && _to != rewards && !usedRewards[_to], "!invalid target");
+
+        //only calls to staking(gauge) address if pool is shutdown
+        if(_to == stakingAddress){
+            require(rewards != address(0),"!pid");
+            (, , , , uint8 shutdown) = IPoolRegistry(poolRegistry).poolInfo( IRewards(rewards).poolId() );
+            require(shutdown == 0,"!shutdown");
+        }
+
+        (bool success, bytes memory result) = _to.call{value:0}(_data);
+        require(success, "!success");
+        return (success, result);
     }
 }

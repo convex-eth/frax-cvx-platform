@@ -38,7 +38,7 @@ contract StakingProxyERC20Joint is StakingProxyBase, ReentrancyGuard{
     }
 
     //initialize vault
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external override{
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) public override{
         require(owner == address(0),"already init");
 
         //check manager

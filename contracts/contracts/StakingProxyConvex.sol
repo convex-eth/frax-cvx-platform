@@ -12,7 +12,6 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     using SafeERC20 for IERC20;
 
-    address public constant poolRegistry = address(0x7413bFC877B5573E29f964d572f421554d8EDF86);
     address public constant convexCurveBooster = address(0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
     address public constant crv = address(0xD533a949740bb3306d119CC777fa900bA034cd52);
     address public constant cvx = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
@@ -28,18 +27,15 @@ contract StakingProxyConvex is StakingProxyBase, ReentrancyGuard{
     }
 
     function vaultVersion() external pure override returns(uint256){
-        return 6;
+        return 7;
     }
 
     //initialize vault
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external override{
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) public override{
         require(owner == address(0),"already init");
 
         //set variables
-        owner = _owner;
-        stakingAddress = _stakingAddress;
-        stakingToken = _stakingToken;
-        rewards = _rewardsAddress;
+        super.initialize(_owner, _stakingAddress, _stakingToken, _rewardsAddress);
 
         //get tokens from pool info
         (address _lptoken, address _token,,, , ) = ICurveConvex(convexCurveBooster).poolInfo(IConvexWrapperV2(_stakingToken).convexPoolId());

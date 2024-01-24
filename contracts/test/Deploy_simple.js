@@ -7,6 +7,10 @@ var contractList = jsonfile.readFileSync('./contracts.json');
 const GaugeExtraRewardDistributor = artifacts.require("GaugeExtraRewardDistributor");
 const WrapperFactory = artifacts.require("WrapperFactory");
 const StakingProxyConvex = artifacts.require("StakingProxyConvex");
+const StakingProxyERC20 = artifacts.require("StakingProxyERC20");
+const VaultEarnedView = artifacts.require("VaultEarnedView");
+const FeeReceiverCvxFxs = artifacts.require("FeeReceiverCvxFxs");
+const FeeReceiverPlatform = artifacts.require("FeeReceiverPlatform");
 
 
 // -- for new ganache
@@ -52,8 +56,8 @@ const addAccount = async (address) => {
 contract("Deploy contracts", async accounts => {
   it("should deploy contracts", async () => {
 
-    let deployer = "0x947B7742C403f20e5FaCcDAc5E092C943E7D0277";
-    let multisig = "0xa3C5A1e09150B75ff251c1a7815A07182c3de2FB";
+    let deployer = contractList.system.deployer;
+    let multisig = contractList.system.multisig;
     let addressZero = "0x0000000000000000000000000000000000000000"
 
     // var distro = await GaugeExtraRewardDistributor.new({from:deployer});
@@ -63,6 +67,12 @@ contract("Deploy contracts", async accounts => {
 
     var conveximpl = await StakingProxyConvex.new({from:deployer});
     console.log("convex impl: " +conveximpl.address);
+    var ercimpl = await StakingProxyERC20.new({from:deployer});
+    console.log("ercimpl impl: " +ercimpl.address);
+
+    // var feerec = await FeeReceiverCvxFxs.new(contractList.system.cvxfxsStaking, contractList.system.treasury, 500);
+    // var feerec = await FeeReceiverPlatform.new();
+    // console.log("feerec view: " +feerec.address);
 
     return;
   });

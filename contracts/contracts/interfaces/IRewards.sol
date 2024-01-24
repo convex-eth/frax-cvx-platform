@@ -22,5 +22,6 @@ interface IRewards{
     function claimableRewards(address _account) external view returns(EarnedData[] memory userRewards);
     function rewardTokens(uint256 _rid) external view returns (address);
     function rewardTokenLength() external view returns(uint256);
+    function poolId() external view returns(uint256);
     function active() external view returns(bool);
 }

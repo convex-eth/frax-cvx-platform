@@ -8,6 +8,7 @@ const FraxVoterProxy = artifacts.require("FraxVoterProxy");
 const cvxFxsToken = artifacts.require("cvxFxsToken");
 const IFeeDistro = artifacts.require("IFeeDistro");
 const TestPool_Erc20 = artifacts.require("TestPool_Erc20");
+const StakingProxyBase = artifacts.require("StakingProxyBase");
 const StakingProxyERC20 = artifacts.require("StakingProxyERC20");
 const StakingProxyConvex = artifacts.require("StakingProxyConvex");
 const IFraxFarmERC20_V2 = artifacts.require("IFraxFarmERC20_V2");
@@ -33,32 +34,18 @@ const IFraxFarmFactory = artifacts.require("IFraxFarmFactory");
 const ICurveConvex = artifacts.require("ICurveConvex");
 
 
-// const unlockAccount = async (address) => {
-//   return new Promise((resolve, reject) => {
-//     web3.currentProvider.send(
-//       {
-//         jsonrpc: "2.0",
-//         method: "evm_unlockUnknownAccount",
-//         params: [address],
-//         id: new Date().getTime(),
-//       },
-//       (err, result) => {
-//         if (err) {
-//           return reject(err);
-//         }
-//         return resolve(result);
-//       }
-//     );
-//   });
-// };
 
-const addAccount = async (address) => {
+const unlockAccount = async (address) => {
+  let NETWORK = config.network;
+  if(!NETWORK.includes("debug")){
+    return null;
+  }
   return new Promise((resolve, reject) => {
     web3.currentProvider.send(
       {
         jsonrpc: "2.0",
-        method: "evm_addAccount",
-        params: [address, "passphrase"],
+        method: "hardhat_impersonateAccount",
+        params: [address],
         id: new Date().getTime(),
       },
       (err, result) => {
@@ -71,14 +58,13 @@ const addAccount = async (address) => {
   });
 };
 
-const unlockAccount = async (address) => {
-  await addAccount(address);
+const setNoGas = async () => {
   return new Promise((resolve, reject) => {
     web3.currentProvider.send(
       {
         jsonrpc: "2.0",
-        method: "personal_unlockAccount",
-        params: [address, "passphrase"],
+        method: "hardhat_setNextBlockBaseFeePerGas",
+        params: ["0x0"],
         id: new Date().getTime(),
       },
       (err, result) => {
@@ -165,8 +151,7 @@ contract("Vault Tests", async accounts => {
     userNames[userZ] = "Z";
 
     const advanceTime = async (secondsElaspse) => {
-      await time.increase(secondsElaspse);
-      await time.advanceBlock();
+      await fastForward(secondsElaspse);
       console.log("\n  >>>>  advance time " +(secondsElaspse/86400) +" days  >>>>\n");
     }
     const day = 86400;
@@ -196,13 +181,10 @@ contract("Vault Tests", async accounts => {
     let actingUser = userA
     await unlockAccount(actingUser);
     console.log("acting user: " +actingUser);
+    await setNoGas();
 
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0x2816Ab1F4Db656602b6B0041c006652A4F5D0437");
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0x76CF35aB1450D3A6c84EdDB8A960A5F65B76e706");
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0x5684d5566bb438D8Ef7B3C1E5da9450cD19C1b9f");
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0xB4fdD7444E1d86b2035c97124C46b1528802DA35");
-    // let stakingAddress = await IFraxFarmERC20_V2.at("0x95AB2a2F6e701873cEA0070dAc735589D089f6Bc");
-    let stakingAddress = await IFraxFarmERC20_V2.at("0x50Cde910D1f8b6C787b7903d23082542593E0710");
+    //set frax farm here
+    let stakingAddress = await IFraxFarmERC20_V2.at("0x7d69b887751Af59fB4b56BC98fcA0234096Eb267");
     let tokenaddy = await stakingAddress.stakingToken();
     let stakingToken = await IERC20.at(tokenaddy);
     let stakingwrapper = await IConvexWrapperV2.at(stakingToken.address);
@@ -281,14 +263,17 @@ contract("Vault Tests", async accounts => {
     
     //get tokens
     await unlockAccount(lpHolder);
+    await setNoGas();
     await lptoken.transfer(actingUser,web3.utils.toWei(PullLpTokenCount, "ether"),{from:lpHolder,gasPrice:0});
     console.log("lp tokens transfered");
 
-
+    await setNoGas();
     await stakingAddress.sync().catch(a=>console.log("sync fail: " +a));
+    console.log("sync called")
 
     let fxsholder = "0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0";
     await unlockAccount(fxsholder);
+    await setNoGas();
     await fxs.transfer(stakingAddress.address,web3.utils.toWei("100000.0", "ether"),{from:fxsholder,gasPrice:0});
     console.log("fxs transfered to farm");
     
@@ -313,6 +298,7 @@ contract("Vault Tests", async accounts => {
     var currentProxy = await stakingAddress.getProxyFor(contractList.system.voteProxy);
     if(currentProxy == addressZero){
       console.log("forcing vefxs proxy toggle...");
+      await setNoGas();
       await stakingAddress.toggleValidVeFXSProxy(contractList.system.voteProxy,{from:stakingOwner,gasPrice:0});
     }else{
       console.log("\n*** proxy already correctly set ***\n")
@@ -320,12 +306,13 @@ contract("Vault Tests", async accounts => {
     await stakingAddress.getProxyFor(contractList.system.voteProxy).then(a=>console.log("Proxy check: " +a));
 
 
-    // let impl = await StakingProxyConvex.new();
-    let impl = await StakingProxyConvex.at(contractList.system.vaultConvexImplementation);
+    let impl = await StakingProxyConvex.new();
+    // let impl = await StakingProxyConvex.at(contractList.system.vaultConvexImplementation);
 
     var poolcount = await poolReg.poolLength();
     console.log("pool count: " +poolcount);
 
+    await setNoGas();
     var tx = await booster.addPool(impl.address, stakingAddress.address, stakingToken.address,{from:deployer,gasPrice:0});
     console.log("pool added, gas: " +tx.receipt.gasUsed);
     await poolReg.poolLength().then(a=>console.log("new pool count: " +a));
@@ -334,12 +321,40 @@ contract("Vault Tests", async accounts => {
     console.log(poolinfo);
     
     //create vault
+    await setNoGas();
     var tx = await booster.createVault(poolcount,{from:actingUser});
-    
+
     //get vault
     let vaultAddress = await poolReg.vaultMap(poolcount,actingUser);
     let vault = await StakingProxyConvex.at(vaultAddress)
     console.log("vault at " +vault.address);// +", gas: " +tx.receipt.gasUsed);
+    await vault.owner().then(a=>console.log("owner: " +a))
+
+    //test execute
+    // var calldata = fxs.contract.methods.approve(deployer,web3.utils.toWei("50000.0", "ether")).encodeABI();
+    // console.log("execute approve data: " +calldata);
+    // console.log("test execute >>> non owner should fail")
+    // await setNoGas();
+    // await vault.execute(fxs.address,calldata,{from:deployer}).catch(a=>console.log("exec revert: " +a));
+    // console.log("test execute >>> fxs should fail")
+    // await setNoGas();
+    // await vault.execute(fxs.address,calldata,{from:actingUser}).catch(a=>console.log("exec revert: " +a));
+    // console.log("test execute >>> cvx should pass")
+    // await setNoGas();
+    // await vault.execute(cvx.address,calldata,{from:actingUser}).then(a=>console.log("pass >> cvx approved")).catch(a=>console.log("exec revert: " +a));
+
+    // calldata = stakingAddress.contract.methods.sync().encodeABI();
+    // console.log("\ntest execute >>> calling sync on gauge should fail when pool active")
+    // await vault.execute(stakingAddress.address,calldata,{from:actingUser}).catch(a=>console.log("exec revert: " +a));
+
+    // console.log("shutdown pool...")
+    // await setNoGas();
+    // await booster.deactivatePool(poolcount,{from:deployer,gasPrice:0});
+
+    // console.log("test execute >>> calling sync on gauge should succeed when pool shutdown")
+    // await setNoGas();
+    // await vault.execute(stakingAddress.address,calldata,{from:actingUser}).then(a=>console.log("pass >> sync called")).catch(a=>console.log("exec revert: " +a));
+    // console.log("exec done");
 
 
     var tokenBalance = await lptoken.balanceOf(actingUser);
@@ -348,7 +363,9 @@ contract("Vault Tests", async accounts => {
     var lockDuration = day*7;
 
     //stake
+    await setNoGas();
     await lptoken.approve(vault.address, web3.utils.toWei("1000000000.0","ether"),{from:actingUser});
+    await setNoGas();
     var tx = await vault.stakeLockedCurveLp(web3.utils.toWei(LpTokenCount,"ether"), lockDuration, {from:actingUser});
     console.log("staked, gas: " +tx.receipt.gasUsed);
 
@@ -376,6 +393,7 @@ contract("Vault Tests", async accounts => {
     await stakingToken.balanceOf(actingUser).then(a=>console.log("staking token actingUser: " +a));
     await lptoken.balanceOf(actingUser).then(a=>console.log("lp token actingUser: " +a));
     // await vault.withdrawLocked(stakeInfo[0][0],{from:actingUser});
+    await setNoGas();
     await vault.withdrawLockedAndUnwrap(stakeInfo[0][0],{from:actingUser});
     console.log("-> withdrawn");
     await stakingToken.balanceOf(actingUser).then(a=>console.log("staking token actingUser: " +a));
@@ -390,6 +408,7 @@ contract("Vault Tests", async accounts => {
     await crv.balanceOf(vault.address).then(a=>console.log("vault crv: " +a));
     await cvx.balanceOf(vault.address).then(a=>console.log("vault cvx: " +a));
     await fxs.balanceOf(feeDepo.address).then(a=>console.log("feeDepo fxs: " +a));
+    await setNoGas();
     await vault.getReward();
     console.log("-> vault get reward");
     await fxs.balanceOf(actingUser).then(a=>console.log("user A fxs: " +a));

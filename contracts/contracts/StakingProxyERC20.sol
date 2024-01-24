@@ -2,7 +2,7 @@
 pragma solidity 0.8.10;
 
 import "./StakingProxyBase.sol";
-import "./interfaces/IFraxFarmERC20.sol";
+import "./interfaces/IFraxFarmERC20_V2.sol";
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 
@@ -17,18 +17,15 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
     }
 
     function vaultVersion() external pure override returns(uint256){
-        return 4;
+        return 5;
     }
 
     //initialize vault
-    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) external override{
+    function initialize(address _owner, address _stakingAddress, address _stakingToken, address _rewardsAddress) public override{
         require(owner == address(0),"already init");
 
         //set variables
-        owner = _owner;
-        stakingAddress = _stakingAddress;
-        stakingToken = _stakingToken;
-        rewards = _rewardsAddress;
+        super.initialize(_owner, _stakingAddress, _stakingToken, _rewardsAddress);
 
         //set infinite approval
         IERC20(stakingToken).approve(_stakingAddress, type(uint256).max);
@@ -42,7 +39,7 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _liquidity);
 
             //stake (use balanceof in case of change during transfer)
-            kek_id = IFraxFarmERC20(stakingAddress).stakeLocked(IERC20(stakingToken).balanceOf(address(this)), _secs);
+            kek_id = IFraxFarmERC20_V2(stakingAddress).stakeLocked(IERC20(stakingToken).balanceOf(address(this)), _secs);
         }
         
         //checkpoint rewards
@@ -56,7 +53,7 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
             IERC20(stakingToken).safeTransferFrom(msg.sender, address(this), _addl_liq);
 
             //add stake (use balanceof in case of change during transfer)
-            IFraxFarmERC20(stakingAddress).lockAdditional(_kek_id, IERC20(stakingToken).balanceOf(address(this)));
+            IFraxFarmERC20_V2(stakingAddress).lockAdditional(_kek_id, IERC20(stakingToken).balanceOf(address(this)));
         }
         
         //checkpoint rewards
@@ -66,7 +63,7 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
     // Extends the lock of an existing stake
     function lockLonger(bytes32 _kek_id, uint256 new_ending_ts) external onlyOwner nonReentrant{
         //update time
-        IFraxFarmERC20(stakingAddress).lockLonger(_kek_id, new_ending_ts);
+        IFraxFarmERC20_V2(stakingAddress).lockLonger(_kek_id, new_ending_ts);
 
         //checkpoint rewards
         _checkpointRewards();
@@ -76,7 +73,7 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
     function withdrawLocked(bytes32 _kek_id) external onlyOwner nonReentrant returns (uint256 liquidity){
 
         //withdraw directly to owner(msg.sender)
-        liquidity = IFraxFarmERC20(stakingAddress).withdrawLocked(_kek_id, msg.sender);
+        liquidity = IFraxFarmERC20_V2(stakingAddress).withdrawLocked(_kek_id, msg.sender, false);
 
         //checkpoint rewards
         _checkpointRewards();
@@ -86,8 +83,8 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
     //helper function to combine earned tokens on staking contract and any tokens that are on this vault
     function earned() external override returns (address[] memory token_addresses, uint256[] memory total_earned) {
         //get list of reward tokens
-        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
-        uint256[] memory stakedearned = IFraxFarmERC20(stakingAddress).earned(address(this));
+        address[] memory rewardTokens = IFraxFarmERC20_V2(stakingAddress).getAllRewardTokens();
+        uint256[] memory stakedearned = IFraxFarmERC20_V2(stakingAddress).earned(address(this));
         
         token_addresses = new address[](rewardTokens.length + IRewards(rewards).rewardTokenLength());
         total_earned = new uint256[](rewardTokens.length + IRewards(rewards).rewardTokenLength());
@@ -128,14 +125,14 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
 
         //claim
         if(_claim){
-            IFraxFarmERC20(stakingAddress).getReward(address(this));
+            IFraxFarmERC20_V2(stakingAddress).getReward(address(this));
         }
 
         //process fxs fees
         _processFxs();
 
         //get list of reward tokens
-        address[] memory rewardTokens = IFraxFarmERC20(stakingAddress).getAllRewardTokens();
+        address[] memory rewardTokens = IFraxFarmERC20_V2(stakingAddress).getAllRewardTokens();
 
         //transfer
         _transferTokens(rewardTokens);
@@ -152,7 +149,7 @@ contract StakingProxyERC20 is StakingProxyBase, ReentrancyGuard{
 
         //claim
         if(_claim){
-            IFraxFarmERC20(stakingAddress).getReward(address(this));
+            IFraxFarmERC20_V2(stakingAddress).getReward(address(this));
         }
 
         //process fxs fees
