@@ -587,6 +587,63 @@
             "stakingToken": "0xAD059ccF041e344eA52A3152Bbf654c605d68473",
             "rewardsAddress": "0x0775de6370806c4DE4667f146B65c1dceaaB2A83",
             "name": "Convex triSDT/FraxBP"
+        },
+        {
+            "id": 66,
+            "implementation": "0x89f5Ac00E0d56C50219eE6006048179c8Cbf0EA1",
+            "stakingAddress": "0x7d69b887751Af59fB4b56BC98fcA0234096Eb267",
+            "stakingToken": "0x562E4d6C958333a5f0988FFedA11e45C27722994",
+            "rewardsAddress": "0xBf71EDaB5a7cCF73E0228E6F7DD2c0C482FF45D9",
+            "name": "Convex Frax/FPI NG"
+        },
+        {
+            "id": 67,
+            "implementation": "0x89f5Ac00E0d56C50219eE6006048179c8Cbf0EA1",
+            "stakingAddress": "0x6D54747fC8e32cA1A91bA2fd36aB673bD84E2e7b",
+            "stakingToken": "0x6E804b00fe562707E3a86bBbcC53Eb73c36c0cf6",
+            "rewardsAddress": "0x70513B599199CBa4Cf08107e3277d94E09927CEF",
+            "name": "Convex Frax/FXB_20240630"
+        },
+        {
+            "id": 68,
+            "implementation": "0x89f5Ac00E0d56C50219eE6006048179c8Cbf0EA1",
+            "stakingAddress": "0x9D7eB7Ec34283D93C6677AE30F3983399Ab72A2f",
+            "stakingToken": "0xBb16610CF051AAc4bBEF9c53e2fc99b77BCE4A8c",
+            "rewardsAddress": "0xF8AE03b000DBDCFCFEEd4278EB393405b9AE0600",
+            "name": "Convex Frax/FXB_20241231"
+        },
+        {
+            "id": 69,
+            "implementation": "0x89f5Ac00E0d56C50219eE6006048179c8Cbf0EA1",
+            "stakingAddress": "0x9A95396eC04B55de54859C06fd75dFb8466F4653",
+            "stakingToken": "0x8aa015CE081505064a9cB8e7816deE3Bd7a45a12",
+            "rewardsAddress": "0x0935dc446981BCEb680F1687b5e488bF7b5Bbc6b",
+            "name": "Convex Frax/FXB_20261231"
+        },
+        {
+            "id": 70,
+            "implementation": "0x89f5Ac00E0d56C50219eE6006048179c8Cbf0EA1",
+            "stakingAddress": "0x18FEFE5Db2D63aCaa8b5520AFde32507216d39e1",
+            "stakingToken": "0x59Ae4E430be0bF47e758F7E022E9a50A8C7D09d6",
+            "rewardsAddress": "0xEaFBE0FC8e999557D9296c857A0AA1348A72ef60",
+            "name": "Convex Frax/PYUSD"
+        },
+        {
+            "id": 71,
+            "implementation": "0x89f5Ac00E0d56C50219eE6006048179c8Cbf0EA1",
+            "stakingAddress": "0x90EB2F13Acf1bc35c2c40c0EBaff2De4d2Eb0d6b",
+            "stakingToken": "0x2EB43dBF8C0013712fEc7B2A57453e41B9907e95",
+            "rewardsAddress": "0x0775fd561b95EE2A1f410Cc9974f9A98A69Ffa49",
+            "name": "Convex Frax/sDAI"
+        },
+        {
+            "id": 72,
+            "implementation": "0x89f5Ac00E0d56C50219eE6006048179c8Cbf0EA1",
+            "stakingAddress": "0x5C0238c4C8f13370001632806C87066B90F1E383",
+            "stakingToken": "0x0643d5C29498149D31bAd69a5bE2771b5440C58d",
+            "rewardsAddress": "0xc4329fE8290CE71Fa4347Bf8b392BfbD5C00BBd1",
+            "name": "Convex TriFrax"
         }
+
     ]
 }

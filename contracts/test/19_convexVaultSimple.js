@@ -184,7 +184,13 @@ contract("Vault Tests", async accounts => {
     await setNoGas();
 
     //set frax farm here
-    let stakingAddress = await IFraxFarmERC20_V2.at("0x7d69b887751Af59fB4b56BC98fcA0234096Eb267");
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x7d69b887751Af59fB4b56BC98fcA0234096Eb267");
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x6D54747fC8e32cA1A91bA2fd36aB673bD84E2e7b");
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x9D7eB7Ec34283D93C6677AE30F3983399Ab72A2f");
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x9A95396eC04B55de54859C06fd75dFb8466F4653");
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x18FEFE5Db2D63aCaa8b5520AFde32507216d39e1");
+    // let stakingAddress = await IFraxFarmERC20_V2.at("0x90EB2F13Acf1bc35c2c40c0EBaff2De4d2Eb0d6b");
+    let stakingAddress = await IFraxFarmERC20_V2.at("0x5C0238c4C8f13370001632806C87066B90F1E383");
     let tokenaddy = await stakingAddress.stakingToken();
     let stakingToken = await IERC20.at(tokenaddy);
     let stakingwrapper = await IConvexWrapperV2.at(stakingToken.address);

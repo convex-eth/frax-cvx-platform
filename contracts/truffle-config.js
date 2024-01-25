@@ -36,10 +36,10 @@ module.exports = {
   networks: {
 
     mainnet: {
-      provider: () => new HDWalletProvider(api_keys.mnemonic, api_keys.provider_mainnet_drpc),
+      provider: () => new HDWalletProvider(api_keys.mnemonic, api_keys.provider_mainnet),
       network_id: 1, 
       gas: 6721975,
-      gasPrice: 22000000000
+      gasPrice: 18000000000
     },
     bsc: {
       provider: () => new HDWalletProvider(mnemonic, `https://bsc-dataseed1.binance.org`),
