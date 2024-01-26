@@ -12,13 +12,17 @@ const IFraxFarmERC20_V2 = artifacts.require("IFraxFarmERC20_V2");
 const StakingProxyConvex = artifacts.require("StakingProxyConvex");
 
 
-const addAccount = async (address) => {
+const unlockAccount = async (address) => {
+  let NETWORK = config.network;
+  if(!NETWORK.includes("debug")){
+    return null;
+  }
   return new Promise((resolve, reject) => {
     web3.currentProvider.send(
       {
         jsonrpc: "2.0",
-        method: "evm_addAccount",
-        params: [address, "passphrase"],
+        method: "hardhat_impersonateAccount",
+        params: [address],
         id: new Date().getTime(),
       },
       (err, result) => {
@@ -31,18 +35,17 @@ const addAccount = async (address) => {
   });
 };
 
-const unlockAccount = async (address) => {
+const setNoGas = async () => {
   let NETWORK = config.network;
   if(!NETWORK.includes("debug")){
     return null;
   }
-  await addAccount(address);
   return new Promise((resolve, reject) => {
     web3.currentProvider.send(
       {
         jsonrpc: "2.0",
-        method: "personal_unlockAccount",
-        params: [address, "passphrase"],
+        method: "hardhat_setNextBlockBaseFeePerGas",
+        params: ["0x0"],
         id: new Date().getTime(),
       },
       (err, result) => {
@@ -145,8 +148,15 @@ contract("Test actions for treasury using fxs gauge vaults", async accounts => {
     await unlockAccount(multisig);
     await unlockAccount(treasury);
 
-    let manager = await TreasuryManagerFrax.new({from:deployer});
-    // let manager = await TreasuryManager.at(contractList.system.treasuryManager);
+    var testlive = true;
+
+    var manager;
+    if(!testlive){
+      manager = await TreasuryManagerFrax.new({from:deployer});
+    }else{
+      manager = await TreasuryManagerFrax.at(contractList.system.treasuryManagerCvxFrxeth);
+    } 
+    
     console.log("manager: " +manager.address)
 
     var frxeth = await IERC20.at(contractList.frax.frxeth);
@@ -154,8 +164,8 @@ contract("Test actions for treasury using fxs gauge vaults", async accounts => {
     var wsteth = await IERC20.at("0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0");
     var fraxpool = await IFraxFarmERC20_V2.at("0xb01BaB994b52A37a231551f00a1B7cAcd43bc8C9");
 
-    var approvedata = frxeth.contract.methods.approve(manager.address,"115792089237316195423570985008687907853269984665640564039457584007913129639935").encodeABI();
-    console.log("approve calldata: " +approvedata);
+    // var approvedata = frxeth.contract.methods.approve(manager.address,"115792089237316195423570985008687907853269984665640564039457584007913129639935").encodeABI();
+    // console.log("approve calldata: " +approvedata);
 
     // return;
 
@@ -170,13 +180,11 @@ contract("Test actions for treasury using fxs gauge vaults", async accounts => {
     let vault = await StakingProxyConvex.at(await manager.vault());
     console.log("vault: " +vault.address);
     
-    await frxeth.approve(manager.address,web3.utils.toWei("100000000000.0", "ether"),{from:treasury,gasPrice:0});
-    await sfrxeth.approve(manager.address,web3.utils.toWei("100000000000.0", "ether"),{from:treasury,gasPrice:0});
-    await wsteth.approve(manager.address,web3.utils.toWei("100000000000.0", "ether"),{from:treasury,gasPrice:0});
-    // await cvx.approve(manager.address,web3.utils.toWei("100000000000.0", "ether"),{from:treasury,gasPrice:0});
-
-    // await manager.setSlippageAllowance("995000000000000000",{from:multisig,gasPrice:0});
-    // console.log("set slippage")
+    if(!testlive){
+      await frxeth.approve(manager.address,web3.utils.toWei("100000000000.0", "ether"),{from:treasury,gasPrice:0});
+      await sfrxeth.approve(manager.address,web3.utils.toWei("100000000000.0", "ether"),{from:treasury,gasPrice:0});
+      await wsteth.approve(manager.address,web3.utils.toWei("100000000000.0", "ether"),{from:treasury,gasPrice:0});
+    }
 
     console.log("\n\n >>> Swap >>>>\n");
     await manager.treasuryBalanceOfFrxEth().then(a=>console.log("treasury frxeth: " +a));

@@ -59,6 +59,10 @@ const unlockAccount = async (address) => {
 };
 
 const setNoGas = async () => {
+  let NETWORK = config.network;
+  if(!NETWORK.includes("debug")){
+    return null;
+  }
   return new Promise((resolve, reject) => {
     web3.currentProvider.send(
       {
