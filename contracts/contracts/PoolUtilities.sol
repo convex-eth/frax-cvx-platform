@@ -5,6 +5,7 @@ import "./interfaces/IConvexWrapperV2.sol";
 import "./interfaces/IFraxFarmERC20.sol";
 import "./interfaces/IRewards.sol";
 import "./interfaces/IPoolRegistry.sol";
+import "./interfaces/IFeeRegistry.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 
@@ -13,8 +14,10 @@ This is a utility library which is mainly used for off chain calculations
 */
 contract PoolUtilities{
     address public constant convexProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
+    address public constant fxs = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
     address public constant vefxs = address(0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0);
     address public constant poolRegistry = address(0x41a5881c17185383e19Df6FA4EC158a6F4851A69);
+    address public constant feeRegistry = address(0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D);
 
     //get weighted reward rates of a specific staking contract(rate per weight unit)
     function weightedRewardRates(address _stakingAddress) public view returns (uint256[] memory weightedRates) {
@@ -135,6 +138,9 @@ contract PoolUtilities{
         for(uint256 i = 0; i < rewardTokens.length; i++){
             token_addresses[i] = rewardTokens[i];
             total_earned[i] = stakedearned[i] + IERC20(rewardTokens[i]).balanceOf(_vault);
+            if(rewardTokens[i] == fxs){
+                total_earned[i] -= total_earned[i] * IFeeRegistry(feeRegistry).totalFees() / 10000;
+            }
         }
 
         if(_extrarewards != address(0)){
