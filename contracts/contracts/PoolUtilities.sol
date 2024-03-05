@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "./interfaces/IConvexWrapperV2.sol";
 import "./interfaces/IFraxFarmERC20.sol";
+import "./interfaces/IRewards.sol";
+import "./interfaces/IPoolRegistry.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 
@@ -11,6 +14,7 @@ This is a utility library which is mainly used for off chain calculations
 contract PoolUtilities{
     address public constant convexProxy = address(0x59CFCD384746ec3035299D90782Be065e466800B);
     address public constant vefxs = address(0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0);
+    address public constant poolRegistry = address(0x41a5881c17185383e19Df6FA4EC158a6F4851A69);
 
     //get weighted reward rates of a specific staking contract(rate per weight unit)
     function weightedRewardRates(address _stakingAddress) public view returns (uint256[] memory weightedRates) {
@@ -81,5 +85,74 @@ contract PoolUtilities{
 
         // Cap the boost to the vefxs_max_multiplier
         if (vefxs_multiplier > vefxs_max_multiplier) vefxs_multiplier = vefxs_max_multiplier;
+    }
+
+    function isConvexWrapper(address _wrapper) public view returns(bool){
+        try IConvexWrapperV2(_wrapper).convexToken(){}catch{
+            return false;
+        }
+
+        return true;
+    }
+
+    function earnedByOwner(uint256 _pid, address _owner) external returns (address[] memory token_addresses, uint256[] memory total_earned) {
+        (, address staking, address token, address rewards, ) = IPoolRegistry(poolRegistry).poolInfo(_pid);
+        return earned(staking,token,rewards, IPoolRegistry(poolRegistry).vaultMap(_pid, _owner) );
+    }
+
+    function earned(uint256 _pid, address _vault) external returns (address[] memory token_addresses, uint256[] memory total_earned) {
+        (, address staking, address token, address rewards, ) = IPoolRegistry(poolRegistry).poolInfo(_pid);
+        return earned(staking,token,rewards, _vault);
+    }
+
+    //helper function to combine earned tokens on staking contract and any tokens that are on this vault
+    function earned(address _stakingAddress, address _stakingToken, address _extrarewards, address _vault) public returns (address[] memory token_addresses, uint256[] memory total_earned) {
+        //simulate frax pool sync
+        try IFraxFarmERC20(_stakingAddress).sync(){}catch{}
+
+        uint256 convexrewardCnt;
+        if(isConvexWrapper(_stakingToken)){
+            //simulate claim on wrapper
+            IConvexWrapperV2(_stakingToken).getReward(_vault);
+
+            convexrewardCnt = IConvexWrapperV2(_stakingToken).rewardLength();
+        }
+
+        //get list of reward tokens
+        address[] memory rewardTokens = IFraxFarmERC20(_stakingAddress).getAllRewardTokens();
+        uint256[] memory stakedearned = IFraxFarmERC20(_stakingAddress).earned(_vault);
+
+        uint256 extraRewardsLength;
+        if(_extrarewards != address(0)){
+            extraRewardsLength = IRewards(_extrarewards).rewardTokenLength();
+        }
+
+        token_addresses = new address[](rewardTokens.length + extraRewardsLength + convexrewardCnt);
+        total_earned = new uint256[](rewardTokens.length + extraRewardsLength + convexrewardCnt);
+
+        //add any tokens that happen to be already claimed but sitting on the vault
+        //(ex. withdraw claiming rewards)
+        for(uint256 i = 0; i < rewardTokens.length; i++){
+            token_addresses[i] = rewardTokens[i];
+            total_earned[i] = stakedearned[i] + IERC20(rewardTokens[i]).balanceOf(_vault);
+        }
+
+        if(_extrarewards != address(0)){
+            IRewards.EarnedData[] memory extraRewards = IRewards(_extrarewards).claimableRewards(_vault);
+            for(uint256 i = 0; i < extraRewards.length; i++){
+                token_addresses[i+rewardTokens.length] = extraRewards[i].token;
+                total_earned[i+rewardTokens.length] = extraRewards[i].amount;
+            }
+        }
+
+        //add convex farm earned tokens
+        for(uint256 i = 0; i < convexrewardCnt; i++){
+            IConvexWrapperV2.RewardType memory rinfo = IConvexWrapperV2(_stakingToken).rewards(i);
+            token_addresses[i+rewardTokens.length+extraRewardsLength] = rinfo.reward_token;
+            if(rinfo.reward_token != address(0)){
+                //claimed so just look at local balance
+                total_earned[i+rewardTokens.length+extraRewardsLength] = IERC20(rinfo.reward_token).balanceOf(_vault);
+            }
+        }
     }
 }
