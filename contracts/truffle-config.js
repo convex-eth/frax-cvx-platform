@@ -39,7 +39,20 @@ module.exports = {
       provider: () => new HDWalletProvider(api_keys.mnemonic, api_keys.provider_mainnet),
       network_id: 1, 
       gas: 6721975,
-      gasPrice: 18000000000
+      gasPrice: 85000000000
+    },
+    mainnetFraxtal: {
+      provider: () => new HDWalletProvider(api_keys.mnemonic, api_keys.provider_fraxtal),
+      network_id: 252,
+      gas: 6721975,
+      gasPrice: 1100000,
+      verify: {
+        apiUrl: 'https://api.fraxscan.com/api',
+        apiKey: api_keys.fraxscan,
+        explorerUrl: 'https://fraxscan.com/address',
+      },
+      maxPriorityFeePerGas:10000,
+      maxFeePerGas:1001000,
     },
     bsc: {
       provider: () => new HDWalletProvider(mnemonic, `https://bsc-dataseed1.binance.org`),
@@ -49,6 +62,14 @@ module.exports = {
       skipDryRun: true,
       gas: 6721975,
       gasPrice: 10000000000
+    },
+    debugFraxtal: {
+      host: "127.0.0.1",
+      port: 8545,
+      // network_id: "252",
+      network_id: "1",
+      gas: 6721975,
+      gasPrice: 1100000
     },
     debugbsc: {
       host: "127.0.0.1",
@@ -104,6 +125,7 @@ module.exports = {
     'truffle-plugin-verify'
   ],
   api_keys: {
-    etherscan: api_keys.etherscan
+    etherscan: api_keys.etherscan,
+    fraxscan: api_keys.fraxscan
   }
 };

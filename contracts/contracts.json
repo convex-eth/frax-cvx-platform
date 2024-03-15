@@ -58,7 +58,7 @@
             "deployer": "0x947B7742C403f20e5FaCcDAc5E092C943E7D0277",
             "multisig": "0x6111ABF720051309012FcdBc2910054E41dcFF8c",
             "voteProxy": "0x59CFCD384746ec3035299D90782Be065e466800B",
-            "cvx": "0xFEEf77d3f69374f66429C91d732A244f074bdf74",
+            "cvxFxs": "0xFEEf77d3f69374f66429C91d732A244f074bdf74",
             "booster": "0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e"
         },
         "frax": {
