@@ -342,13 +342,16 @@ contract("Deploy Pool(s)", async accounts => {
     // await deployConvexPool("0x50Cde910D1f8b6C787b7903d23082542593E0710", "Convex triSDT/FraxBP");
 
 
-    await deployConvexPool("0x7d69b887751Af59fB4b56BC98fcA0234096Eb267", "Convex Frax/FPI NG");
-    await deployConvexPool("0x6D54747fC8e32cA1A91bA2fd36aB673bD84E2e7b", "Convex Frax/FXB_20240630");
-    await deployConvexPool("0x9D7eB7Ec34283D93C6677AE30F3983399Ab72A2f", "Convex Frax/FXB_20241231");
-    await deployConvexPool("0x9A95396eC04B55de54859C06fd75dFb8466F4653", "Convex Frax/FXB_20261231");
-    await deployConvexPool("0x18FEFE5Db2D63aCaa8b5520AFde32507216d39e1", "Convex Frax/PYUSD");
-    await deployConvexPool("0x90EB2F13Acf1bc35c2c40c0EBaff2De4d2Eb0d6b", "Convex Frax/sDAI");
-    await deployConvexPool("0x5C0238c4C8f13370001632806C87066B90F1E383", "Convex TriFrax");
+    // await deployConvexPool("0x7d69b887751Af59fB4b56BC98fcA0234096Eb267", "Convex Frax/FPI NG");
+    // await deployConvexPool("0x6D54747fC8e32cA1A91bA2fd36aB673bD84E2e7b", "Convex Frax/FXB_20240630");
+    // await deployConvexPool("0x9D7eB7Ec34283D93C6677AE30F3983399Ab72A2f", "Convex Frax/FXB_20241231");
+    // await deployConvexPool("0x9A95396eC04B55de54859C06fd75dFb8466F4653", "Convex Frax/FXB_20261231");
+    // await deployConvexPool("0x18FEFE5Db2D63aCaa8b5520AFde32507216d39e1", "Convex Frax/PYUSD");
+    // await deployConvexPool("0x90EB2F13Acf1bc35c2c40c0EBaff2De4d2Eb0d6b", "Convex Frax/sDAI");
+    // await deployConvexPool("0x5C0238c4C8f13370001632806C87066B90F1E383", "Convex TriFrax");
+
+
+    await deployConvexPool("0x972d92f4563Ac9581c730A13A47Ae9d6dCdf18b7", "Convex Dola/FraxPyusd");
 
 
 

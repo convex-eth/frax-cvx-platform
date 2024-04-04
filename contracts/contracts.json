@@ -670,6 +670,14 @@
             "stakingToken": "0x0643d5C29498149D31bAd69a5bE2771b5440C58d",
             "rewardsAddress": "0xc4329fE8290CE71Fa4347Bf8b392BfbD5C00BBd1",
             "name": "Convex TriFrax"
+        },
+        {
+            "id": 73,
+            "implementation": "0x89f5Ac00E0d56C50219eE6006048179c8Cbf0EA1",
+            "stakingAddress": "0x972d92f4563Ac9581c730A13A47Ae9d6dCdf18b7",
+            "stakingToken": "0x8aAa49650C4908156efAc3B47e00745a319c806c",
+            "rewardsAddress": "0x4B6A3C2CaDef8a80ED7AE0AF1047725bE451f800",
+            "name": "Convex Dola/FraxPyusd"
         }
     ]
 }
