@@ -16,18 +16,19 @@ Main interface for the whitelisted proxy contract.
 contract FraxtalBooster{
     using SafeERC20 for IERC20;
 
-    // address public constant fxs = address();
-
     address public immutable proxy;
+    address public immutable vefxs;
     address public owner;
     address public pendingOwner;
     address public voteDelegate;
+    address public fxsDepositor;
     bool public isShutdown;
 
 
 
-    constructor(address _proxy) {
+    constructor(address _proxy, address _vefxs) {
         proxy = _proxy;
+        vefxs = _vefxs;
         isShutdown = false;
         owner = msg.sender;
         voteDelegate = msg.sender;
@@ -37,6 +38,10 @@ contract FraxtalBooster{
 
     modifier onlyOwner() {
         require(owner == msg.sender, "!auth");
+        _;
+    }
+    modifier onlyDepositor() {
+        require(fxsDepositor == msg.sender, "!deposit");
         _;
     }
 
@@ -89,6 +94,11 @@ contract FraxtalBooster{
         _proxyCall(_votingContract,data);
     }
 
+    function setFxsDepositor(address _deposit) external onlyOwner{
+        fxsDepositor = _deposit;
+        emit SetFxsDepositor(_deposit);
+    }
+
     //recover tokens on this contract
     function recoverERC20(address _tokenAddress, uint256 _tokenAmount, address _withdrawTo) external onlyOwner{
         IERC20(_tokenAddress).safeTransfer(_withdrawTo, _tokenAmount);
@@ -104,6 +114,12 @@ contract FraxtalBooster{
         emit Recovered(_tokenAddress, _tokenAmount);
     }
 
+    //create a new lock
+    function createLock(uint256 _value, uint128 _unlockTime) external onlyOwner{
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("createLock(address,uint256,uint128)")), proxy, _value, _unlockTime);
+        _proxyCall(vefxs,data);
+    }
+
     //arbitrary execute
     function execute(address _to, bytes calldata _data) external onlyOwner{
         _proxyCall(_to,_data);
@@ -111,9 +127,29 @@ contract FraxtalBooster{
 
     //////// End Owner Section ///////////
 
-    
+    //// Depositor ///
+    function increaseAmount(uint256 _value, uint128 _lockIndex) external onlyDepositor{
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("increaseAmount(uint256,uint128)")), _value, _lockIndex);
+        _proxyCall(vefxs,data);
+    }
+
+    function increaseUnlockTime(uint128 _unlockTime, uint128 _lockIndex) external onlyDepositor{
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("increaseUnlockTime(uint128,uint128)")), _unlockTime, _lockIndex);
+        _proxyCall(vefxs,data);
+    }
+
+    /// End Depositor ///
+
+
+
+    //claim and distribute fees
+    function claimFees() external {
+
+    }
+
     /* ========== EVENTS ========== */
     event SetPendingOwner(address indexed _address);
+    event SetFxsDepositor(address indexed _address);
     event OwnerChanged(address indexed _address);
     event Shutdown();
     event DelegateSet(address indexed _address);

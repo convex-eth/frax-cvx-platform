@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 
 interface IConvexStaking {
     function stakeFor(address, uint256) external;
-    function stake( uint256) external;
+    function stake(uint256) external;
     function withdraw(uint256 amount, bool claim) external;
     function withdrawAndUnwrap(uint256 amount, bool claim) external;
     function earned(address account) external view returns (uint256);

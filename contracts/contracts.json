@@ -61,10 +61,12 @@
             "cvx": "0x3a562a8CEB9866BcF39bB5EdA32F282d619e08E0",
             "cvxCrv": "0xBA9801aCfdF3B8852865149d93AcFfEF9120272d",
             "cvxFxs": "0xEFb4B26FC242478c9008274F9e81db89Fa6adAB9",
-            "booster": "0x8f55d7c21bDFf1A51AFAa60f3De7590222A3181e",
+            "booster": "0x1925fA0953AD95bE77c2eb07551Bd2D73Fac6844",
             "fpisVoteProxy": "0xf3BD66ca9b2b43F6Aa11afa6F4Dfdc836150d973",
             "fpisBooster": "0x27445D3F59d6b966072Abe20E41a29fbB6A7A04b",
-            "cvxFpis": "0x3fC86CA96014862F9a12427e5220936C56d5dAc9"
+            "cvxFpis": "0x3fC86CA96014862F9a12427e5220936C56d5dAc9",
+            "fxsDepositor": "0x5bdB1733A7660c4D64e95d7064e5334c5Fbc3f99",
+            "stakedCvxFxs": "0x8c279F6Bfa31c47F29e5d05a68796f2A6c216892"
         },
         "frax": {
             "frax": "0xFc00000000000000000000000000000000000001",
@@ -76,7 +78,7 @@
             "frxbtc": "0xfC00000000000000000000000000000000000007",
             "sfrax": "0xfC00000000000000000000000000000000000008",
             "bridge": "0x4200000000000000000000000000000000000010",
-            "vefxs": "0x0000000000000000000000000000000000000000"
+            "vefxs": "0x007FD070a7E1B0fA1364044a373Ac1339bAD89CF"
         }
     },
     "pools": [
