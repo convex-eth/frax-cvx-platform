@@ -159,7 +159,7 @@ contract("Deploy and test locking", async accounts => {
     var vefxs = await IFraxtalVoteEscrow.at(chainContracts.frax.vefxs);
 
     //deploy
-    var migrate = await FpisMigrate.new(chainContracts.frax.fpis, chainContracts.system.cvxFpis, chainContracts.system.cvxFxs, "33333333333333333", {from:deployer});
+    var migrate = await FpisMigrate.new(chainContracts.frax.fpis, chainContracts.system.cvxFpis, chainContracts.system.cvxFxs, "3", {from:deployer});
     console.log("migrator: " +migrate.address);
 
     //set mint role on migrate

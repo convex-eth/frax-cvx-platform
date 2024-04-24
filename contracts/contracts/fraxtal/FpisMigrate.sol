@@ -80,7 +80,7 @@ contract FpisMigrate is ReentrancyGuard{
         //combine
         uint256 mintAmount = _fpisAmount + _cvxfpisAmount;
         //apply rate
-        mintAmount = mintAmount * rate / denominator;
+        mintAmount = mintAmount / rate;
         require(mintAmount > 0,"!minimal amount");
 
         //mint back cvxfxs
