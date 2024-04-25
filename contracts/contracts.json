@@ -683,6 +683,14 @@
             "stakingToken": "0x8aAa49650C4908156efAc3B47e00745a319c806c",
             "rewardsAddress": "0x4B6A3C2CaDef8a80ED7AE0AF1047725bE451f800",
             "name": "Convex Dola/FraxPyusd"
+        },
+        {
+            "id": 74,
+            "implementation": "0x89f5Ac00E0d56C50219eE6006048179c8Cbf0EA1",
+            "stakingAddress": "0x1ee8D379e374A4A00e7d79AF4Bf2eD2b591561c2",
+            "stakingToken": "0x7B465174A93a6d0602fD4ea99eEc86C07e5E1568",
+            "rewardsAddress": "0x24588c8DB569FD31398cFe9Bfd0F85A2DbC602ee",
+            "name": "Convex CVG/FraxBP"
         }
     ]
 }
