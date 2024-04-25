@@ -3,15 +3,16 @@ const { BN, time } = require('openzeppelin-test-helpers');
 var jsonfile = require('jsonfile');
 var contractList = jsonfile.readFileSync('./contracts.json');
 
+const FraxtalVoterProxy = artifacts.require("FraxtalVoterProxy");
+const FraxtalBooster = artifacts.require("FraxtalBooster");
+// const ProxyFactory = artifacts.require("ProxyFactory");
+const cvxToken = artifacts.require("cvxToken");
+const IConvexSideBooster = artifacts.require("IConvexSideBooster");
+const BridgeReceiver = artifacts.require("BridgeReceiver");
 
-const GaugeExtraRewardDistributor = artifacts.require("GaugeExtraRewardDistributor");
-const WrapperFactory = artifacts.require("WrapperFactory");
-const StakingProxyConvex = artifacts.require("StakingProxyConvex");
-const StakingProxyERC20 = artifacts.require("StakingProxyERC20");
-const VaultEarnedView = artifacts.require("VaultEarnedView");
-const FeeReceiverCvxFxs = artifacts.require("FeeReceiverCvxFxs");
-const FeeReceiverPlatform = artifacts.require("FeeReceiverPlatform");
-const FeeBridge = artifacts.require("FeeBridge");
+const IERC20 = artifacts.require("IERC20");
+const ERC20 = artifacts.require("ERC20");
+
 
 const unlockAccount = async (address) => {
   let NETWORK = config.network;
@@ -124,35 +125,44 @@ const advanceTime = async (secondsElaspse) => {
 }
 const day = 86400;
 
-contract("Deploy contracts", async accounts => {
-  it("should deploy contracts", async () => {
+contract("Deploy simple contracts", async accounts => {
+  it("should deploy contracts and test various functions", async () => {
 
-    let deployer = contractList.system.deployer;
-    let multisig = contractList.system.multisig;
+    let chainContracts = getChainContracts();
+    let deployer = chainContracts.system.deployer;
+    let multisig = chainContracts.system.multisig;
     let addressZero = "0x0000000000000000000000000000000000000000"
+    let voteproxy = "0xf3BD66ca9b2b43F6Aa11afa6F4Dfdc836150d973";
+
+    let userA = accounts[0];
+    let userB = accounts[1];
+    let userC = accounts[2];
+    let userD = accounts[3];
+    let userZ = "0xAAc0aa431c237C2C0B5f041c8e59B3f1a43aC78F";
+    var userNames = {};
+    userNames[userA] = "A";
+    userNames[userB] = "B";
+    userNames[userC] = "C";
+    userNames[userD] = "D";
+    userNames[userZ] = "Z";
+
+    
     await unlockAccount(deployer);
-    // var distro = await GaugeExtraRewardDistributor.new({from:deployer});
-    // console.log("fxs vault distro: " +distro.address);
-    // var factory = await WrapperFactory.new({from:deployer})
-    // console.log("factory: " +factory.address);
 
-    // var conveximpl = await StakingProxyConvex.new({from:deployer});
-    // console.log("convex impl: " +conveximpl.address);
-    // var ercimpl = await StakingProxyERC20.new({from:deployer});
-    // console.log("ercimpl impl: " +ercimpl.address);
+    console.log("\n\n >>>> deploy >>>>")
 
-    // var feerec = await FeeReceiverCvxFxs.new(contractList.system.cvxfxsStaking, contractList.system.treasury, 500);
-    // var feerec = await FeeReceiverPlatform.new();
-    // console.log("feerec view: " +feerec.address);
+    var br = await BridgeReceiver.new(chainContracts.system.voteProxy);
+    console.log("bridge receiver " +br.address);
+    chainContracts.system.bridgeReceiver = br.address;
+    await br.operator().then(a=>console.log("op " +a))
+    
+    console.log("\n\n --- deployed ----");
 
-    //address _bridge, address _l1token, address _l2token, address _l2receiver, uint256 _share, address _returnAddress
-    var bridge = contractList.frax.fraxtalBridge;
-    var l1token = contractList.frax.fxs;
-    var l2token = contractList.fraxtal.frax.fxs;
-    var receiver = contractList.fraxtal.system.bridgeReceiver;
-    var returnaddress = contractList.system.feeReceiverCvxFxs;
-    var feebridge = await FeeBridge.new(bridge, l1token, l2token, receiver, 500, returnaddress, {from:deployer});
-    console.log("feebridge: " +feebridge.address);
+    console.log(chainContracts);
+    if(config.network == "mainnetFraxtal"){
+      contractList.fraxtal = chainContracts;
+      jsonfile.writeFileSync("./contracts.json", contractList, { spaces: 4 });
+    }
 
     return;
   });

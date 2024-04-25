@@ -44,6 +44,7 @@
         "vefxs": "0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0",
         "frxeth": "0x5E8422345238F34275888049021821E8E08CAa1f",
         "sfrxeth": "0xac3E018457B222d93114458476f3E3416Abbe38F",
+        "fraxtalBridge": "0x34C0bD5877A5Ee7099D0f5688D65F4bB9158BDE2",
         "gaugeControllerOLD": "0x44ade9AA409B0C29463fF7fcf07c9d3c939166ce",
         "gaugeController": "0x3669C421b77340B2979d1A00a792CC2ee0FcE737",
         "rewardDistributor": "0x278dC748edA1d8eFEf1aDFB518542612b49Fcd34",
@@ -66,7 +67,8 @@
             "fpisBooster": "0x27445D3F59d6b966072Abe20E41a29fbB6A7A04b",
             "cvxFpis": "0x3fC86CA96014862F9a12427e5220936C56d5dAc9",
             "fxsDepositor": "0x5bdB1733A7660c4D64e95d7064e5334c5Fbc3f99",
-            "stakedCvxFxs": "0x8c279F6Bfa31c47F29e5d05a68796f2A6c216892"
+            "stakedCvxFxs": "0x8c279F6Bfa31c47F29e5d05a68796f2A6c216892",
+            "bridgeReceiver": "0xB31a34a2510FbC676b079f734530599F057bcAfd"
         },
         "frax": {
             "frax": "0xFc00000000000000000000000000000000000001",

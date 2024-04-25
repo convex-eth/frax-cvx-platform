@@ -22,6 +22,11 @@ contract FraxtalBooster{
     address public pendingOwner;
     address public voteDelegate;
     address public fxsDepositor;
+    address public vefxsRewardDistribution;
+    address public vefxsFeeToken;
+    address public cvxfxsRewardReceiver;
+    uint256 public platformVefxsFees;
+    address public platformTreasury;
     bool public isShutdown;
 
 
@@ -99,6 +104,21 @@ contract FraxtalBooster{
         emit SetFxsDepositor(_deposit);
     }
 
+    function setVefxsDistro(address _distro, address _feeToken, address _cvxFeeReceiver) external onlyOwner{
+        vefxsRewardDistribution = _distro;
+        vefxsFeeToken = _feeToken;
+        cvxfxsRewardReceiver = _cvxFeeReceiver;
+        emit SetVefxsDistro(_distro, _feeToken, _cvxFeeReceiver);
+    }
+
+    function setFeeInfo(address _platformReceiver, uint256 _fee) external onlyOwner{
+        require(platformTreasury != address(0),"invalid receiver");
+        require(_fee <= 1e17, "invalid fee");
+        platformTreasury = _platformReceiver;
+        platformVefxsFees = _fee;
+        emit SetFeeInfo(_platformReceiver, _fee);
+    }
+
     //recover tokens on this contract
     function recoverERC20(address _tokenAddress, uint256 _tokenAmount, address _withdrawTo) external onlyOwner{
         IERC20(_tokenAddress).safeTransfer(_withdrawTo, _tokenAmount);
@@ -144,12 +164,32 @@ contract FraxtalBooster{
 
     //claim and distribute fees
     function claimFees() external {
+        uint256 _balance = IERC20(vefxsFeeToken).balanceOf(proxy);
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("getYield()")));
+        _proxyCall(vefxsRewardDistribution,data);
+        _balance = IERC20(vefxsFeeToken).balanceOf(proxy) - _balance;
 
+        uint256 platformshare = _balance * platformVefxsFees / 10000; 
+        data = abi.encodeWithSelector(bytes4(keccak256("transfer(address,uint256)")), platformTreasury, platformshare);
+        _proxyCall(vefxsFeeToken,data);
+        emit ClaimFees(platformTreasury,platformshare);
+        _balance -= platformshare;
+        data = abi.encodeWithSelector(bytes4(keccak256("transfer(address,uint256)")), cvxfxsRewardReceiver, _balance);
+        _proxyCall(vefxsFeeToken,data);
+        emit ClaimFees(cvxfxsRewardReceiver, _balance);
+
+        //todo: claim from other sources (ex. bridged rewards from mainnet)
+        //1) take tokens on bridge receiver and queue new rewards (if x days have passed?)
+        //2) claim from RewardDistribution for staked cvxfxs
+        //3) claim from rewarddistribution for treasury
     }
 
     /* ========== EVENTS ========== */
     event SetPendingOwner(address indexed _address);
     event SetFxsDepositor(address indexed _address);
+    event SetVefxsDistro(address indexed _vefxsdistro, address _token, address _receiver);
+    event SetFeeInfo(address indexed _platformreceiver, uint256 _fee);
+    event ClaimFees(address indexed _receiver, uint256 _amount );
     event OwnerChanged(address indexed _address);
     event Shutdown();
     event DelegateSet(address indexed _address);
