@@ -62,13 +62,14 @@
             "cvx": "0x3a562a8CEB9866BcF39bB5EdA32F282d619e08E0",
             "cvxCrv": "0xBA9801aCfdF3B8852865149d93AcFfEF9120272d",
             "cvxFxs": "0xEFb4B26FC242478c9008274F9e81db89Fa6adAB9",
-            "booster": "0x1925fA0953AD95bE77c2eb07551Bd2D73Fac6844",
+            "booster": "0x67082fe8971915a6E83F12A2b96c6c381Cc5812B",
             "fpisVoteProxy": "0xf3BD66ca9b2b43F6Aa11afa6F4Dfdc836150d973",
             "fpisBooster": "0x27445D3F59d6b966072Abe20E41a29fbB6A7A04b",
             "cvxFpis": "0x3fC86CA96014862F9a12427e5220936C56d5dAc9",
             "fxsDepositor": "0x5bdB1733A7660c4D64e95d7064e5334c5Fbc3f99",
             "stakedCvxFxs": "0x8c279F6Bfa31c47F29e5d05a68796f2A6c216892",
-            "bridgeReceiver": "0xB31a34a2510FbC676b079f734530599F057bcAfd"
+            "bridgeReceiver": "0xB31a34a2510FbC676b079f734530599F057bcAfd",
+            "treasury": "0xe967CDd160c349A33531aB315CcBA7D55Dc48bed"
         },
         "frax": {
             "frax": "0xFc00000000000000000000000000000000000001",

@@ -37,6 +37,14 @@ contract FraxtalBooster{
         isShutdown = false;
         owner = msg.sender;
         voteDelegate = msg.sender;
+
+
+        //defaults
+        vefxsRewardDistribution = address(0x39333a540bbea6262e405E1A6d435Bd2e776561E);
+        vefxsFeeToken = address(0xFc00000000000000000000000000000000000002);
+        cvxfxsRewardReceiver = address(0x8c279F6Bfa31c47F29e5d05a68796f2A6c216892);
+        platformTreasury = address(0xe967CDd160c349A33531aB315CcBA7D55Dc48bed);
+        platformVefxsFees = 500;
     }
 
     /////// Owner Section /////////
@@ -177,11 +185,6 @@ contract FraxtalBooster{
         data = abi.encodeWithSelector(bytes4(keccak256("transfer(address,uint256)")), cvxfxsRewardReceiver, _balance);
         _proxyCall(vefxsFeeToken,data);
         emit ClaimFees(cvxfxsRewardReceiver, _balance);
-
-        //todo: claim from other sources (ex. bridged rewards from mainnet)
-        //1) take tokens on bridge receiver and queue new rewards (if x days have passed?)
-        //2) claim from RewardDistribution for staked cvxfxs
-        //3) claim from rewarddistribution for treasury
     }
 
     /* ========== EVENTS ========== */
