@@ -16,7 +16,6 @@ contract FpisMigrate is ReentrancyGuard{
     address public immutable cvxfpis;
     address public immutable cvxfxs;
     uint256 public immutable rate;
-    uint256 constant denominator = 1e18;
     
     event SetPendingOwner(address indexed _address);
     event OwnerChanged(address indexed _address);
