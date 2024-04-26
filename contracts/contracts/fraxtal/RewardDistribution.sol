@@ -54,9 +54,8 @@ contract RewardDistribution {
     uint256 public constant duration = 7 days;
 
     IERC20 public immutable rewardToken;
+    address public immutable owner;
 
-    address public owner;
-    address public pendingOwner;
     uint256 public pid;
     uint256 public periodFinish;
     uint256 public rewardRate;
@@ -79,25 +78,11 @@ contract RewardDistribution {
     event RewardPaid(address indexed user, uint256 reward);
     event AddDistributor(address indexed _distro, bool _valid);
 
-    constructor(address _rewardToken){
+    constructor(address _rewardToken, address _owner){
         rewardToken = IERC20(_rewardToken);
-        owner = msg.sender;
-    }
+        owner = _owner;
 
-    //set next owner
-    function setPendingOwner(address _po) external {
-        require(msg.sender == owner, "!auth");
-        pendingOwner = _po;
-        emit SetPendingOwner(_po);
-    }
-
-    //claim ownership
-    function acceptPendingOwner() external {
-        require(msg.sender == pendingOwner, "!p_owner");
-
-        owner = pendingOwner;
-        pendingOwner = address(0);
-        emit OwnerChanged(owner);
+        _setWeight(_owner, 1e18);
     }
 
     //set a distributor address
@@ -186,13 +171,13 @@ contract RewardDistribution {
         return true;
     }
 
-    //get reward for given account (unguarded)
-    function getReward(address _account) public updateReward(_account) returns(bool){
-        uint256 reward = earned(_account);
+    //get reward
+    function getReward(address _claimTo) public updateReward(msg.sender) returns(bool){
+        uint256 reward = earned(msg.sender);
         if (reward > 0) {
-            rewards[_account] = 0;
-            rewardToken.safeTransfer(_account, reward);
-            emit RewardPaid(_account, reward);
+            rewards[msg.sender] = 0;
+            rewardToken.safeTransfer(_claimTo, reward);
+            emit RewardPaid(msg.sender, reward);
         }
         return true;
     }

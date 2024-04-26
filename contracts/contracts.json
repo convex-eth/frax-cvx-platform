@@ -19,6 +19,8 @@
         "feeDeposit": "0xcBec22233Dad5E15AB9c02CAA4d914F3c97323f7",
         "feeDepositV2": "0x7A527d8bB09f7D70C148aB5DE919e9BF68a0d769",
         "feeReceiverVlCvx": "0xB9A2120F32420f0da2777Ee07BeEeA92d3D2C2B8",
+        "feeReceiverVeFxs": "0x871B36934C82E79CC133731127805a5B1D830B56",
+        "feeBridge": "0xd430246142084eC68F7Ab090Cbd9252a1D1410e9",
         "vaultErc20Implementation_v4": "0x2628b24F6Dc73875f730a8a0086f26447Fa7bbb6",
         "vaultErc20Implementation": "0xe0A69190De31Cf55eEd0D2B97DB15006A9befdf4",
         "vaultConvexImplementation_v4": "0x03fb8543E933624b45abdd31987548c0D9892F07",
@@ -69,7 +71,9 @@
             "fxsDepositor": "0x5bdB1733A7660c4D64e95d7064e5334c5Fbc3f99",
             "stakedCvxFxs": "0x8c279F6Bfa31c47F29e5d05a68796f2A6c216892",
             "bridgeReceiver": "0xB31a34a2510FbC676b079f734530599F057bcAfd",
-            "treasury": "0xe967CDd160c349A33531aB315CcBA7D55Dc48bed"
+            "treasury": "0xe967CDd160c349A33531aB315CcBA7D55Dc48bed",
+            "rewardDistribution": "0x47aAEc3baD88D406642cC4f26cCfB6F7193c5709",
+            "poolUtility": "0xf105463f14E955De791fC0AFaED2962850A7104d"
         },
         "frax": {
             "frax": "0xFc00000000000000000000000000000000000001",

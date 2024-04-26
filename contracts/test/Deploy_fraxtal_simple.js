@@ -9,6 +9,8 @@ const FraxtalBooster = artifacts.require("FraxtalBooster");
 const cvxToken = artifacts.require("cvxToken");
 const IConvexSideBooster = artifacts.require("IConvexSideBooster");
 const BridgeReceiver = artifacts.require("BridgeReceiver");
+const RewardDistribution = artifacts.require("RewardDistribution");
+const FraxtalPoolUtilities = artifacts.require("FraxtalPoolUtilities");
 
 const IERC20 = artifacts.require("IERC20");
 const ERC20 = artifacts.require("ERC20");
@@ -151,11 +153,29 @@ contract("Deploy simple contracts", async accounts => {
 
     console.log("\n\n >>>> deploy >>>>")
 
-    var br = await BridgeReceiver.new(chainContracts.system.voteProxy);
-    console.log("bridge receiver " +br.address);
-    chainContracts.system.bridgeReceiver = br.address;
-    await br.operator().then(a=>console.log("op " +a))
+    // var br = await BridgeReceiver.new(chainContracts.system.voteProxy);
+    // console.log("bridge receiver " +br.address);
+    // chainContracts.system.bridgeReceiver = br.address;
+    // await br.operator().then(a=>console.log("op " +a))
+
+    // var rd = await RewardDistribution.new(chainContracts.frax.fxs,chainContracts.system.voteProxy,{from:deployer});
+    // console.log("distro " +rd.address);
+    // chainContracts.system.rewardDistribution = rd.address;
     
+    
+    var util = await FraxtalPoolUtilities.new({from:deployer});
+    console.log("util " +util.address);
+    chainContracts.system.poolUtility = util.address;
+    await util.stakedCvxFxsRewardRates().then(a=>console.log(JSON.stringify(a)));
+
+/*
+  35645.068029810893191494
+  0.000134540446621353
+
+
+
+*/
+
     console.log("\n\n --- deployed ----");
 
     console.log(chainContracts);

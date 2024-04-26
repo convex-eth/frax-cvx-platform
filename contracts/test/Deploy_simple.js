@@ -12,6 +12,7 @@ const VaultEarnedView = artifacts.require("VaultEarnedView");
 const FeeReceiverCvxFxs = artifacts.require("FeeReceiverCvxFxs");
 const FeeReceiverPlatform = artifacts.require("FeeReceiverPlatform");
 const FeeBridge = artifacts.require("FeeBridge");
+const FeeReceiverVeFxs = artifacts.require("FeeReceiverVeFxs");
 
 const unlockAccount = async (address) => {
   let NETWORK = config.network;
@@ -146,13 +147,16 @@ contract("Deploy contracts", async accounts => {
     // console.log("feerec view: " +feerec.address);
 
     //address _bridge, address _l1token, address _l2token, address _l2receiver, uint256 _share, address _returnAddress
-    var bridge = contractList.frax.fraxtalBridge;
-    var l1token = contractList.frax.fxs;
-    var l2token = contractList.fraxtal.frax.fxs;
-    var receiver = contractList.fraxtal.system.bridgeReceiver;
-    var returnaddress = contractList.system.feeReceiverCvxFxs;
-    var feebridge = await FeeBridge.new(bridge, l1token, l2token, receiver, 500, returnaddress, {from:deployer});
-    console.log("feebridge: " +feebridge.address);
+    // var bridge = contractList.frax.fraxtalBridge;
+    // var l1token = contractList.frax.fxs;
+    // var l2token = contractList.fraxtal.frax.fxs;
+    // var receiver = contractList.fraxtal.system.bridgeReceiver;
+    // var returnaddress = contractList.system.feeReceiverCvxFxs;
+    // var feebridge = await FeeBridge.new(bridge, l1token, l2token, receiver, 500, returnaddress, {from:deployer});
+    // console.log("feebridge: " +feebridge.address);
+
+    var vefxsfee = await FeeReceiverVeFxs.new(contractList.system.feeBridge, contractList.system.treasury, 500, {from:deployer});
+    console.log("vefxs fees " +vefxsfee.address);
 
     return;
   });
