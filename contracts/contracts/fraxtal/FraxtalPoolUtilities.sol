@@ -16,7 +16,7 @@ contract FraxtalPoolUtilities{
     address public constant vefxs = address(0x007FD070a7E1B0fA1364044a373Ac1339bAD89CF);
     address public constant vefxsRewards = address(0x39333a540bbea6262e405E1A6d435Bd2e776561E);
     address public constant stkCvxFxs = address(0x8c279F6Bfa31c47F29e5d05a68796f2A6c216892);
-    address public constant extraRewards = address(0x47aAEc3baD88D406642cC4f26cCfB6F7193c5709);
+    address public constant extraRewards = address(0x858847c21B075e45727fcB0B544BD843CD750361);
 
     //get apr with given rates and prices
     function apr(uint256 _rate, uint256 _priceOfReward, uint256 _priceOfDeposit) external pure returns(uint256 _apr){
@@ -48,12 +48,10 @@ contract FraxtalPoolUtilities{
         //reward rates from other fxs sources
         uint256 extraSupply = IRewardStaking(extraRewards).totalSupply();
         uint256 weightForCvxfxs = IRewardStaking(extraRewards).balanceOf(convexProxy);
-        uint256 extrarate;
         if(block.timestamp <= IRewardStaking(extraRewards).periodFinish()){
-            extrarate = IRewardStaking(extraRewards).rewardRate();
+            uint256 extrarate = IRewardStaking(extraRewards).rewardRate();
             extrarate = extrarate * weightForCvxfxs / extraSupply;
-            extrarate = extrarate * 1e18 / supplyStkCvxfxs;
-            rates[0] += ratePerStakedCvxfxs;
+            rates[0] +=  extrarate * 1e18 / supplyStkCvxfxs;
         }
     }
 }

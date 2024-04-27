@@ -8,6 +8,8 @@ const FraxtalBooster = artifacts.require("FraxtalBooster");
 // const ProxyFactory = artifacts.require("ProxyFactory");
 const cvxToken = artifacts.require("cvxToken");
 const TreasuryFunds = artifacts.require("TreasuryFunds");
+const RewardDistribution = artifacts.require("RewardDistribution");
+const FraxtalPoolUtilities = artifacts.require("FraxtalPoolUtilities");
 
 const IERC20 = artifacts.require("IERC20");
 const ERC20 = artifacts.require("ERC20");
@@ -153,16 +155,18 @@ contract("Deploy System and test staking/rewards", async accounts => {
     //system
     var usingproxy = await FraxtalVoterProxy.at(chainContracts.system.voteProxy);
 
-    // var booster = await FraxtalBooster.new(usingproxy.address, chainContracts.frax.vefxs, {from:deployer});
-    // console.log("deployed booster to " +booster.address);
-    // chainContracts.system.booster = booster.address;
-    // console.log("using booster at: " +booster.address)
+    var booster = await FraxtalBooster.new(usingproxy.address, chainContracts.frax.vefxs, {from:deployer});
+    console.log("deployed booster to " +booster.address);
+    chainContracts.system.booster = booster.address;
+    console.log("using booster at: " +booster.address);
+    await booster.setVefxsDistro(chainContracts.frax.vefxsRewardDistro,chainContracts.frax.fxs, chainContracts.system.stakedCvxFxs, {from:deployer})
+    await booster.setExtraDistro(chainContracts.system.rewardDistribution, chainContracts.system.bridgeReceiver, {from:deployer})
+    await booster.setFeeInfo(chainContracts.system.treasury,500,{from:deployer})
+    await booster.setFxsDepositor(chainContracts.system.fxsDepositor,{from:deployer})
+    console.log("booster initialized");
 
     //set proxy operator
     var boosterold = await FraxtalBooster.at(await usingproxy.operator());
-    await boosterold.setFxsDepositor(chainContracts.system.fxsDepositor,{from:deployer});
-
-    return;
     await boosterold.isShutdown().then(a=>console.log("isShutdown " +a))
     await boosterold.shutdownSystem({from:deployer});
     console.log("shutdown");
@@ -171,8 +175,33 @@ contract("Deploy System and test staking/rewards", async accounts => {
     console.log("set voterproxy operator");
     await usingproxy.operator().then(a=>console.log("operator: "+a))
 
-    await booster.claimFees();
+    // var poolUtil = await FraxtalPoolUtilities.new();
+    // chainContracts.system.poolUtility = poolUtil.address;
+
+    // var fxs = await IERC20.at(chainContracts.frax.fxs);
+    // var rewards = await RewardDistribution.at(chainContracts.system.rewardDistribution);
+    // await fxs.balanceOf(booster.address).then(a=>console.log("booster balance; " +a));
+    // await fxs.balanceOf(chainContracts.system.stakedCvxFxs).then(a=>console.log("stakedCvxFxs balance; " +a));
+    // await fxs.balanceOf(rewards.address).then(a=>console.log("rewards balance; " +a));
+    // await poolUtil.stakedCvxFxsRewardRates().then(a=>console.log("rate " +a.rates[0].toString()));
+
+    // await booster.claimFees();
+    // console.log("claimFees");
     
+    // await fxs.balanceOf(booster.address).then(a=>console.log("booster balance; " +a));
+    // await fxs.balanceOf(chainContracts.system.stakedCvxFxs).then(a=>console.log("stakedCvxFxs balance; " +a));
+    // await fxs.balanceOf(rewards.address).then(a=>console.log("rewards balance; " +a));
+    // await poolUtil.stakedCvxFxsRewardRates().then(a=>console.log("rate " +a.rates[0].toString()));
+
+    // await advanceTime(day);
+
+    // await booster.claimFees();
+    // console.log("claimFees");
+    
+    // await fxs.balanceOf(booster.address).then(a=>console.log("booster balance; " +a));
+    // await fxs.balanceOf(chainContracts.system.stakedCvxFxs).then(a=>console.log("stakedCvxFxs balance; " +a));
+    // await fxs.balanceOf(rewards.address).then(a=>console.log("rewards balance; " +a));
+
     console.log("\n\n --- deployed ----");
 
     console.log(chainContracts);

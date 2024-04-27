@@ -40,6 +40,7 @@ pragma solidity 0.8.10;
 */
 
 import "../interfaces/MathUtil.sol";
+import "../interfaces/IVoterProxy.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
@@ -68,7 +69,6 @@ contract RewardDistribution {
     uint256 private _totalSupply;
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
-    mapping(address => bool) public distributors;
     mapping(address => uint256) private _balances;
 
     event SetPendingOwner(address indexed _address);
@@ -83,13 +83,6 @@ contract RewardDistribution {
         owner = _owner;
 
         _setWeight(_owner, 1e18);
-    }
-
-    //set a distributor address
-    function setDistributor(address _distro, bool _valid) external {
-        require(msg.sender == owner, "!authorized");
-        distributors[_distro] = _valid;
-        emit AddDistributor(_distro, _valid);
     }
 
     //total supply
@@ -189,9 +182,9 @@ contract RewardDistribution {
         return true;
     }
 
-    //whitelisted distributors can add more rewards and start new reward cycle
+    //distributor can add more rewards and start new reward cycle
     function queueNewRewards(uint256 _rewards) external returns(bool){
-        require(distributors[msg.sender], "!distro");
+        require(msg.sender == IVoterProxy(owner).operator(), "!distro");
 
         //pull
         if(_rewards > 0){

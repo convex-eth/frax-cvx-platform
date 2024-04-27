@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 
 import "../interfaces/IStaker.sol";
+import "../interfaces/IRewardDistribution.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
@@ -25,8 +26,10 @@ contract FraxtalBooster{
     address public vefxsRewardDistribution;
     address public vefxsFeeToken;
     address public cvxfxsRewardReceiver;
+    address public extraRewardDistribution;
+    address public bridgeReceiver;
     uint256 public platformVefxsFees;
-    address public platformTreasury;
+    address public platformReceiver;
     bool public isShutdown;
 
 
@@ -36,15 +39,7 @@ contract FraxtalBooster{
         vefxs = _vefxs;
         isShutdown = false;
         owner = msg.sender;
-        voteDelegate = msg.sender;
-
-
-        //defaults
-        vefxsRewardDistribution = address(0x39333a540bbea6262e405E1A6d435Bd2e776561E);
-        vefxsFeeToken = address(0xFc00000000000000000000000000000000000002);
-        cvxfxsRewardReceiver = address(0x8c279F6Bfa31c47F29e5d05a68796f2A6c216892);
-        platformTreasury = address(0xe967CDd160c349A33531aB315CcBA7D55Dc48bed);
-        platformVefxsFees = 500;
+        voteDelegate = msg.sender;    
     }
 
     /////// Owner Section /////////
@@ -113,16 +108,28 @@ contract FraxtalBooster{
     }
 
     function setVefxsDistro(address _distro, address _feeToken, address _cvxFeeReceiver) external onlyOwner{
+        require(_distro != address(0),"invalid");
+        require(_feeToken != address(0),"invalid");
+        require(_cvxFeeReceiver != address(0),"invalid");
         vefxsRewardDistribution = _distro;
         vefxsFeeToken = _feeToken;
         cvxfxsRewardReceiver = _cvxFeeReceiver;
         emit SetVefxsDistro(_distro, _feeToken, _cvxFeeReceiver);
     }
 
+    function setExtraDistro(address _distro, address _bridgeReceiver) external onlyOwner{
+        require(_distro != address(0),"invalid");
+        require(vefxsFeeToken != address(0),"!feeToken");
+        extraRewardDistribution = _distro;
+        bridgeReceiver = _bridgeReceiver;
+        IERC20(vefxsFeeToken).approve(extraRewardDistribution,type(uint256).max);
+        emit SetExtraDistro(_distro,_bridgeReceiver);
+    }
+
     function setFeeInfo(address _platformReceiver, uint256 _fee) external onlyOwner{
-        require(platformTreasury != address(0),"invalid receiver");
+        require(_platformReceiver != address(0),"invalid receiver");
         require(_fee <= 1e17, "invalid fee");
-        platformTreasury = _platformReceiver;
+        platformReceiver = _platformReceiver;
         platformVefxsFees = _fee;
         emit SetFeeInfo(_platformReceiver, _fee);
     }
@@ -178,19 +185,33 @@ contract FraxtalBooster{
         _balance = IERC20(vefxsFeeToken).balanceOf(proxy) - _balance;
 
         uint256 platformshare = _balance * platformVefxsFees / 10000; 
-        data = abi.encodeWithSelector(bytes4(keccak256("transfer(address,uint256)")), platformTreasury, platformshare);
+        data = abi.encodeWithSelector(bytes4(keccak256("transfer(address,uint256)")), platformReceiver, platformshare);
         _proxyCall(vefxsFeeToken,data);
-        emit ClaimFees(platformTreasury,platformshare);
+        emit ClaimFees(platformReceiver,platformshare);
         _balance -= platformshare;
         data = abi.encodeWithSelector(bytes4(keccak256("transfer(address,uint256)")), cvxfxsRewardReceiver, _balance);
         _proxyCall(vefxsFeeToken,data);
         emit ClaimFees(cvxfxsRewardReceiver, _balance);
+
+        //pull rewards from bridge
+        uint256 bridgeBalance = IERC20(vefxsFeeToken).balanceOf(bridgeReceiver);
+        data = abi.encodeWithSelector(bytes4(keccak256("withdrawTo(address,uint256,address)")),vefxsFeeToken,bridgeBalance,address(this));
+        _proxyCall(bridgeReceiver,data);
+
+        //enqueue rewards
+        IRewardDistribution(extraRewardDistribution).queueNewRewards(bridgeBalance);
+
+        //claim rewards
+        data = abi.encodeWithSelector(bytes4(keccak256("getReward(address)")), address(this));
+        _proxyCall(extraRewardDistribution,data);
+        IERC20(vefxsFeeToken).safeTransfer(cvxfxsRewardReceiver, IERC20(vefxsFeeToken).balanceOf(address(this)));
     }
 
     /* ========== EVENTS ========== */
     event SetPendingOwner(address indexed _address);
     event SetFxsDepositor(address indexed _address);
     event SetVefxsDistro(address indexed _vefxsdistro, address _token, address _receiver);
+    event SetExtraDistro(address indexed _distro, address _bridgeReceiver);
     event SetFeeInfo(address indexed _platformreceiver, uint256 _fee);
     event ClaimFees(address indexed _receiver, uint256 _amount );
     event OwnerChanged(address indexed _address);

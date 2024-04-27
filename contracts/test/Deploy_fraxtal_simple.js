@@ -158,15 +158,15 @@ contract("Deploy simple contracts", async accounts => {
     // chainContracts.system.bridgeReceiver = br.address;
     // await br.operator().then(a=>console.log("op " +a))
 
-    // var rd = await RewardDistribution.new(chainContracts.frax.fxs,chainContracts.system.voteProxy,{from:deployer});
-    // console.log("distro " +rd.address);
-    // chainContracts.system.rewardDistribution = rd.address;
+    var rd = await RewardDistribution.new(chainContracts.frax.fxs,chainContracts.system.voteProxy,{from:deployer});
+    console.log("distro " +rd.address);
+    chainContracts.system.rewardDistribution = rd.address;
     
     
-    var util = await FraxtalPoolUtilities.new({from:deployer});
-    console.log("util " +util.address);
-    chainContracts.system.poolUtility = util.address;
-    await util.stakedCvxFxsRewardRates().then(a=>console.log(JSON.stringify(a)));
+    // var util = await FraxtalPoolUtilities.new({from:deployer});
+    // console.log("util " +util.address);
+    // chainContracts.system.poolUtility = util.address;
+    // await util.stakedCvxFxsRewardRates().then(a=>console.log(JSON.stringify(a)));
 
 /*
   35645.068029810893191494
