@@ -26,6 +26,8 @@ contract FeeReceiverVeFxs is IFeeReceiver {
     event RewardsDistributed(address indexed token, uint256 amount);
     event SetPlatformFees(address _account, uint256 _fees);
     event WithdrawTo(address indexed _address, uint256 _amount);
+    event ReceivePlatformFees(address indexed _address, uint256 _amount);
+    event ForwardFees(address indexed _address, uint256 _amount);
 
     constructor(address _forwardAddress, address _platformReceiver, uint256 _platformFees) {
         forwardAddress = _forwardAddress;
@@ -59,6 +61,7 @@ contract FeeReceiverVeFxs is IFeeReceiver {
         if(platformReceiver != address(0)){
             uint256 platformRewards = tokenbalance * platformFees / denominator;
             IERC20(fxs).transfer(platformReceiver,platformRewards);
+            emit ReceivePlatformFees(platformReceiver, platformRewards);
             tokenbalance -= platformRewards;
         }
 
@@ -66,6 +69,7 @@ contract FeeReceiverVeFxs is IFeeReceiver {
         if(tokenbalance > 0){
             //send to rewards
             IERC20(fxs).transfer(forwardAddress,tokenbalance);
+            emit ForwardFees(forwardAddress, tokenbalance);
         }
     }
 

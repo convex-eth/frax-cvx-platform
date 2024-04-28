@@ -6,6 +6,9 @@ import "./interfaces/IStaker.sol";
 import "./interfaces/IPoolRegistry.sol";
 import "./interfaces/IProxyVault.sol";
 import "./interfaces/IProxyOwner.sol";
+import "./interfaces/IFeeDeposit.sol";
+import "./interfaces/IFeeRegistry.sol";
+import "./interfaces/IFeeReceiver.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
@@ -29,11 +32,11 @@ contract Booster{
     address public poolManager;
     address public rewardManager;
     address public voteDelegate;
-    address public feeclaimer;
+    address public feeBridge;
+    address public vefxsFeeDistro;
+    address public vefxsFeeToken;
     bool public isShutdown;
     address public feeQueue;
-
-    mapping(address=>mapping(address=>bool)) public feeClaimMap;
 
     mapping(address=>address) public proxyOwners;
 
@@ -50,11 +53,12 @@ contract Booster{
 
 
         //TODO: consider moving to a module so dont have to set everything again if upgraded
-        feeclaimer = address(0);//msg.sender;
-        feeClaimMap[address(0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872)][fxs] = true;
-        emit FeeClaimPairSet(address(0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872), fxs, true);
-        feeQueue = address(0xa1b72482cF45a6F4a0A7EE1DafFdbc66E243622a);
-        emit FeeQueueChanged(address(0xa1b72482cF45a6F4a0A7EE1DafFdbc66E243622a));
+        feeQueue = address(0x6f94FE4DadD7a6f4CE67E607Bab531A9D1717624);
+        emit FeeQueueChanged(address(0x6f94FE4DadD7a6f4CE67E607Bab531A9D1717624));
+
+        vefxsFeeDistro = address(0xc6764e58b36e26b08Fd1d2AeD4538c02171fA872);
+        vefxsFeeToken = address(0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0);
+        feeBridge = address(0xd430246142084eC68F7Ab090Cbd9252a1D1410e9);
 
         //set our proxy as its own owner
         proxyOwners[_proxy] = _proxy;
@@ -100,17 +104,6 @@ contract Booster{
         emit FeeQueueChanged(_queue);
     }
 
-    //set who can call claim fees, 0x0 address will allow anyone to call
-    function setFeeClaimer(address _claimer) external onlyOwner{
-        feeclaimer = _claimer;
-        emit FeeClaimerChanged(_claimer);
-    }
-
-    function setFeeClaimPair(address _claimAddress, address _token, bool _active) external onlyOwner{
-        feeClaimMap[_claimAddress][_token] = _active;
-        emit FeeClaimPairSet(_claimAddress, _token, _active);
-    }
-
     function addProxyOwner(address _proxy, address _owner) external onlyOwner{
         proxyOwners[_proxy] = _owner;
         emit ProxyOwnerSet(_proxy, _owner);
@@ -146,11 +139,21 @@ contract Booster{
     }
 
     //set fees on user vaults
-    function setPoolFees(uint256 _cvxfxs, uint256 _cvx, uint256 _platform) external onlyOwner{
+    function setPoolFees(uint256 _cvxfxs, uint256 _cvx, uint256 _platform, address _feeBridge) external onlyOwner{
         require(!isShutdown,"shutdown");
 
+        //set fees
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("setFees(uint256,uint256,uint256)")), _cvxfxs, _cvx, _platform);
         _proxyCall(feeRegistry,data);
+
+        //set where fees are bridged
+        feeBridge = _feeBridge;
+    }
+
+    function setVefxsFeeInfo(address _distro, address _token) external onlyOwner{
+        vefxsFeeDistro = _distro;
+        vefxsFeeToken = _token;
+        emit VefxFeeInfoSet(_distro, _token);
     }
 
     //set fee deposit address for all user vaults
@@ -301,24 +304,28 @@ contract Booster{
 
 
     //claim fees - if set, move to a fee queue that rewards can pull from
-    function claimFees(address _distroContract, address _token) external {
-        require(feeclaimer == address(0) || feeclaimer == msg.sender, "!auth");
-        require(feeClaimMap[_distroContract][_token],"!claimPair");
+    function claimFees() external {
 
+        //claim vefxs rewards
         uint256 bal;
         if(feeQueue != address(0)){
-            bal = IStaker(proxy).claimFees(_distroContract, _token, feeQueue);
+            bal = IStaker(proxy).claimFees(vefxsFeeDistro, vefxsFeeToken, feeQueue);
+            IFeeReceiver(feeQueue).processFees();
         }else{
-            bal = IStaker(proxy).claimFees(_distroContract, _token, address(this));
+            bal = IStaker(proxy).claimFees(vefxsFeeDistro, vefxsFeeToken, address(this));
         }
         emit FeesClaimed(bal);
+
+        //process boost rewards
+        IFeeDeposit(IFeeRegistry(feeRegistry).feeDeposit()).distribute();
+
+        //bridge rewards
+        IFeeReceiver(feeBridge).processFees();
     }
 
     //call vefxs checkpoint
-    function checkpointFeeRewards(address _distroContract) external {
-        require(feeclaimer == address(0) || feeclaimer == msg.sender, "!auth");
-
-        IStaker(proxy).checkpointFeeRewards(_distroContract);
+    function checkpointFeeRewards() external {
+        IStaker(proxy).checkpointFeeRewards(vefxsFeeDistro);
     }
 
     
@@ -326,9 +333,8 @@ contract Booster{
     event SetPendingOwner(address indexed _address);
     event OwnerChanged(address indexed _address);
     event FeeQueueChanged(address indexed _address);
-    event FeeClaimerChanged(address indexed _address);
-    event FeeClaimPairSet(address indexed _address, address indexed _token, bool _value);
     event ProxyOwnerSet(address indexed _address, address _owner);
+    event VefxFeeInfoSet(address indexed _distro, address _token);
     event RewardManagerChanged(address indexed _address);
     event PoolManagerChanged(address indexed _address);
     event Shutdown();
