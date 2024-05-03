@@ -161,6 +161,7 @@ contract("Deploy and test locking", async accounts => {
     //deploy
     var migrate = await FpisMigrate.new(chainContracts.frax.fpis, chainContracts.system.cvxFpis, chainContracts.system.cvxFxs, "3", {from:deployer});
     console.log("migrate: " +migrate.address);
+    chainContracts.system.fpisMigrate = migrate.address;
 
     //set mint role on migrate
     var minterdata = cvxfxs.contract.methods.setOperator(migrate.address,true).encodeABI();
@@ -170,7 +171,17 @@ contract("Deploy and test locking", async accounts => {
     console.log("migrate given mint role of cvxfxs")
     await cvxfxs.operators(migrate.address).then(a=>console.log("migrator is operator of cvxfxs? " +a));
 
+    console.log("\n\n --- deployed ----");
+
+    console.log(chainContracts);
+    if(config.network == "mainnetFraxtal"){
+      contractList.fraxtal = chainContracts;
+      jsonfile.writeFileSync("./contracts.json", contractList, { spaces: 4 });
+      console.log("done");
+      return;
+    }
     
+
     //get more fpis
     var holder = "0xcD3A040f05769d7628582B403063e61B7D212F91";
     await unlockAccount(holder);

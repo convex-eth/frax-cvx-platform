@@ -73,7 +73,8 @@
             "bridgeReceiver": "0xB31a34a2510FbC676b079f734530599F057bcAfd",
             "treasury": "0xe967CDd160c349A33531aB315CcBA7D55Dc48bed",
             "rewardDistribution": "0x858847c21B075e45727fcB0B544BD843CD750361",
-            "poolUtility": "0xE56681bBDc27CE9311c66B2b12D4B19e3e51CD8d"
+            "poolUtility": "0xE56681bBDc27CE9311c66B2b12D4B19e3e51CD8d",
+            "fpisMigrate": "0xCdE8b51CE5809238C953dD4E95C689D88B602ECF"
         },
         "frax": {
             "frax": "0xFc00000000000000000000000000000000000001",
