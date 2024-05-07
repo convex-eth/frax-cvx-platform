@@ -697,6 +697,14 @@
             "stakingToken": "0x7B465174A93a6d0602fD4ea99eEc86C07e5E1568",
             "rewardsAddress": "0x24588c8DB569FD31398cFe9Bfd0F85A2DbC602ee",
             "name": "Convex CVG/FraxBP"
+        },
+        {
+            "id": 75,
+            "implementation": "0x89f5Ac00E0d56C50219eE6006048179c8Cbf0EA1",
+            "stakingAddress": "0xE2E998A68C6f1D10c41884931457B7C302C6fA97",
+            "stakingToken": "0xD893522D2CCd40eA6C1414815e3eAD1B58a83D51",
+            "rewardsAddress": "0x2c45d17b8311d42B86F3E69112D0c78096C35Af6",
+            "name": "Convex zunETH/frxETH"
         }
     ]
 }

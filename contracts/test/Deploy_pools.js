@@ -352,7 +352,8 @@ contract("Deploy Pool(s)", async accounts => {
 
 
     // await deployConvexPool("0x972d92f4563Ac9581c730A13A47Ae9d6dCdf18b7", "Convex Dola/FraxPyusd");
-    await deployConvexPool("0x1ee8D379e374A4A00e7d79AF4Bf2eD2b591561c2", "Convex CVG/FraxBP");
+    // await deployConvexPool("0x1ee8D379e374A4A00e7d79AF4Bf2eD2b591561c2", "Convex CVG/FraxBP");
+    await deployConvexPool("0xE2E998A68C6f1D10c41884931457B7C302C6fA97", "Convex zunETH/frxETH");
 
 
 
