@@ -9,6 +9,7 @@ const config = jsonfile.readFileSync('./config.json');
 const cvxfxsholders_file = 'cvxfxs_holders.json';
 const cvxfxsfinal_file = 'cvxfxs_final.json';
 
+
 //Setup ethers providers
 // const provider = new ethers.providers.InfuraProvider(config.NETWORK, config.INFURA_KEY);
 const provider = new ethers.providers.AlchemyProvider (config.NETWORK, config.ALCHEMY_KEY);
@@ -35,8 +36,15 @@ if (fs.existsSync(cvxfxsholders_file)) {
 }
 
 var redirects = {
-    //"0x40ec5B33f54e0E8A33A975908C5BA1c14e5BbbDf":"0x4F64c22FB06ab877Bf63f7064fA21C5c51cc85bf",//vesq
+    "0x92D863279f6047f21615D453E725d30110E2A260":"0xeBe2Eb875eCCfb50A99675420f58174ddF564Cf7", //inverse user
+    "0xE873174F2988c4C1eEE3D820b30F1f8cD24cA220":"0xAAc0aa431c237C2C0B5f041c8e59B3f1a43aC78F", //inverse user
+    "0x5070aE2d302d04441186A39448505B3ACd562a2a":"0x8061199A31983A077E691C08B2263a4CF5c24093", //inverse user
+    "0x8c34a491A534408249f2904E751571FA4C49F358":"0x1E0cABeF79e70DDaca8859e9A33b306DE1a368f9", //inverse user
+    "0x15BA375645f4EBb7e11cb3cae8b53e7c4695F52a":"0xED9376094Ce37635827E0Cfddc23bFbb6D788469", //inverse user
+    "0x437ae349875a3e225A72Bd4A3a5c1E60904adF94":"0xe32a8CF93AF8661Ec4708ef627b255801184ad2f", //inverse user
 }
+
+
 
 function compare( a, b ) {
   return b.num._compare(a.num);
@@ -105,9 +113,9 @@ const getBalances = async (token, userAddresses, snapshotBlock) => {
     return balances; 
 }
 
-const getPoolHolders = async (snapshotBlock, startBlock, lpaddress, gauge, rewardAddress) => {
+const getPoolHolders = async (snapshotBlock, startBlock, lpaddress, pooladdress, gauge, rewardAddress) => {
     console.log("Getting lp holders");
-    var logCount = 20000;
+    var logCount = 15000;
     var holders = {};
 
     var contract = new ethers.Contract(lpaddress, CRV_ABI, provider);
@@ -179,7 +187,7 @@ const getPoolHolders = async (snapshotBlock, startBlock, lpaddress, gauge, rewar
     const cvxFxsContract = new ethers.Contract(cvxfxsAddress, CRV_ABI, provider);
 
     //get amount of cvxfxs on lp
-    var lpcvxfxs = await cvxFxsContract.balanceOf(lpaddress, { blockTag: snapshotBlock });
+    var lpcvxfxs = await cvxFxsContract.balanceOf(pooladdress, { blockTag: snapshotBlock });
     console.log("cvxfxs on lp: "+lpcvxfxs.toString())
    
     //convert
@@ -203,7 +211,7 @@ const getcvxFxsHolders = async (snapshotBlock) => {
 	console.log("Getting cvxFxs holders");
     const cvxFxsContract = new ethers.Contract(cvxfxsAddress, CRV_ABI, provider);
     const cvxFxsInstance = cvxFxsContract.connect(provider);
-    var logCount = 20000;
+    var logCount = 15000;
     var startBlock = 13854115;
     var holders = {};
     //get holders
@@ -233,7 +241,6 @@ const getcvxFxsHolders = async (snapshotBlock) => {
     }
     
     delete holders["0x0000000000000000000000000000000000000000"];
-    delete holders["0x49b4d1dF40442f0C31b1BbAEA3EDE7c38e37E31a"];
 
     holders = await getBalances(cvxfxsAddress,holders,snapshotBlock );
     return holders;
@@ -243,10 +250,9 @@ const getcvxFxsStakers = async (snapshotBlock) => {
     console.log("Getting cvxFxs stakers");
     var cvxFxsContract = new ethers.Contract(stkcvxfxsAddress, CRV_ABI, provider);
     var instance = cvxFxsContract.connect(provider);
-    var logCount = 20000;
+    var logCount = 15000;
     var startBlock = 16780566;
     var holders = {};
-    // holders.addresses = {};
     //get holders
     for (var i = startBlock; i <= snapshotBlock;) {
         var logs = await instance.queryFilter(instance.filters.Transfer(), i, i + logCount)
@@ -288,11 +294,21 @@ const main = async () => {
  	//// cvxfxs holders/stakers
  	var holders = await getcvxFxsHolders(snapshotBlock);
     var stakers = await getcvxFxsStakers(snapshotBlock);
-    var lpers = await getPoolHolders(snapshotBlock,17532777,"0x6a9014FB802dCC5efE3b97Fd40aAa632585636D0","0x0c58c509305a8a7fE9a6a60CEaAC6185B96ECBb7","0x19F3C877eA278e61fE1304770dbE5D78521792D2");
+
+    //startblock, lptoken, gauge, convex reward
+    var lpers1 = await getPoolHolders(snapshotBlock,17532777,"0x6a9014FB802dCC5efE3b97Fd40aAa632585636D0","0x6a9014FB802dCC5efE3b97Fd40aAa632585636D0","0x0c58c509305a8a7fE9a6a60CEaAC6185B96ECBb7","0x19F3C877eA278e61fE1304770dbE5D78521792D2");
+    var lpers2 = await getPoolHolders(snapshotBlock,14249398,"0xf3a43307dcafa93275993862aae628fcb50dc768","0xd658a338613198204dca1143ac3f01a722b5d94a","0xab1927160ec7414c6fa71763e2a9f3d107c126dd","0xf27AFAD0142393e4b3E5510aBc5fe3743Ad669Cb");
+    var lpers3 = await getPoolHolders(snapshotBlock,15465253,"0xf57ccad8122b898a147cc8601b1eca88b1662c7e","0x21d158d95c2e150e144c36fc64e3653b8d6c6267","0xc7a770de69479beeeef22b2c9851760bac3630da","0x19eA715F854dB2196C6f45A174541a5Ac884D2f9");
  
+    var lpers = combine(combine(lpers1,lpers2),lpers3);
+
     var holdersstakers = combine(holders,stakers);
     cvxfxsHolders.addresses = combine(holdersstakers,lpers);
-    delete cvxfxsHolders.addresses["0x6a9014FB802dCC5efE3b97Fd40aAa632585636D0"];
+    delete cvxfxsHolders.addresses["0x6a9014FB802dCC5efE3b97Fd40aAa632585636D0"]; //lp 1
+    delete cvxfxsHolders.addresses["0xd658A338613198204DCa1143Ac3F01A722b5d94A"]; //lp 2
+    delete cvxfxsHolders.addresses["0x21d158d95c2e150e144c36fc64e3653b8d6c6267"]; //lp 3
+    delete cvxfxsHolders.addresses["0x49b4d1dF40442f0C31b1BbAEA3EDE7c38e37E31a"]; //staked cvxfxs
+    delete cvxfxsHolders.addresses["0x34C0bD5877A5Ee7099D0f5688D65F4bB9158BDE2"]; //fraxtal bridge
 
     var totalHeldcvxfxs = BN(0);
     for (var i in cvxfxsHolders.addresses) {
@@ -302,11 +318,12 @@ const main = async () => {
 
     //redirects
     var rkeys = Object.keys(redirects);
+    console.log("redirects...");
     for(var i=0; i < rkeys.length; i++){
         var from = rkeys[i];
         var to = redirects[from];
-        console.log("redirect from " +from +"  to  " +to);
         if(cvxfxsHolders.addresses[from] != undefined){
+            console.log("redirect from " +from +"  to  " +to +" amount: "+cvxfxsHolders.addresses[from]);
             if(cvxfxsHolders.addresses[to] == undefined){
                 cvxfxsHolders.addresses[to] = cvxfxsHolders.addresses[from];
             }else{
@@ -321,6 +338,15 @@ const main = async () => {
         delete cvxfxsHolders.addresses[from];
     }
 
+    //airforce
+    var airforce = jsonfile.readFileSync('./airforce_cvxfxs_1.json');
+    var airTotal = BN(0);
+    for (var i in airforce) {
+        airTotal.add(new BN(airforce[i]));
+    }
+    console.log("airforce total: " +airTotal.toString());
+    cvxfxsHolders.addresses = combine(cvxfxsHolders.addresses,airforce);
+    //todo, remove airforce vault from cvxfxsHolders and double check balance
     
     var totalcvxfxs = BN(0);
     for (var i in cvxfxsHolders.addresses) {
