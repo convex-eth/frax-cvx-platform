@@ -75,6 +75,35 @@ function combine(a,b){
     return combined;
 }
 
+function formatToDecimals(data) {
+    var arr = []
+    for (var i in data) {
+        arr.push({address:i,num:new BN(data[i])})
+    }
+    var formatted = {};
+    for(var i in arr){
+        var amount = arr[i].num.toString()
+
+        amount = amount.padStart(19,"0");
+        amount = [Number(amount.substring(0,amount.length-18)).toLocaleString(), ".", amount.substring(amount.length-18)].join('');
+        amount = amount.replace(/(\.[0-9]*[1-9])0+$|\.0*$/,'$1')
+
+        formatted[arr[i].address] = amount
+    }
+    return formatted;
+}
+
+function formatRemoveDecimals(data) {
+    var formatted = {};
+    for (var i in data) {
+        var numstr = data[i].replace(",","");
+        var decimals = numstr.substring(numstr.indexOf(".")).padEnd(19,"0").substring(1);
+        numstr = numstr.substring(0,numstr.indexOf(".")).replace(/^0+/, '');
+        formatted[i] = numstr+decimals;
+    }
+    return formatted;
+}
+
 const getBalances = async (token, userAddresses, snapshotBlock) => {
     let querySize = 30;
     let iface = new ethers.utils.Interface(CRV_ABI)
@@ -344,6 +373,13 @@ const main = async () => {
         delete cvxfxsHolders.addresses[from];
     }
 
+
+    ////// **** begin external vaults etc from other protocols **** //////
+
+    //Currently adding in user info given to us by each protocol's team
+    //In the future this could be nice to calculate via this script but for now
+    //just importing a json file
+
     //airforce
     var airforce = jsonfile.readFileSync('./airforce_cvxfxs_1.json');
     var airTotal = BN(0);
@@ -353,6 +389,19 @@ const main = async () => {
     console.log("airforce total: " +airTotal.toString());
     cvxfxsHolders.addresses = combine(cvxfxsHolders.addresses,airforce);
     //todo, remove airforce vault from cvxfxsHolders and double check balance
+
+    //afxs
+    var afxs = jsonfile.readFileSync('./afxs_cvxfxs_1.json');
+    afxs = formatRemoveDecimals(afxs);
+    var afxsTotal = BN(0);
+    for (var i in afxs) {
+        afxsTotal.add(new BN(afxs[i]));
+    }
+    console.log("afxs total: " +afxsTotal.toString());
+    cvxfxsHolders.addresses = combine(cvxfxsHolders.addresses,afxs);
+    //todo, remove afxs vault from cvxfxsHolders and double check balance
+
+    ////// **** end external vaults etc from other protocols **** //////
     
     var totalcvxfxs = BN(0);
     for (var i in cvxfxsHolders.addresses) {
