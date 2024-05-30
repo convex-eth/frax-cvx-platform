@@ -398,8 +398,8 @@ const main = async () => {
         afxsTotal.add(new BN(afxs[i]));
     }
     console.log("afxs total: " +afxsTotal.toString());
+    delete cvxfxsHolders.addresses["0x36925622dc537c65cd6433703f7aEdA5929b1CBf"]; //afxs vault
     cvxfxsHolders.addresses = combine(cvxfxsHolders.addresses,afxs);
-    //todo, remove afxs vault from cvxfxsHolders and double check balance
 
     ////// **** end external vaults etc from other protocols **** //////
     
