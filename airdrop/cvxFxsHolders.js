@@ -387,8 +387,8 @@ const main = async () => {
         airTotal.add(new BN(airforce[i]));
     }
     console.log("airforce total: " +airTotal.toString());
+    delete cvxfxsHolders.addresses["0x110A888f88b65a2c34a6922f518128eDa4FB70de"]; //airforce vault
     cvxfxsHolders.addresses = combine(cvxfxsHolders.addresses,airforce);
-    //todo, remove airforce vault from cvxfxsHolders and double check balance
 
     //afxs
     var afxs = jsonfile.readFileSync('./afxs_cvxfxs_1.json');
