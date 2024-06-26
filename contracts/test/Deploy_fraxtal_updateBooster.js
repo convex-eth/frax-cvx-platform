@@ -155,7 +155,7 @@ contract("Deploy System and test staking/rewards", async accounts => {
     //system
     var usingproxy = await FraxtalVoterProxy.at(chainContracts.system.voteProxy);
 
-    var booster = await FraxtalBooster.new(usingproxy.address, chainContracts.frax.vefxs, {from:deployer});
+    var booster = await FraxtalBooster.new(usingproxy.address, chainContracts.frax.vefxs, chainContracts.frax.fpisLocker, {from:deployer});
     console.log("deployed booster to " +booster.address);
     chainContracts.system.booster = booster.address;
     console.log("using booster at: " +booster.address);
@@ -163,6 +163,7 @@ contract("Deploy System and test staking/rewards", async accounts => {
     await booster.setExtraDistro(chainContracts.system.rewardDistribution, chainContracts.system.bridgeReceiver, {from:deployer})
     await booster.setFeeInfo(chainContracts.system.treasury,500,{from:deployer})
     await booster.setFxsDepositor(chainContracts.system.fxsDepositor,{from:deployer})
+    await booster.setFpisLocker(chainContracts.system.fpisLockController,{from:deployer})
     console.log("booster initialized");
 
     //set proxy operator
