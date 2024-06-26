@@ -19,10 +19,12 @@ contract FraxtalBooster{
 
     address public immutable proxy;
     address public immutable vefxs;
+    address public immutable vefxsfpis;
     address public owner;
     address public pendingOwner;
     address public voteDelegate;
     address public fxsDepositor;
+    address public fpisLocker;
     address public vefxsRewardDistribution;
     address public vefxsFeeToken;
     address public cvxfxsRewardReceiver;
@@ -34,9 +36,10 @@ contract FraxtalBooster{
 
 
 
-    constructor(address _proxy, address _vefxs) {
+    constructor(address _proxy, address _vefxs, address _vefxsfpis) {
         proxy = _proxy;
         vefxs = _vefxs;
+        vefxsfpis = _vefxsfpis;
         isShutdown = false;
         owner = msg.sender;
         voteDelegate = msg.sender;    
@@ -50,6 +53,10 @@ contract FraxtalBooster{
     }
     modifier onlyDepositor() {
         require(fxsDepositor == msg.sender, "!deposit");
+        _;
+    }
+    modifier onlyFpisLocker() {
+        require(fpisLocker == msg.sender, "!locker");
         _;
     }
 
@@ -107,6 +114,11 @@ contract FraxtalBooster{
         emit SetFxsDepositor(_deposit);
     }
 
+    function setFpisLocker(address _locker) external onlyOwner{
+        fpisLocker = _locker;
+        emit SetFpisLocker(_locker);
+    }
+
     function setVefxsDistro(address _distro, address _feeToken, address _cvxFeeReceiver) external onlyOwner{
         require(_distro != address(0),"invalid");
         require(_feeToken != address(0),"invalid");
@@ -150,9 +162,9 @@ contract FraxtalBooster{
     }
 
     //create a new lock
-    function createLock(uint256 _value, uint128 _unlockTime) external onlyOwner{
+    function createLock(address _locker, uint256 _value, uint128 _unlockTime) external onlyOwner{
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("createLock(address,uint256,uint128)")), proxy, _value, _unlockTime);
-        _proxyCall(vefxs,data);
+        _proxyCall(_locker,data);
     }
 
     //arbitrary execute
@@ -171,6 +183,16 @@ contract FraxtalBooster{
     function increaseUnlockTime(uint128 _unlockTime, uint128 _lockIndex) external onlyDepositor{
         bytes memory data = abi.encodeWithSelector(bytes4(keccak256("increaseUnlockTime(uint128,uint128)")), _unlockTime, _lockIndex);
         _proxyCall(vefxs,data);
+    }
+
+    function increaseFpisAmount(uint256 _value, uint128 _lockIndex) external onlyFpisLocker{
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("increaseAmount(uint256,uint128)")), _value, _lockIndex);
+        _proxyCall(vefxsfpis,data);
+    }
+
+    function increaseFpisUnlockTime(uint128 _unlockTime, uint128 _lockIndex) external onlyFpisLocker{
+        bytes memory data = abi.encodeWithSelector(bytes4(keccak256("increaseUnlockTime(uint128,uint128)")), _unlockTime, _lockIndex);
+        _proxyCall(vefxsfpis,data);
     }
 
     /// End Depositor ///
@@ -210,6 +232,7 @@ contract FraxtalBooster{
     /* ========== EVENTS ========== */
     event SetPendingOwner(address indexed _address);
     event SetFxsDepositor(address indexed _address);
+    event SetFpisLocker(address indexed _address);
     event SetVefxsDistro(address indexed _vefxsdistro, address _token, address _receiver);
     event SetExtraDistro(address indexed _distro, address _bridgeReceiver);
     event SetFeeInfo(address indexed _platformreceiver, uint256 _fee);

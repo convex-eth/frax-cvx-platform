@@ -15,6 +15,7 @@
         "poolUtility": "0x8f8459040DCc5D45179cea9c64f514ACC085fBCA",
         "poolTypes": "0x85152Ab706eAE359eaf99B2e1Dc73eAbE4891246",
         "poolRegistry": "0x41a5881c17185383e19Df6FA4EC158a6F4851A69",
+        "poolManager": "0xBE5d4ec42F88D11cba0957F013A5dE41052c887d",
         "feeRegistry": "0xC9aCB83ADa68413a6Aa57007BC720EE2E2b3C46D",
         "feeDeposit": "0xcBec22233Dad5E15AB9c02CAA4d914F3c97323f7",
         "feeDepositV2": "0x7A527d8bB09f7D70C148aB5DE919e9BF68a0d769",
@@ -42,6 +43,7 @@
     },
     "frax": {
         "frax": "0x853d955aCEf822Db058eb8505911ED77F175b99e",
+        "sfrax": "0xA663B02CF0a4b149d2aD41910CB81e23e1c41c32",
         "fxs": "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0",
         "vefxs": "0xc8418aF6358FFddA74e09Ca9CC3Fe03Ca6aDC5b0",
         "frxeth": "0x5E8422345238F34275888049021821E8E08CAa1f",
@@ -74,7 +76,8 @@
             "treasury": "0xe967CDd160c349A33531aB315CcBA7D55Dc48bed",
             "rewardDistribution": "0x858847c21B075e45727fcB0B544BD843CD750361",
             "poolUtility": "0xE56681bBDc27CE9311c66B2b12D4B19e3e51CD8d",
-            "fpisMigrate": "0xCdE8b51CE5809238C953dD4E95C689D88B602ECF"
+            "fpisMigrate": "0xCdE8b51CE5809238C953dD4E95C689D88B602ECF",
+            "fpisLockController": ""
         },
         "frax": {
             "frax": "0xFc00000000000000000000000000000000000001",
@@ -87,7 +90,8 @@
             "sfrax": "0xfC00000000000000000000000000000000000008",
             "bridge": "0x4200000000000000000000000000000000000010",
             "vefxs": "0x007FD070a7E1B0fA1364044a373Ac1339bAD89CF",
-            "vefxsRewardDistro": "0x39333a540bbea6262e405E1A6d435Bd2e776561E"
+            "vefxsRewardDistro": "0x39333a540bbea6262e405E1A6d435Bd2e776561E",
+            "fpisLocker": "0x437E9F65cA234eCfed12149109587139d435AD35"
         }
     },
     "pools": [

@@ -62,4 +62,11 @@ interface IFraxFarmERC20_V2 {
     function sync() external;
     function setRewardVars(address reward_token_address, uint256 _new_rate, address _gauge_controller_address, address _rewards_distributor_address) external;
     function changeTokenManager(address reward_token_address, address new_manager_address) external;
+
+    function version() external view returns(string memory);
+    function farm_type() external view returns(string memory);
+    function withdrawalOnlyShutdown() external view returns(bool);
+    function stakingPaused() external view returns(bool);
+    function stakesUnlocked() external view returns(bool);
+
 }
