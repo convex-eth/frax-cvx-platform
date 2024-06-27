@@ -30,6 +30,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     uint256 public constant EXCHANGE_PRECISION = 1e18;
     uint256 public constant LTV_PRECISION = 100000;
 
+    address public operator;
     address public owner;
     address public pendingOwner;
     bool public isPaused;
@@ -45,6 +46,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
 
     //events
     event SetPendingOwner(address indexed _address);
+    event SetOperator(address indexed _address);
     event SetSwapper(address indexed _address, uint256 _buffer);
     event SetFees(address indexed _address, uint256 _fees);
     event SetBounds(uint256 _borrow, uint256 _repay, uint256 _util);
@@ -74,6 +76,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         frax = _frax;
         sfrax = _sfrax;
         owner = msg.sender;
+        operator = msg.sender;
         borrowBound = 97000;
         repayBound = 99000;
         utilBound = 95000;
@@ -85,6 +88,11 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
 
     modifier onlyOwner() {
         require(owner == msg.sender, "!o_auth");
+        _;
+    }
+
+    modifier onlyOperator() {
+        require(owner == msg.sender || operator == msg.sender, "!op_auth");
         _;
     }
 
@@ -101,6 +109,12 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         owner = pendingOwner;
         pendingOwner = address(0);
         emit OwnerChanged(owner);
+    }
+
+    //set operator
+    function setOperator(address _o) external onlyOwner{
+        operator = _o;
+        emit SetOperator(_o);
     }
 
     function setPaused(bool _pause) external onlyOwner{
@@ -124,7 +138,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         emit SetFees(_feeCollector, _fee);
     }
 
-    function setBounds(uint256 _borrow, uint256 _repay, uint256 _util) external onlyOwner{
+    function setBounds(uint256 _borrow, uint256 _repay, uint256 _util) external onlyOperator{
         require(_repay >= _borrow+1000 && _repay <= 99000,"repay gap");
         require(_util < LTV_PRECISION, "util gap");
 
