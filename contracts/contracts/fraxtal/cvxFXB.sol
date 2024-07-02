@@ -129,7 +129,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     }
 
     //set pending migration role
-    function setPendingMigrationRole(address _pmr) external onlyOwner{
+    function setPendingMigrationRole(address _pmr) external onlyMigratorRole{
         pendingMigratorRole = _pmr;
         emit SetPendingMigrationRole(_pmr);
     }
@@ -165,6 +165,12 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
 
         //reset migrator settings
         migrationContract = address(0);
+        //reset swapper
+        swapper = address(0);
+        emit SetSwapper(address(0), swapbuffer);
+        //set to pause so that owner can adjust settings after migration
+        isPaused = true;
+        emit SetPaused(true);
     }
 
     //set operator
