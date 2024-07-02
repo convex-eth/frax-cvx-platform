@@ -11,6 +11,10 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+interface IMigrator{
+    function migrate() external;
+}
+
 /*
 cvxFXB
 a fxb token wrapper that borrows against the fxb for sfrax in the background
@@ -22,8 +26,8 @@ a fxb token wrapper that borrows against the fxb for sfrax in the background
 contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     using SafeERC20 for IERC20;
 
-    address public immutable stakingToken;
-    address public immutable fraxlend;
+    address public stakingToken;
+    address public fraxlend;
     address public immutable frax;
     address public immutable sfrax;
     uint256 public constant minimumInitialDeposit = 1e18;
@@ -33,6 +37,10 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     address public operator;
     address public owner;
     address public pendingOwner;
+    address public migratorRole;
+    address public pendingMigratorRole;
+    address public migrationContract;
+    uint256 public migrationTime;
     bool public isPaused;
 
     uint256 public borrowBound;
@@ -46,12 +54,15 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
 
     //events
     event SetPendingOwner(address indexed _address);
+    event SetPendingMigrationRole(address indexed _address);
+    event SetMigrationContract(address indexed _address);
     event SetOperator(address indexed _address);
     event SetSwapper(address indexed _address, uint256 _buffer);
     event SetFees(address indexed _address, uint256 _fees);
     event SetBounds(uint256 _borrow, uint256 _repay, uint256 _util);
     event SetPaused(bool _paused);
     event OwnerChanged(address indexed _address);
+    event MigrationRoleChanged(address indexed _address);
     event Deposit(
         address indexed sender,
         address indexed owner,
@@ -67,7 +78,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         uint256 share
     );
 
-    constructor(address _fxb, address _lend, address _frax, address _sfrax) ERC20(
+    constructor(address _fxb, address _lend, address _frax, address _sfrax, address _migratorRole) ERC20(
             "Convex FXB",
             "cvxFXB"
         ){
@@ -77,6 +88,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         sfrax = _sfrax;
         owner = msg.sender;
         operator = msg.sender;
+        migratorRole = _migratorRole;
         borrowBound = 97000;
         repayBound = 99000;
         utilBound = 95000;
@@ -88,6 +100,11 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
 
     modifier onlyOwner() {
         require(owner == msg.sender, "!o_auth");
+        _;
+    }
+
+    modifier onlyMigratorRole() {
+        require(migratorRole == msg.sender, "!m_auth");
         _;
     }
 
@@ -109,6 +126,45 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         owner = pendingOwner;
         pendingOwner = address(0);
         emit OwnerChanged(owner);
+    }
+
+    //set pending migration role
+    function setPendingMigrationRole(address _pmr) external onlyOwner{
+        pendingMigratorRole = _pmr;
+        emit SetPendingMigrationRole(_pmr);
+    }
+
+    //claim migration role
+    function acceptPendingMigrationRole() external {
+        require(pendingMigratorRole != address(0) && msg.sender == pendingMigratorRole, "!p_migrationRole");
+
+        migratorRole = pendingMigratorRole;
+        pendingMigratorRole = address(0);
+        emit MigrationRoleChanged(migratorRole);
+    }
+
+    function setMigrationContract(address _migrateContract) external onlyMigratorRole{
+        migrationContract = _migrateContract;
+        migrationTime = block.timestamp + 1 weeks; //set timelock of migration
+        emit SetMigrationContract(_migrateContract);
+    }
+
+    function migrate(address _newfxb, address _newfraxlend) external onlyMigratorRole{
+        require(migrationContract != address(0),"!mcontract");
+        require(block.timestamp >= migrationTime, "!mtime");
+
+        //repay
+        _repayShares(IFraxLend(fraxlend).userBorrowShares(address(this)));
+        //send underlying to migrator
+        IERC20(stakingToken).safeTransfer(migrationContract, IERC20(stakingToken).balanceOf(address(this)));
+        //update token and fraxlend
+        stakingToken = _newfxb;
+        fraxlend = _newfraxlend;
+        //tell migrator to execute
+        IMigrator(migrationContract).migrate();
+
+        //reset migrator settings
+        migrationContract = address(0);
     }
 
     //set operator

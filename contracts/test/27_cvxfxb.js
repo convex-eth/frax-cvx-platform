@@ -166,7 +166,7 @@ contract("Deploy and test locking", async accounts => {
 
     //deploy
     console.log("--- deploy ---");
-    var cvxfxb = await cvxFXB.new(fxb.address, fraxlend.address, frax.address, sfrax.address, {from:deployer});
+    var cvxfxb = await cvxFXB.new(fxb.address, fraxlend.address, frax.address, sfrax.address, multisig, {from:deployer});
     console.log("cvxfxb: " +cvxfxb.address);
 
     var swapper = await cvxFXBSwapper.new(cvxfxb.address, fxb.address, frax.address, fraxlend.address, exchange, {from:deployer})
