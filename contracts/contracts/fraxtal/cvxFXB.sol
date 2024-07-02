@@ -133,20 +133,21 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     }
 
     function setFees(address _feeCollector, uint256 _fee) external onlyOwner{
+        require(_fee <= LTV_PRECISION, "invalid fee");
         feeCollector = _feeCollector;
         fee = _fee;
         emit SetFees(_feeCollector, _fee);
     }
 
-    function setBounds(uint256 _borrow, uint256 _repay, uint256 _util) external onlyOperator{
-        require(_repay >= _borrow+1000 && _repay <= 99000,"repay gap");
-        require(_util < LTV_PRECISION, "util gap");
+    function setBounds(uint256 _borrowb, uint256 _repayb, uint256 _utilb) external onlyOperator{
+        require(_repayb >= _borrowb+1000 && _repayb <= 99000,"repay gap");
+        require(_utilb < LTV_PRECISION, "util gap");
 
-        borrowBound = _borrow;
-        repayBound = _repay;
-        utilBound = _util;
+        borrowBound = _borrowb;
+        repayBound = _repayb;
+        utilBound = _utilb;
 
-        emit SetBounds(_borrow, _repay, _util);
+        emit SetBounds(_borrowb, _repayb, _utilb);
     }
 
     function deposit(uint256 _assets, address _receiver) external returns (uint256 shares){
@@ -295,9 +296,10 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         uint256 borrowshares = IFraxLend(fraxlend).userBorrowShares(address(this));
         uint256 borrowamount = IFraxLend(fraxlend).toBorrowAmount(borrowshares,true,true);
 
-        //calculate utilization bounds
-        uint256 totallending = IFraxLend(fraxlend).totalAssets();
-        (uint256 totalborrowed,) = IFraxLend(fraxlend).totalBorrow();
+        //calculate utilization bounds using updated interest fees
+        (,,,,IFraxLend.VaultAccount memory totalAsset, IFraxLend.VaultAccount memory totalBorrow) = IFraxLend(fraxlend).previewAddInterest();
+        uint256 totallending = totalAsset.amount;
+        uint256 totalborrowed = totalBorrow.amount;
         //remove current borrowed amount as we are considering what our full position could be
         totalborrowed -= borrowamount;
         //available for us to use
@@ -413,12 +415,12 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     //helper function
     //get difference of outstanding debt vs frax available
     //note, does not take swapbuffer into account
-    function getProfit() external view returns(uint256){
+    function getProfit() external view returns(int256){
         uint256 borrowshares = IFraxLend(fraxlend).userBorrowShares(address(this));
         uint256 borrowamount = IFraxLend(fraxlend).toBorrowAmount(borrowshares,true,true);
         uint256 fraxb = IERC4626(sfrax).previewRedeem(IERC20(sfrax).balanceOf(address(this)));
 
-        return fraxb > borrowamount ? fraxb - borrowamount : 0;
+        return int256(fraxb) - int256(borrowamount);
     }
 
     //helper function to check if updateBalances() should be called

@@ -50,6 +50,18 @@ interface IFraxLend {
    function updateExchangeRate()
         external
         returns (bool _isBorrowAllowed, uint256 _lowExchangeRate, uint256 _highExchangeRate);
+   function addInterest(
+        bool _returnAccounting
+    )
+        external
+        returns (
+            uint256 _interestEarned,
+            uint256 _feesAmount,
+            uint256 _feesShare,
+            CurrentRateInfo memory _currentRateInfo,
+            VaultAccount memory _totalAsset,
+            VaultAccount memory _totalBorrow
+        );
    function previewAddInterest()
         external
         view
