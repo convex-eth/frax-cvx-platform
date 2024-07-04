@@ -155,6 +155,8 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
 
         //repay
         _repayShares(IFraxLend(fraxlend).userBorrowShares(address(this)));
+        //withdraw collateral
+        IFraxLend(fraxlend).removeCollateral(IFraxLend(fraxlend).userCollateralBalance(address(this)), address(this));
         //send underlying to migrator
         IERC20(stakingToken).safeTransfer(migrationContract, IERC20(stakingToken).balanceOf(address(this)));
         //update token and fraxlend
