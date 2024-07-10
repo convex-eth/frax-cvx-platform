@@ -23,7 +23,8 @@ interface IFraxLend {
         uint256 highExchangeRate;
     }
 
-    function toBorrowAmount(
+   function collateralContract() external view returns(address);
+   function toBorrowAmount(
         uint256 _shares,
         bool _roundUp,
         bool _previewInterest
@@ -73,4 +74,5 @@ interface IFraxLend {
             VaultAccount memory _totalAsset,
             VaultAccount memory _totalBorrow
         );
+   function rateContract() external view returns(address);
 }

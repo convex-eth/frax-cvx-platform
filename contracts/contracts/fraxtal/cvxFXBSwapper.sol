@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "../interfaces/ICvxFxb.sol";
 import "../interfaces/IFraxLend.sol";
-import "../interfaces/IFeeReceiver.sol";
+import "../interfaces/IRewardReceiver.sol";
 import "../interfaces/ICurveExchange.sol";
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
@@ -11,12 +12,8 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
-interface ICvxFxb {
-    function updateBalances() external;
-}
-
 //swap frax for fxb and return to cvxfxb
-contract cvxFXBSwapper is IFeeReceiver{
+contract cvxFXBSwapper is IRewardReceiver{
     using SafeERC20 for IERC20;
 
     address public immutable fxb;
@@ -77,7 +74,7 @@ contract cvxFXBSwapper is IFeeReceiver{
 
     //swap frax for fxb
     //use oracle as a basis for setting min amount out
-    function processFees() external{
+    function processRewards() external{
         //get available frax
         uint256 fbal = IERC20(frax).balanceOf(address(this));
 
@@ -90,9 +87,6 @@ contract cvxFXBSwapper is IFeeReceiver{
         
         //exchange with result going back to cvxfxb
         ICurveExchange(exchange).exchange(0,1,fbal,minOut, cvxfxb);
-
-        //update cvxfxb
-        ICvxFxb(cvxfxb).updateBalances();
 
         emit Swapped(fbal,minOut);
     }

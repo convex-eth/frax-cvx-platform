@@ -11,6 +11,7 @@ const cvxToken = artifacts.require("cvxToken");
 const cvxFXB = artifacts.require("cvxFXB");
 const cvxFXBSwapper = artifacts.require("cvxFXBSwapper");
 const IFraxLend = artifacts.require("IFraxLend");
+const IStakedFrax = artifacts.require("IStakedFrax");
 
 const IERC20 = artifacts.require("IERC20");
 const ERC20 = artifacts.require("ERC20");
@@ -160,6 +161,7 @@ contract("Deploy and test locking", async accounts => {
     var fraxlend = await IFraxLend.at("0x1c0C222989a37247D974937782cebc8bF4f25733");
     var frax = await IERC20.at(chainContracts.frax.frax);
     var sfrax = await IERC20.at(chainContracts.frax.sfrax);
+    var stakedfrax = await IStakedFrax.at(chainContracts.frax.sfrax);
     var exchange = "0xe035e27A8eD6842b478933820f90093D205F7098"; //mainnet
     // var exchange = "0xeE454138083b9B9714cac3c7cF12560248d76D6B"; //fraxtal
 
@@ -172,7 +174,7 @@ contract("Deploy and test locking", async accounts => {
     var swapper = await cvxFXBSwapper.new(cvxfxb.address, fxb.address, frax.address, fraxlend.address, exchange, {from:deployer})
     console.log("swapper: " +swapper.address)
 
-    await cvxfxb.setSwapper(swapper.address,web3.utils.toWei("1.0", "ether"),{from:deployer});
+    await cvxfxb.setSwapper(swapper.address,web3.utils.toWei("10.0", "ether"),{from:deployer});
     console.log("swapper set")
 
     console.log("\n\n --- deployed ----");
@@ -192,8 +194,10 @@ contract("Deploy and test locking", async accounts => {
     await unlockAccount(holder);
     await unlockAccount(holderfrax);
     await setNoGas();
+    await fxb.transfer(cvxfxb.address, web3.utils.toWei("1.0", "ether"),{from:holder,gasPrice:0})
     await fxb.transfer(userA, web3.utils.toWei("800000.0", "ether"),{from:holder,gasPrice:0})
     await frax.transfer(userA, web3.utils.toWei("1000000.0", "ether"),{from:holderfrax,gasPrice:0})
+    await frax.transfer(cvxfxb.address, web3.utils.toWei("100.0", "ether"),{from:holderfrax,gasPrice:0})
     await fxb.balanceOf(userA).then(a=>console.log("fxb balance: " +a))
     await frax.balanceOf(userA).then(a=>console.log("frax balance: " +a))
 
@@ -210,7 +214,8 @@ contract("Deploy and test locking", async accounts => {
       await fraxlend.userCollateralBalance(cvxfxb.address).then(a=>console.log("userCollateralBalance: " +a));
       await fraxlend.totalBorrow().then(a=>console.log("totalBorrow: " +a.assets));
       await fraxlend.totalAsset().then(a=>console.log("totalAsset: " +a.assets));
-      await cvxfxb.maxBorrowable(cvxfxbassets).then(a=>console.log("cvxfxb maxBorrowable: " +a));
+      var utilb = await cvxfxb.utilBound();
+      await cvxfxb.maxBorrowable(cvxfxbassets,utilb).then(a=>console.log("cvxfxb maxBorrowable: " +a));
       await cvxfxb.needsUpdate().then(a=>console.log("cvxfxb needs update?: " +a));
       await fxb.balanceOf(cvxfxb.address).then(a=>console.log("fxb on cvxfxb: " +a))
       await frax.balanceOf(cvxfxb.address).then(a=>console.log("frax on cvxfxb: " +a))
@@ -219,6 +224,8 @@ contract("Deploy and test locking", async accounts => {
     }
     await report();
 
+    await stakedfrax.syncRewardsAndDistribution();
+    console.log("updated staked frax");
 
     await advanceTime(day * 3);
     await cvxfxb.getProfit().then(a=>console.log("getProfit: " +a))

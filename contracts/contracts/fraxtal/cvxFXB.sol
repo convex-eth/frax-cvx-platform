@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 
 import "../interfaces/IERC4626.sol";
 import "../interfaces/IFraxLend.sol";
-import "../interfaces/IFeeReceiver.sol";
+import "../interfaces/IRewardReceiver.sol";
 import "../interfaces/IDualOracle.sol";
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
@@ -13,6 +13,11 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 interface IMigrator{
     function migrate() external;
+    function fraxlend() external view returns(address);
+}
+
+interface ICvxFXBOperator{
+    function update() external;
 }
 
 /*
@@ -30,11 +35,11 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     address public fraxlend;
     address public immutable frax;
     address public immutable sfrax;
-    uint256 public constant minimumInitialDeposit = 1e18;
     uint256 public constant EXCHANGE_PRECISION = 1e18;
     uint256 public constant LTV_PRECISION = 100000;
 
     address public operator;
+    uint256 public operatorTime;
     address public owner;
     address public pendingOwner;
     address public migratorRole;
@@ -87,15 +92,23 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         frax = _frax;
         sfrax = _sfrax;
         owner = msg.sender;
+        emit OwnerChanged(msg.sender);
         operator = msg.sender;
+        emit SetOperator(msg.sender);
         migratorRole = _migratorRole;
+        emit MigrationRoleChanged(_migratorRole);
         borrowBound = 97000;
         repayBound = 99000;
         utilBound = 95000;
+        emit SetBounds(borrowBound, repayBound, utilBound);
 
         IERC20(frax).approve(sfrax, type(uint256).max);
         IERC20(frax).approve(fraxlend, type(uint256).max);
         IERC20(stakingToken).approve(fraxlend, type(uint256).max);
+
+        //mint unbacked shares to this address
+        //deployment should send the outstanding amount
+        _mint(address(this), 1e18);
     }
 
     modifier onlyOwner() {
@@ -149,7 +162,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         emit SetMigrationContract(_migrateContract);
     }
 
-    function migrate(address _newfxb, address _newfraxlend) external onlyMigratorRole{
+    function migrate() external onlyMigratorRole{
         require(migrationContract != address(0),"!mcontract");
         require(block.timestamp >= migrationTime, "!mtime");
 
@@ -160,23 +173,33 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         //send underlying to migrator
         IERC20(stakingToken).safeTransfer(migrationContract, IERC20(stakingToken).balanceOf(address(this)));
         //update token and fraxlend
-        stakingToken = _newfxb;
-        fraxlend = _newfraxlend;
+        fraxlend = IMigrator(migrationContract).fraxlend();
+        stakingToken = IFraxLend(fraxlend).collateralContract();
         //tell migrator to execute
         IMigrator(migrationContract).migrate();
+        //approve new fraxlend
+        IERC20(stakingToken).approve(fraxlend, type(uint256).max);
 
         //reset migrator settings
         migrationContract = address(0);
+        emit SetMigrationContract(address(0));
         //reset swapper
         swapper = address(0);
         emit SetSwapper(address(0), swapbuffer);
         //set to pause so that owner can adjust settings after migration
         isPaused = true;
         emit SetPaused(true);
+        //reset operator as it could be a contract thats configured for previous parameters
+        operator = address(0);
+        //force a small window where an operator cant be set
+        operatorTime = block.timestamp + 1 weeks;
+        emit SetOperator(address(0));
     }
 
     //set operator
     function setOperator(address _o) external onlyOwner{
+        require(block.timestamp >= operatorTime, "!otime");
+
         operator = _o;
         emit SetOperator(_o);
     }
@@ -197,13 +220,14 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     }
 
     function setFees(address _feeCollector, uint256 _fee) external onlyOwner{
-        require(_fee <= LTV_PRECISION, "invalid fee");
+        require(_fee <= 50000, "invalid fee");
         feeCollector = _feeCollector;
         fee = _fee;
         emit SetFees(_feeCollector, _fee);
     }
 
-    function setBounds(uint256 _borrowb, uint256 _repayb, uint256 _utilb) external onlyOperator{
+    //set boundaries
+    function setBounds(uint256 _borrowb, uint256 _repayb, uint256 _utilb) external onlyOwner{
         require(_repayb >= _borrowb+1000 && _repayb <= 99000,"repay gap");
         require(_utilb < LTV_PRECISION, "util gap");
 
@@ -214,12 +238,18 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         emit SetBounds(_borrowb, _repayb, _utilb);
     }
 
+    //let operator change utilization bounds
+    function setUtilBounds(uint256 _utilb) external onlyOperator{
+        require(_utilb < LTV_PRECISION, "util gap");
+
+        utilBound = _utilb;
+
+        emit SetBounds(borrowBound, repayBound, _utilb);
+    }
+
     function deposit(uint256 _assets, address _receiver) external returns (uint256 shares){
 
          if (_assets > 0) {
-            if(totalSupply() == 0){
-                require(_assets >= minimumInitialDeposit, "!min init dep");
-            }
             shares = previewDeposit(_assets);
             if(shares > 0){
                 _mint(_receiver, shares);
@@ -233,9 +263,6 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     function mint(uint256 _shares, address _receiver) external override returns (uint256 assets){
 
         if (_shares > 0) {
-            if(totalSupply() == 0){
-                require(_shares >= minimumInitialDeposit, "!min init dep");
-            }
             assets = previewMint(_shares);
             if(assets > 0){
                 _mint(_receiver, _shares);
@@ -246,23 +273,33 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         }
     }
 
-    function redeem(uint256 _shares, address _receiver, address /*_owner*/) public override returns (uint256 assets){
+    function redeem(uint256 _shares, address _receiver, address _owner) public override returns (uint256 assets){
 
         if (_shares > 0) {
+            if (msg.sender != _owner) {
+                _spendAllowance(_owner, msg.sender, _shares);
+            }
+
             assets = previewRedeem(_shares);
-            _burn(msg.sender, _shares);
+            require(assets != 0, "ZERO_ASSETS");
+            _burn(_owner, _shares);
             _removeCollateral(assets);
             IERC20(stakingToken).safeTransfer(_receiver, assets);
             updateBalances(); //update balances after collateral has been sent back
-            emit Withdraw(msg.sender, _receiver, msg.sender, _shares, assets);
+            emit Withdraw(msg.sender, _receiver, _owner, _shares, assets);
         }
     }
 
-    function withdraw(uint256 _amount, address _receiver, address /*_owner*/) public override returns(uint256 shares){
+    function withdraw(uint256 _amount, address _receiver, address _owner) public override returns(uint256 shares){
 
         if (_amount > 0) {
             shares = previewWithdraw(_amount);
-            _burn(msg.sender, shares);
+
+            if (msg.sender != _owner) {
+                _spendAllowance(_owner, msg.sender, shares);
+            }
+            
+            _burn(_owner, shares);
             _removeCollateral(_amount);
             IERC20(stakingToken).safeTransfer(_receiver, _amount);
             updateBalances(); //update balances after collateral has been sent back
@@ -344,7 +381,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     }
 
     //get our max borrowable amount
-    function maxBorrowable(uint256 _collateralAmount) public view returns (uint256) {
+    function maxBorrowable(uint256 _collateralAmount, uint256 _utilityBounds) public view returns (uint256) {
         IFraxLend.ExchangeRateInfo memory exInfo = IFraxLend(fraxlend).exchangeRateInfo();
         //look directly at oracle to keep this a view function
         (,,uint256 exchangeRate) = IDualOracle(exInfo.oracle).getPrices();
@@ -370,7 +407,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         uint256 available = totallending - totalborrowed;
 
         //only use whats available above a utilization threshold
-        uint256 utilbuffer = totallending * (LTV_PRECISION-utilBound) / LTV_PRECISION;
+        uint256 utilbuffer = totallending * (LTV_PRECISION-_utilityBounds) / LTV_PRECISION;
         available = available > utilbuffer ? available - utilbuffer : 0;
 
         //if our ltv is above available, clamp to available
@@ -423,8 +460,13 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         //exit gracefully if paused
         if(isPaused) return;
 
+        //if operator is a contract, see if it needs to update
+        if(operator != address(0) && operator.code.length > 0){
+            ICvxFXBOperator(operator).update();
+        }
+
         //get max borrow and bounds
-        uint256 maxborrow = maxBorrowable(totalAssets());
+        uint256 maxborrow = maxBorrowable(totalAssets(),utilBound);
         uint256 borrowbound = maxborrow * borrowBound / LTV_PRECISION;
         uint256 repaybound = maxborrow * repayBound / LTV_PRECISION;
 
@@ -452,7 +494,6 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     //so that no borrowed frax can be sent out
     function processRewards() external{
         require(swapper != address(0),"!swapper");
-        require(totalSupply() >= minimumInitialDeposit, "!min init dep");
 
         //first repay everything and withdraw from sfrax
         _repayShares(IFraxLend(fraxlend).userBorrowShares(address(this)));
@@ -471,9 +512,12 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
             fraxbalance -= feeamount;
         }
 
-        //send remaining to swapper
+        //send remaining to swapper and process
         IERC20(frax).transfer(swapper, fraxbalance);
-        IFeeReceiver(swapper).processFees();
+        IRewardReceiver(swapper).processRewards();
+
+        //update balances after complete
+        updateBalances();
     }
 
     //helper function
@@ -482,7 +526,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     function getProfit() external view returns(int256){
         uint256 borrowshares = IFraxLend(fraxlend).userBorrowShares(address(this));
         uint256 borrowamount = IFraxLend(fraxlend).toBorrowAmount(borrowshares,true,true);
-        uint256 fraxb = IERC4626(sfrax).previewRedeem(IERC20(sfrax).balanceOf(address(this)));
+        uint256 fraxb = IERC4626(sfrax).maxWithdraw(address(this));
 
         return int256(fraxb) - int256(borrowamount);
     }
@@ -504,18 +548,18 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
 
         
         //get max borrow and bounds
-        uint256 maxborrow = maxBorrowable(totalAssets());
-        uint256 borrowbound = maxborrow * borrowBound / LTV_PRECISION;
-        uint256 repaybound = maxborrow * repayBound / LTV_PRECISION;
+        uint256 maxborrow = maxBorrowable(totalAssets(), utilBound);
+        uint256 bbound = maxborrow * borrowBound / LTV_PRECISION;
+        uint256 rbound = maxborrow * repayBound / LTV_PRECISION;
 
         //get current borrow amount
         uint256 borrowshares = IFraxLend(fraxlend).userBorrowShares(address(this));
         uint256 borrowamount = IFraxLend(fraxlend).toBorrowAmount(borrowshares,true,true);
         
-        if(borrowamount > repaybound){
+        if(borrowamount > rbound){
             //need to repay/reduce
             return true;
-        }else if(borrowbound > borrowamount){
+        }else if(bbound > borrowamount){
 
             //check oracle conditions for borrowing more directly from oracle to keep as a view function
             //otherwise could call fraxlend.updateExchangeRate() and use isBorrowAllowed
