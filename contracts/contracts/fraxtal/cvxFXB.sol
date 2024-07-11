@@ -443,7 +443,10 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
             }
         }
         //deposit to sfrax any frax available
-        IERC4626(sfrax).deposit(IERC20(frax).balanceOf(address(this)), address(this));
+        uint256 fraxbalance = IERC20(frax).balanceOf(address(this));
+        if(fraxbalance > 0){
+            IERC4626(sfrax).deposit(fraxbalance, address(this));
+        }
     }
 
     function _repayShares(uint256 _shares) internal{
