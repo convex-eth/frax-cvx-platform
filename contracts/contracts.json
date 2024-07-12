@@ -66,7 +66,7 @@
             "cvx": "0x3a562a8CEB9866BcF39bB5EdA32F282d619e08E0",
             "cvxCrv": "0xBA9801aCfdF3B8852865149d93AcFfEF9120272d",
             "cvxFxs": "0xEFb4B26FC242478c9008274F9e81db89Fa6adAB9",
-            "booster": "0x30571deD5300F3D1285f017beA79F358487ff987",
+            "booster": "0x4fe483391715Be3bf0C4a4fE37fa2E1AD0633D7f",
             "fpisVoteProxy": "0xf3BD66ca9b2b43F6Aa11afa6F4Dfdc836150d973",
             "fpisBooster": "0x27445D3F59d6b966072Abe20E41a29fbB6A7A04b",
             "cvxFpis": "0x3fC86CA96014862F9a12427e5220936C56d5dAc9",
@@ -77,7 +77,7 @@
             "rewardDistribution": "0x858847c21B075e45727fcB0B544BD843CD750361",
             "poolUtility": "0x4C586e8B191d67AA79EB55e89F9a5cbD9BcbDc57",
             "fpisMigrate": "0xCdE8b51CE5809238C953dD4E95C689D88B602ECF",
-            "fpisLockController": ""
+            "fpisLockController": "0xC1115C1E030b38416a7B7ab1C20165f67098913B"
         },
         "frax": {
             "frax": "0xFc00000000000000000000000000000000000001",

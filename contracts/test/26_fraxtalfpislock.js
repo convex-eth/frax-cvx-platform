@@ -172,6 +172,9 @@ contract("Deploy and test locking", async accounts => {
     console.log("booster: " +booster.address);
     chainContracts.system.booster = booster.address;
 
+    await booster.setVefxsDistro(chainContracts.frax.vefxsRewardDistro,chainContracts.frax.fxs, chainContracts.system.stakedCvxFxs, {from:deployer})
+    await booster.setExtraDistro(chainContracts.system.rewardDistribution, chainContracts.system.bridgeReceiver, {from:deployer})
+    await booster.setFeeInfo(chainContracts.system.treasury,500,{from:deployer})
     await booster.setFxsDepositor(depositor.address,{from:deployer});
     console.log("set depositor on booster");
     await booster.setFpisLocker(lockcontroller.address,{from:deployer});
@@ -205,14 +208,47 @@ contract("Deploy and test locking", async accounts => {
     await fpisLocker.lockedByIndex(voteproxy.address,0).then(a=>console.log("lock amount: " +a._amount +", end: " +a._end));
     await fpis.balanceOf(voteproxy.address).then(a=>console.log("fpis balance on voteproxy: " +a));
 
-
+    await migration.owner().then(a=>console.log("migration owner; " +a))
     await migration.setPendingOwner(lockcontroller.address, {from:deployer})
     await lockcontroller.acceptOwnership();
     console.log("migration ownership to lock controller")
+    await migration.owner().then(a=>console.log("migration owner; " +a))
 
-    //TODO test reverting etc
+    //test reverting
+    if(config.network != "mainnetFraxtal"){
+      await lockcontroller.revertOwnership({from:deployer})
+      await migration.acceptPendingOwner({from:deployer});
+      console.log("revert ownership");
+      await migration.owner().then(a=>console.log("migration owner; " +a))
+      await migration.setPendingOwner(lockcontroller.address, {from:deployer})
+      await lockcontroller.acceptOwnership();
+      console.log("migration ownership to lock controller again")
+      await migration.owner().then(a=>console.log("migration owner; " +a))
+    }
 
     console.log("\n\n --- deployed ----");
+
+    //lock whats in migration now
+    await fpis.balanceOf(voteproxy.address).then(a=>console.log("balance on voteproxy: " +a))
+    await fpis.balanceOf(migration.address).then(a=>console.log("balance on migration: " +a))
+    await booster.fpisLocker().then(a=>console.log("fpis lock controller on booster: " +a))
+    await fpisLocker.lockedByIndex(voteproxy.address,0).then(a=>console.log("lock amount: " +a._amount +", end: " +a._end));
+    await lockcontroller.lock();
+    console.log("locked")
+    await fpisLocker.lockedByIndex(voteproxy.address,0).then(a=>console.log("lock amount: " +a._amount +", end: " +a._end));
+    
+    //lock whats on deployer
+    var deployerBalance = await fpis.balanceOf(deployer);
+    await fpis.transfer(voteproxy.address, deployerBalance,{from:deployer});
+    await fpis.balanceOf(voteproxy.address).then(a=>console.log("balance on voteproxy: " +a))
+    await fpisLocker.lockedByIndex(voteproxy.address,0).then(a=>console.log("lock amount: " +a._amount +", end: " +a._end));
+    await lockcontroller.lock();
+    console.log("locked")
+    await fpisLocker.lockedByIndex(voteproxy.address,0).then(a=>console.log("lock amount: " +a._amount +", end: " +a._end));
+
+    //force checkpoint by claiming fees
+    await booster.claimFees();
+    console.log("fees claimed");
 
     console.log(chainContracts);
     if(config.network == "mainnetFraxtal"){
@@ -222,14 +258,6 @@ contract("Deploy and test locking", async accounts => {
       return;
     }
     
-    //lock whats in migration now
-    await fpis.balanceOf(voteproxy.address).then(a=>console.log("balance on voteproxy: " +a))
-    await fpis.balanceOf(migration.address).then(a=>console.log("balance on migration: " +a))
-    await booster.fpisLocker().then(a=>console.log("fpis lock controller on booster: " +a))
-    await fpisLocker.lockedByIndex(voteproxy.address,0).then(a=>console.log("lock amount: " +a._amount +", end: " +a._end));
-    await lockcontroller.lock();
-    console.log("locked")
-    await fpisLocker.lockedByIndex(voteproxy.address,0).then(a=>console.log("lock amount: " +a._amount +", end: " +a._end));
     await advanceTime(day * 8);
     await lockcontroller.unlockTime().then(a=>console.log("unlockTime: " +a))
     await lockcontroller.nextUnlock().then(a=>console.log("nextUnlock: " +a))
