@@ -10,5 +10,6 @@ interface IStakedFrax {
 
     function rewardsCycleData() external view returns(RewardsCycleData memory);
     function storedTotalAssets() external view returns(uint256);
+    function maxDistributionPerSecondPerAsset() external view returns(uint256);
     function syncRewardsAndDistribution() external;
 }

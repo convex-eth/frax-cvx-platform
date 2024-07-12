@@ -12,6 +12,8 @@ const cvxFXB = artifacts.require("cvxFXB");
 const cvxFXBSwapper = artifacts.require("cvxFXBSwapper");
 const IFraxLend = artifacts.require("IFraxLend");
 const IStakedFrax = artifacts.require("IStakedFrax");
+const cvxFXBRateCalc = artifacts.require("cvxFXBRateCalc");
+const cvxFXBMigrator = artifacts.require("cvxFXBMigrator");
 
 const IERC20 = artifacts.require("IERC20");
 const ERC20 = artifacts.require("ERC20");
@@ -177,7 +179,15 @@ contract("Deploy and test locking", async accounts => {
     await cvxfxb.setSwapper(swapper.address,web3.utils.toWei("10.0", "ether"),{from:deployer});
     console.log("swapper set")
 
+    var cvxfxbRates = await cvxFXBRateCalc.new(cvxfxb.address, sfrax.address, fraxlend.address, {from:deployer})
+    await cvxfxb.setOperator(cvxfxbRates.address,{from:deployer})
+    console.log("rates: " +cvxfxbRates.address);
+
     console.log("\n\n --- deployed ----");
+
+
+    await cvxfxb.setUtilBounds(60000,{from:deployer});
+    console.log("set util bounds");
 
     // console.log(chainContracts);
     // if(config.network == "mainnetFraxtal"){
@@ -208,28 +218,45 @@ contract("Deploy and test locking", async accounts => {
 
     const report = async (secondsElaspse) => {
       console.log("\n --- report ---")
+
+      //update address
+      var flend = await IFraxLend.at( await cvxfxb.fraxlend() );
+      var currentfxb = await IERC20.at( await cvxfxb.stakingToken() );
+      var rates = await cvxFXBRateCalc.at( await cvxfxb.operator() );
+
       var cvxfxbassets = await cvxfxb.totalAssets();
       console.log("cvxfxb totalAssets: " +cvxfxbassets);
-      await fraxlend.userBorrowShares(cvxfxb.address).then(a=>console.log("userBorrowShares: " +a));
-      await fraxlend.userCollateralBalance(cvxfxb.address).then(a=>console.log("userCollateralBalance: " +a));
-      await fraxlend.totalBorrow().then(a=>console.log("totalBorrow: " +a.assets));
-      await fraxlend.totalAsset().then(a=>console.log("totalAsset: " +a.assets));
+      await cvxfxb.totalSupply().then(a=>console.log("cvxfxb totalShares: " +a));
+      await flend.userBorrowShares(cvxfxb.address).then(a=>console.log("userBorrowShares: " +a));
+      await flend.userCollateralBalance(cvxfxb.address).then(a=>console.log("userCollateralBalance: " +a));
+      await flend.totalBorrow().then(a=>console.log("totalBorrow: " +a.assets));
+      await flend.totalAsset().then(a=>console.log("totalAsset: " +a.assets));
+      await rates.fraxlendCurrentUtil().then(a=>console.log("fraxlend util: " +a));
       var utilb = await cvxfxb.utilBound();
+      console.log("current util bound: " +utilb);
       await cvxfxb.maxBorrowable(cvxfxbassets,utilb).then(a=>console.log("cvxfxb maxBorrowable: " +a));
       await cvxfxb.needsUpdate().then(a=>console.log("cvxfxb needs update?: " +a));
-      await fxb.balanceOf(cvxfxb.address).then(a=>console.log("fxb on cvxfxb: " +a))
+      await currentfxb.balanceOf(cvxfxb.address).then(a=>console.log("fxb on cvxfxb: " +a))
       await frax.balanceOf(cvxfxb.address).then(a=>console.log("frax on cvxfxb: " +a))
       await sfrax.balanceOf(cvxfxb.address).then(a=>console.log("sfrax on cvxfxb: " +a))
+      await cvxfxb.getProfit().then(a=>console.log("getProfit: " +a))
+      await rates.sfraxRates().then(a=>console.log("sfrax rates: " +a));
+      await rates.fraxlendRates().then(a=>console.log("fraxlend rates: \nlow: " +a.lowRate +"\ncurrent: " +a.currentRate +"\n high: " +a.highRate +"\nlowUtil: " +a.lowUtil +"\ncurrentUtil: " +a.currentUtil +"\n highUtil: " +a.highUtil));
+      await rates.rewardsPerSecond().then(a=>console.log("rewards per second: \nlow: " +a.low +"\ncurrent: " +a.current +"\n high: " +a.high));
+      await rates.calcUtilBounds().then(a=>console.log("calcUtilBounds: " +a));
+      var tx =  await rates.update();
+      console.log("rates updated, gas: " +tx.receipt.gasUsed);
       console.log(" -------------- \n")
     }
     await report();
 
+    await advanceTime(day * 3);
     await stakedfrax.syncRewardsAndDistribution();
     console.log("updated staked frax");
 
-    await advanceTime(day * 3);
+    
     await cvxfxb.getProfit().then(a=>console.log("getProfit: " +a))
-    await cvxfxb.processRewards();
+    await cvxfxb.processRewards().catch(a=>console.log("REVERT ON PROCESS REWARDS " +a));
     console.log("rewards processed")
     await cvxfxb.getProfit().then(a=>console.log("getProfit: " +a))
     await report();
@@ -255,6 +282,31 @@ contract("Deploy and test locking", async accounts => {
     await cvxfxb.redeem(web3.utils.toWei("50000.0", "ether"), userA, userA, {from:userA});
     console.log("redeemed some");
     await report();
+
+
+    //migration test
+    var newfxb = await IERC20.at("0xF8FDe8A259A3698902C88bdB1E13Ff28Cd7f6F09");
+    var newfraxlend = await IFraxLend.at("0xd1887398f3bbdC9d10D0d5616AD83506DdF5057a");
+    var migrator = await cvxFXBMigrator.new(cvxfxb.address, fxb.address, newfxb.address, newfraxlend.address, {from:deployer})
+    await newfxb.transfer(migrator.address, web3.utils.toWei("100000.0", "ether"),{from:holder,gasPrice:0})
+    await newfxb.transfer(userA, web3.utils.toWei("1000.0", "ether"),{from:holder,gasPrice:0})
+
+    await cvxfxb.setMigrationContract(migrator.address,{from:multisig,gasPrice:0});
+    await cvxfxb.migrate({from:multisig,gasPrice:0}).catch(a=>console.log("too soon: " +a));
+    await advanceTime(7 * day);
+    await cvxfxb.migrate({from:multisig,gasPrice:0});
+    console.log("migrated")
+    var newcvxfxbRates = await cvxFXBRateCalc.new(cvxfxb.address, sfrax.address, newfraxlend.address, {from:deployer})
+    await cvxfxb.setOperator(newcvxfxbRates.address,{from:deployer}).catch(a=>console.log("too soon: " +a));
+    await advanceTime(7 * day);
+    await cvxfxb.setOperator(newcvxfxbRates.address,{from:deployer})
+
+    await report();
+    await newfxb.approve(cvxfxb.address, web3.utils.toWei("10000000000.0", "ether"), {from:userA});
+    await cvxfxb.deposit(web3.utils.toWei("1000.0", "ether"), userA, {from:userA});
+    console.log("deposited new fxb");
+    await report();
+
 
     await cvxfxb.redeem(await cvxfxb.balanceOf(userA), userA, userA, {from:userA});
     console.log("redeemed all");

@@ -17,7 +17,7 @@ interface IMigrator{
 }
 
 interface ICvxFXBOperator{
-    function update() external;
+    function calcUtilBounds() external view returns(uint256 useUtil);
 }
 
 /*
@@ -179,6 +179,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         IMigrator(migrationContract).migrate();
         //approve new fraxlend
         IERC20(stakingToken).approve(fraxlend, type(uint256).max);
+        IERC20(frax).approve(fraxlend, type(uint256).max);
 
         //reset migrator settings
         migrationContract = address(0);
@@ -242,8 +243,11 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     function setUtilBounds(uint256 _utilb) external onlyOperator{
         require(_utilb < LTV_PRECISION, "util gap");
 
-        utilBound = _utilb;
+        _setUtilBounds(_utilb);
+    }
 
+    function _setUtilBounds(uint256 _utilb) internal{
+        utilBound = _utilb;
         emit SetBounds(borrowBound, repayBound, _utilb);
     }
 
@@ -465,7 +469,11 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
 
         //if operator is a contract, see if it needs to update
         if(operator != address(0) && operator.code.length > 0){
-            ICvxFXBOperator(operator).update();
+            uint256 ubounds = ICvxFXBOperator(operator).calcUtilBounds();
+            //check if valid bounds, if over just ignore
+            if(ubounds < LTV_PRECISION){
+                _setUtilBounds(ubounds);
+            }
         }
 
         //get max borrow and bounds
