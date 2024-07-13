@@ -406,7 +406,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         uint256 totallending = totalAsset.amount;
         uint256 totalborrowed = totalBorrow.amount;
         //remove current borrowed amount as we are considering what our full position could be
-        totalborrowed -= borrowamount;
+        totalborrowed = totalborrowed > borrowamount ? totalborrowed - borrowamount : 0;
         //available for us to use
         uint256 available = totallending - totalborrowed;
 
@@ -469,11 +469,14 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
 
         //if operator is a contract, see if it needs to update
         if(operator != address(0) && operator.code.length > 0){
-            uint256 ubounds = ICvxFXBOperator(operator).calcUtilBounds();
-            //check if valid bounds, if over just ignore
-            if(ubounds < LTV_PRECISION){
-                _setUtilBounds(ubounds);
-            }
+            // uint256 ubounds = ICvxFXBOperator(operator).calcUtilBounds();
+            try ICvxFXBOperator(operator).calcUtilBounds() returns(uint256 ubounds){
+                //check if valid bounds, if over just ignore
+                if(ubounds < LTV_PRECISION){
+                    _setUtilBounds(ubounds);
+                }
+            }catch{}
+            
         }
 
         //get max borrow and bounds

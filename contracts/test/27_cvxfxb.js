@@ -294,6 +294,9 @@ contract("Deploy and test locking", async accounts => {
     await cvxfxb.setMigrationContract(migrator.address,{from:multisig,gasPrice:0});
     await cvxfxb.migrate({from:multisig,gasPrice:0}).catch(a=>console.log("too soon: " +a));
     await advanceTime(7 * day);
+    await stakedfrax.syncRewardsAndDistribution();
+    await frax.transfer(cvxfxb.address, web3.utils.toWei("1000.0", "ether"),{from:holderfrax,gasPrice:0})
+    await report();
     await cvxfxb.migrate({from:multisig,gasPrice:0});
     console.log("migrated")
     var newcvxfxbRates = await cvxFXBRateCalc.new(cvxfxb.address, sfrax.address, newfraxlend.address, {from:deployer})
