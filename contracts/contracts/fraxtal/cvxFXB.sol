@@ -448,7 +448,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         }
         //deposit to sfrax any frax available
         uint256 fraxbalance = IERC20(frax).balanceOf(address(this));
-        if(fraxbalance > 0){
+        if(IERC4626(sfrax).previewDeposit(fraxbalance) > 0){
             IERC4626(sfrax).deposit(fraxbalance, address(this));
         }
     }
@@ -476,7 +476,6 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
                     _setUtilBounds(ubounds);
                 }
             }catch{}
-            
         }
 
         //get max borrow and bounds

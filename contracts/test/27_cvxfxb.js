@@ -250,6 +250,18 @@ contract("Deploy and test locking", async accounts => {
     }
     await report();
 
+    //make sure low amouts of frax is handled
+    await cvxfxb.setOperator(addressZero,{from:deployer})
+    await cvxfxb.updateBalances();
+    await frax.balanceOf(cvxfxb.address).then(a=>console.log("frax on cvxfxb: " +a))
+    await sfrax.balanceOf(cvxfxb.address).then(a=>console.log("sfrax on cvxfxb: " +a))
+    await frax.transfer(cvxfxb.address, 1,{from:holderfrax,gasPrice:0})
+    await cvxfxb.updateBalances();
+    await frax.balanceOf(cvxfxb.address).then(a=>console.log("frax on cvxfxb: " +a))
+    await sfrax.balanceOf(cvxfxb.address).then(a=>console.log("sfrax on cvxfxb: " +a))
+    await cvxfxb.setOperator(cvxfxbRates.address,{from:deployer})
+
+
     await advanceTime(day * 3);
     await stakedfrax.syncRewardsAndDistribution();
     console.log("updated staked frax");
