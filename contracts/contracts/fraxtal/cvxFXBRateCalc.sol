@@ -34,9 +34,10 @@ contract cvxFXBRateCalc{
     }
 
     function sfraxRates() public view returns(uint256 fraxPerSecond){
-        IStakedFrax.RewardsCycleData memory rdata = IStakedFrax(sfrax).rewardsCycleData();
-        uint256 sfraxtotal = IStakedFrax(sfrax).storedTotalAssets();
-        uint256 maxsfraxDistro = IStakedFrax(sfrax).maxDistributionPerSecondPerAsset();
+        address pricefeed = IStakedFrax(sfrax).priceFeedVault();
+        IStakedFrax.RewardsCycleData memory rdata = IStakedFrax(pricefeed).rewardsCycleData();
+        uint256 sfraxtotal = IStakedFrax(pricefeed).storedTotalAssets();
+        uint256 maxsfraxDistro = IStakedFrax(pricefeed).maxDistributionPerSecondPerAsset();
         fraxPerSecond = rdata.rewardCycleAmount / REWARDS_CYCLE_LENGTH;
         fraxPerSecond = fraxPerSecond * 1e18 / sfraxtotal;
         fraxPerSecond = fraxPerSecond > maxsfraxDistro ? maxsfraxDistro : fraxPerSecond;

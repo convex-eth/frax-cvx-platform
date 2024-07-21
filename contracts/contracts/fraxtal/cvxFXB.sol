@@ -35,6 +35,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     address public fraxlend;
     address public immutable frax;
     address public immutable sfrax;
+    address public immutable sfraxVault;
     uint256 public constant EXCHANGE_PRECISION = 1e18;
     uint256 public constant LTV_PRECISION = 100000;
 
@@ -83,7 +84,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         uint256 share
     );
 
-    constructor(address _fxb, address _lend, address _frax, address _sfrax, address _migratorRole) ERC20(
+    constructor(address _fxb, address _lend, address _frax, address _sfrax, address _sfraxVault, address _migratorRole) ERC20(
             "Convex FXB",
             "cvxFXB"
         ){
@@ -91,6 +92,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         fraxlend = _lend;
         frax = _frax;
         sfrax = _sfrax;
+        sfraxVault = _sfraxVault;
         owner = msg.sender;
         emit OwnerChanged(msg.sender);
         operator = msg.sender;
@@ -102,7 +104,8 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         utilBound = 95000;
         emit SetBounds(borrowBound, repayBound, utilBound);
 
-        IERC20(frax).approve(sfrax, type(uint256).max);
+        IERC20(frax).approve(sfraxVault, type(uint256).max);
+        IERC20(sfrax).approve(sfraxVault, type(uint256).max);
         IERC20(frax).approve(fraxlend, type(uint256).max);
         IERC20(stakingToken).approve(fraxlend, type(uint256).max);
 
@@ -448,15 +451,15 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         }
         //deposit to sfrax any frax available
         uint256 fraxbalance = IERC20(frax).balanceOf(address(this));
-        if(IERC4626(sfrax).previewDeposit(fraxbalance) > 0){
-            IERC4626(sfrax).deposit(fraxbalance, address(this));
+        if(IERC4626(sfraxVault).previewDeposit(fraxbalance) > 0){
+            IERC4626(sfraxVault).deposit(fraxbalance, address(this));
         }
     }
 
     function _repayShares(uint256 _shares) internal{
         if(_shares > 0){
             //withdraw from sfrax
-            IERC4626(sfrax).redeem(IERC20(sfrax).balanceOf(address(this)), address(this), address(this));
+            IERC4626(sfraxVault).redeem(IERC20(sfrax).balanceOf(address(this)), address(this), address(this));
             //repay
             IFraxLend(fraxlend).repayAsset(_shares,address(this));
         }
@@ -469,7 +472,6 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
 
         //if operator is a contract, see if it needs to update
         if(operator != address(0) && operator.code.length > 0){
-            // uint256 ubounds = ICvxFXBOperator(operator).calcUtilBounds();
             try ICvxFXBOperator(operator).calcUtilBounds() returns(uint256 ubounds){
                 //check if valid bounds, if over just ignore
                 if(ubounds < LTV_PRECISION){
