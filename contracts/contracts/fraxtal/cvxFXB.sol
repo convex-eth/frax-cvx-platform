@@ -541,7 +541,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     function getProfit() external view returns(int256){
         uint256 borrowshares = IFraxLend(fraxlend).userBorrowShares(address(this));
         uint256 borrowamount = IFraxLend(fraxlend).toBorrowAmount(borrowshares,true,true);
-        uint256 fraxb = IERC4626(sfrax).maxWithdraw(address(this));
+        uint256 fraxb = IERC4626(sfraxVault).maxWithdraw(address(this));
 
         return int256(fraxb) - int256(borrowamount);
     }
