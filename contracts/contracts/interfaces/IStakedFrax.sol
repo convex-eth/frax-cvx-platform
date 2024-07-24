@@ -11,5 +11,8 @@ interface IStakedFrax {
     function rewardsCycleData() external view returns(RewardsCycleData memory);
     function storedTotalAssets() external view returns(uint256);
     function maxDistributionPerSecondPerAsset() external view returns(uint256);
+    function priceFeedVault() external view returns(address);
     function syncRewardsAndDistribution() external;
+    function updateVaultTknOracle() external;
+    function setMintRedeemFee(uint256 _fee) external;
 }

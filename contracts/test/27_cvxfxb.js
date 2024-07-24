@@ -3,11 +3,11 @@ const { BN, time } = require('openzeppelin-test-helpers');
 var jsonfile = require('jsonfile');
 var contractList = jsonfile.readFileSync('./contracts.json');
 
-const FraxtalVoterProxy = artifacts.require("FraxtalVoterProxy");
-const FraxtalBooster = artifacts.require("FraxtalBooster");
-const FraxtalFxsDepositor = artifacts.require("FraxtalFxsDepositor");
+// const FraxtalVoterProxy = artifacts.require("FraxtalVoterProxy");
+// const FraxtalBooster = artifacts.require("FraxtalBooster");
+// const FraxtalFxsDepositor = artifacts.require("FraxtalFxsDepositor");
 const StakedCvxFxs = artifacts.require("StakedCvxFxs");
-const cvxToken = artifacts.require("cvxToken");
+// const cvxToken = artifacts.require("cvxToken");
 const cvxFXB = artifacts.require("cvxFXB");
 const cvxFXBSwapper = artifacts.require("cvxFXBSwapper");
 const IFraxLend = artifacts.require("IFraxLend");
@@ -154,67 +154,111 @@ contract("Deploy and test locking", async accounts => {
     userNames[userD] = "D";
     userNames[userZ] = "Z";
 
-    
+    web3.eth.getBlockNumber().then(console.log);
     await unlockAccount(deployer);
     await unlockAccount(multisig);
 
-    
-    var fxb = await IERC20.at("0x76237BCfDbe8e06FB774663add96216961df4ff3");
-    var fraxlend = await IFraxLend.at("0x1c0C222989a37247D974937782cebc8bF4f25733");
-    var frax = await IERC20.at(chainContracts.frax.frax);
-    var sfrax = await IERC20.at(chainContracts.frax.sfrax);
-    var stakedfrax = await IStakedFrax.at(chainContracts.frax.sfrax);
-    var exchange = "0xe035e27A8eD6842b478933820f90093D205F7098"; //mainnet
-    // var exchange = "0xeE454138083b9B9714cac3c7cF12560248d76D6B"; //fraxtal
+    var migraterole;
+    var fxb;
+    var fraxlend;
+    var frax;
+    var sfrax;
+    var sfraxVault;
+    var stakedfrax;
+    var exchange;
+    var holderfxb;
+    var holderfrax;
+    // if(config.network == "debug"){
+    //   //mainnet debug
+    //   migraterole = multisig;
+    //   fxb = await IERC20.at("0x76237BCfDbe8e06FB774663add96216961df4ff3");
+    //   fraxlend = await IFraxLend.at("0x1c0C222989a37247D974937782cebc8bF4f25733");
+    //   frax = await IERC20.at(chainContracts.frax.frax);
+    //   sfrax = await IERC20.at(chainContracts.frax.sfrax);
+    //   sfraxVault = await IERC4626.at(sfrax.address);
+    //   stakedfrax = await IStakedFrax.at(chainContracts.frax.sfrax);
+    //   exchange = "0xe035e27A8eD6842b478933820f90093D205F7098"; //mainnet
+    //   holderfxb = "0xa3A7B6F88361F48403514059F1F16C8E78d60EeC";
+    //   holderfrax = "0xcE6431D21E3fb1036CE9973a3312368ED96F5CE7";
+    // }else{
+      //fraxtal
+      migraterole = "0xC4EB45d80DC1F079045E75D5d55de8eD1c1090E6"; //frax comptroller
+      fxb = await IERC20.at("0xF1e2b576aF4C6a7eE966b14C810b772391e92153");
+      fraxlend = await IFraxLend.at("0x3e92765eE2B009b104A8A7baf3759B159c19AbA1");
+      frax = await IERC20.at(chainContracts.frax.frax);
+      sfrax = await IERC20.at(chainContracts.frax.sfrax);
+      sfraxVault = await IERC4626.at(chainContracts.frax.sfraxVault);
+      stakedfrax = await IStakedFrax.at(chainContracts.frax.sfraxVault);
+      exchange = "0xeE454138083b9B9714cac3c7cF12560248d76D6B";
+      holderfxb = "0xb29002BF776066BF8d73B3F0597cA8B894E30050";
+      holderfrax = "0x00160baF84b3D2014837cc12e838ea399f8b8478";
+    // }
+    await unlockAccount(holderfxb);
+    await unlockAccount(holderfrax);
+    await unlockAccount(migraterole);
 
 
     //deploy
     console.log("--- deploy ---");
-    var cvxfxb = await cvxFXB.new(fxb.address, fraxlend.address, frax.address, sfrax.address, multisig, {from:deployer});
+    if(config.network == "mainnetFraxtal"){
+      var checkbalance = await fxb.balanceOf(deployer);
+      if(checkbalance != web3.utils.toWei("1.0", "ether")){
+        console.log("deploy with 1.0 fxb on deployer")
+        return;
+      }
+    }
+    var cvxfxb = await cvxFXB.new(fxb.address, fraxlend.address, frax.address, sfrax.address, sfraxVault.address, migraterole, {from:deployer});
     console.log("cvxfxb: " +cvxfxb.address);
+    await cvxfxb.sfrax().then(a=>console.log("using sfrax: " +a))
+    chainContracts.system.cvxfxb = cvxfxb.address;
 
     var swapper = await cvxFXBSwapper.new(cvxfxb.address, fxb.address, frax.address, fraxlend.address, exchange, {from:deployer})
     console.log("swapper: " +swapper.address)
+    chainContracts.system.cvxfxbSwapper = swapper.address;
 
     await cvxfxb.setSwapper(swapper.address,web3.utils.toWei("10.0", "ether"),{from:deployer});
     console.log("swapper set")
 
-    var cvxfxbRates = await cvxFXBRateCalc.new(cvxfxb.address, sfrax.address, fraxlend.address, {from:deployer})
+    await cvxfxb.setFees(chainContracts.system.treasury,10000,{from:deployer});
+    console.log("set fees");
+
+    var cvxfxbRates = await cvxFXBRateCalc.new(cvxfxb.address, sfraxVault.address, fraxlend.address, {from:deployer})
     await cvxfxb.setOperator(cvxfxbRates.address,{from:deployer})
     console.log("rates: " +cvxfxbRates.address);
+    chainContracts.system.cvxfxbOperator = cvxfxbRates.address;
 
     console.log("\n\n --- deployed ----");
 
+    console.log(chainContracts);
+    if(config.network == "mainnetFraxtal"){
+      contractList.fraxtal = chainContracts;
+      jsonfile.writeFileSync("./contracts.json", contractList, { spaces: 4 });
+      
+      await fxb.transfer(cvxfxb.address, web3.utils.toWei("1.0", "ether"),{from:deployer})
 
-    await cvxfxb.setUtilBounds(60000,{from:deployer});
-    console.log("set util bounds");
-
-    // console.log(chainContracts);
-    // if(config.network == "mainnetFraxtal"){
-    //   contractList.fraxtal = chainContracts;
-    //   jsonfile.writeFileSync("./contracts.json", contractList, { spaces: 4 });
-    //   console.log("done");
-    //   return;
-    // }
+      console.log("done");
+      return;
+    }
     
+    await swapper.setSlippage(web3.utils.toWei("0.79", "ether"),{from:deployer})
+    console.log("slippage set");
 
     //get tokens
-    var holder = "0xa3A7B6F88361F48403514059F1F16C8E78d60EeC";
-    var holderfrax = "0xcE6431D21E3fb1036CE9973a3312368ED96F5CE7";
-    await unlockAccount(holder);
-    await unlockAccount(holderfrax);
     await setNoGas();
-    await fxb.transfer(cvxfxb.address, web3.utils.toWei("1.0", "ether"),{from:holder,gasPrice:0})
-    await fxb.transfer(userA, web3.utils.toWei("800000.0", "ether"),{from:holder,gasPrice:0})
+    await fxb.transfer(cvxfxb.address, web3.utils.toWei("1.0", "ether"),{from:holderfxb,gasPrice:0})
+    await fxb.transfer(userA, web3.utils.toWei("800000.0", "ether"),{from:holderfxb,gasPrice:0})
     await frax.transfer(userA, web3.utils.toWei("1000000.0", "ether"),{from:holderfrax,gasPrice:0})
     await frax.transfer(cvxfxb.address, web3.utils.toWei("100.0", "ether"),{from:holderfrax,gasPrice:0})
     await fxb.balanceOf(userA).then(a=>console.log("fxb balance: " +a))
     await frax.balanceOf(userA).then(a=>console.log("frax balance: " +a))
 
+    // await cvxfxb.setUtilBounds(60000,{from:deployer});
+    // console.log("set util bounds");
 
     await fxb.approve(cvxfxb.address, web3.utils.toWei("10000000000.0", "ether"), {from:userA});
     await cvxfxb.deposit(web3.utils.toWei("400000.0", "ether"), userA, {from:userA});
     console.log("deposited");
+    await cvxfxb.migrationTime().then(a=>console.log("x: " +a))
 
     const report = async (secondsElaspse) => {
       console.log("\n --- report ---")
@@ -262,17 +306,20 @@ contract("Deploy and test locking", async accounts => {
     await cvxfxb.setOperator(cvxfxbRates.address,{from:deployer})
 
 
-    await advanceTime(day * 3);
-    await stakedfrax.syncRewardsAndDistribution();
-    console.log("updated staked frax");
+    // await advanceTime(day * 3);
+    await report();
 
-    
-    await cvxfxb.getProfit().then(a=>console.log("getProfit: " +a))
+    await fraxlend.userCollateralBalance(cvxfxb.address).then(a=>console.log("userCollateralBalance: " +a));
+    await frax.balanceOf(chainContracts.system.treasury).then(a=>console.log("frax on treasury: " +a))
     await cvxfxb.processRewards().catch(a=>console.log("REVERT ON PROCESS REWARDS " +a));
     console.log("rewards processed")
+    await fraxlend.userCollateralBalance(cvxfxb.address).then(a=>console.log("userCollateralBalance: " +a));
+    await frax.balanceOf(chainContracts.system.treasury).then(a=>console.log("frax on treasury: " +a))
+
     await cvxfxb.getProfit().then(a=>console.log("getProfit: " +a))
     await report();
 
+    // return;
     await cvxfxb.deposit(web3.utils.toWei("400000.0", "ether"), userA, {from:userA});
     console.log("deposited");
     await report();
@@ -297,26 +344,30 @@ contract("Deploy and test locking", async accounts => {
 
 
     //migration test
-    var newfxb = await IERC20.at("0xF8FDe8A259A3698902C88bdB1E13Ff28Cd7f6F09");
-    var newfraxlend = await IFraxLend.at("0xd1887398f3bbdC9d10D0d5616AD83506DdF5057a");
+    var newfxb = await IERC20.at("0xacA9A33698cF96413A40A4eB9E87906ff40fC6CA");
+    var newfraxlend = await IFraxLend.at("0x1b48c9595385F1780d7Be1aB57f8eAcFeA3A5cE5");
+    var newfxbholder = "0x6e6B61369A4f549FF3A7c9E0CFA5F7E8Ada5CD22";
+    await unlockAccount(newfxbholder);
     var migrator = await cvxFXBMigrator.new(cvxfxb.address, fxb.address, newfxb.address, newfraxlend.address, {from:deployer})
-    await newfxb.transfer(migrator.address, web3.utils.toWei("100000.0", "ether"),{from:holder,gasPrice:0})
-    await newfxb.transfer(userA, web3.utils.toWei("1000.0", "ether"),{from:holder,gasPrice:0})
+    console.log("migrator deployed to " +migrator.address);
+    await newfxb.transfer(migrator.address, web3.utils.toWei("100000.0", "ether"),{from:newfxbholder,gasPrice:0})
+    await newfxb.transfer(userA, web3.utils.toWei("1000.0", "ether"),{from:newfxbholder,gasPrice:0})
 
-    await cvxfxb.setMigrationContract(migrator.address,{from:multisig,gasPrice:0});
-    await cvxfxb.migrate({from:multisig,gasPrice:0}).catch(a=>console.log("too soon: " +a));
+    await cvxfxb.setMigrationContract(migrator.address,{from:migraterole,gasPrice:0});
+    await cvxfxb.migrate({from:migraterole,gasPrice:0}).catch(a=>console.log("too soon: " +a));
     await advanceTime(7 * day);
-    await stakedfrax.syncRewardsAndDistribution();
+    // await stakedfrax.syncRewardsAndDistribution();
     await frax.transfer(cvxfxb.address, web3.utils.toWei("1000.0", "ether"),{from:holderfrax,gasPrice:0})
-    await report();
-    await cvxfxb.migrate({from:multisig,gasPrice:0});
+    // await report();
+    console.log("migrating...");
+    await cvxfxb.migrate({from:migraterole,gasPrice:0});
     console.log("migrated")
     var newcvxfxbRates = await cvxFXBRateCalc.new(cvxfxb.address, sfrax.address, newfraxlend.address, {from:deployer})
     await cvxfxb.setOperator(newcvxfxbRates.address,{from:deployer}).catch(a=>console.log("too soon: " +a));
     await advanceTime(7 * day);
     await cvxfxb.setOperator(newcvxfxbRates.address,{from:deployer})
 
-    await report();
+    // await report();
     await newfxb.approve(cvxfxb.address, web3.utils.toWei("10000000000.0", "ether"), {from:userA});
     await cvxfxb.deposit(web3.utils.toWei("1000.0", "ether"), userA, {from:userA});
     console.log("deposited new fxb");

@@ -85,8 +85,8 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     );
 
     constructor(address _fxb, address _lend, address _frax, address _sfrax, address _sfraxVault, address _migratorRole) ERC20(
-            "Convex FXB",
-            "cvxFXB"
+            "Wrapped FXB",
+            "wFXB"
         ){
         stakingToken = _fxb;
         fraxlend = _lend;
