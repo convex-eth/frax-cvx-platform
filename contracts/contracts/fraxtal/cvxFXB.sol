@@ -63,7 +63,8 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
     event SetPendingMigrationRole(address indexed _address);
     event SetMigrationContract(address indexed _address);
     event SetOperator(address indexed _address);
-    event SetSwapper(address indexed _address, uint256 _buffer);
+    event SetSwapper(address indexed _address);
+    event SetSwapBuffer(uint256 _buffer);
     event SetFees(address indexed _address, uint256 _fees);
     event SetBounds(uint256 _borrow, uint256 _repay, uint256 _util);
     event SetPaused(bool _paused);
@@ -189,7 +190,7 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         emit SetMigrationContract(address(0));
         //reset swapper
         swapper = address(0);
-        emit SetSwapper(address(0), swapbuffer);
+        emit SetSwapper(address(0));
         //set to pause so that owner can adjust settings after migration
         isPaused = true;
         emit SetPaused(true);
@@ -217,10 +218,14 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         emit SetPaused(_pause);
     }
 
-    function setSwapper(address _swap, uint256 _buffer) external onlyOwner{
+    function setSwapper(address _swap) external onlyOwner{
         swapper = _swap;
+        emit SetSwapper(_swap);
+    }
+
+    function setSwapBuffer(uint256 _buffer) external onlyOperator{
         swapbuffer = _buffer;
-        emit SetSwapper(_swap, _buffer);
+        emit SetSwapBuffer(_buffer);
     }
 
     function setFees(address _feeCollector, uint256 _fee) external onlyOwner{
@@ -546,52 +551,4 @@ contract cvxFXB is ERC20, ReentrancyGuard, IERC4626{
         return int256(fraxb) - int256(borrowamount);
     }
 
-    //helper function to check if updateBalances() should be called
-    function needsUpdate() external view returns(bool){
-        //check if paused locally
-        if(isPaused){
-            return false;
-        }
-
-        //check if we have frax or fxb to deposit
-        if(IERC20(frax).balanceOf(address(this)) > 0){
-            return true;
-        }
-        if(IERC20(stakingToken).balanceOf(address(this)) > 0){
-            return true;
-        }
-
-        
-        //get max borrow and bounds
-        uint256 maxborrow = maxBorrowable(totalAssets(), utilBound);
-        uint256 bbound = maxborrow * borrowBound / LTV_PRECISION;
-        uint256 rbound = maxborrow * repayBound / LTV_PRECISION;
-
-        //get current borrow amount
-        uint256 borrowshares = IFraxLend(fraxlend).userBorrowShares(address(this));
-        uint256 borrowamount = IFraxLend(fraxlend).toBorrowAmount(borrowshares,true,true);
-        
-        if(borrowamount > rbound){
-            //need to repay/reduce
-            return true;
-        }else if(bbound > borrowamount){
-
-            //check oracle conditions for borrowing more directly from oracle to keep as a view function
-            //otherwise could call fraxlend.updateExchangeRate() and use isBorrowAllowed
-            IFraxLend.ExchangeRateInfo memory exInfo = IFraxLend(fraxlend).exchangeRateInfo();
-            (,uint256 lowexchangeRate,uint256 highexchangeRate) = IDualOracle(exInfo.oracle).getPrices();
-            uint256 _deviation = (LTV_PRECISION *
-                (highexchangeRate - lowexchangeRate)) /
-                highexchangeRate;
-            if (_deviation > exInfo.maxOracleDeviation) {
-                return false;
-            }
-
-            //can borrow more
-            return true;
-        }
-
-        //no need to update now
-        return false;
-    }
 }

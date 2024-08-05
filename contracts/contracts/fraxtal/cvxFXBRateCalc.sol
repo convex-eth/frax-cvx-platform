@@ -5,22 +5,28 @@ import "../interfaces/ICvxFxb.sol";
 import "../interfaces/IFraxLend.sol";
 import "../interfaces/IStakedFrax.sol";
 import "../interfaces/IRateCalculatorV2.sol";
+import "../interfaces/IDualOracle.sol";
+
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 
 //calculate utilization bounds for cvxfxb
 contract cvxFXBRateCalc{
 
     address public immutable cvxfxb;
+    address public immutable frax;
     address public immutable sfrax;
     address public immutable fraxlend;
     uint256 public constant UTIL_PREC = 100000;
     uint256 public constant UTIL_CAP = 99000; //dont let util go to 100%
     uint256 public constant RATE_STEP = 1000;
     uint256 public constant REWARDS_CYCLE_LENGTH = 604800;
+    uint256 public constant BORROW_MORE_DIFF = 1e18+1e15;
 
 
-    constructor(address _cvxfxb, address _sfrax, address _fraxlend){
+    constructor(address _cvxfxb, address _frax, address _sfrax, address _fraxlend){
         cvxfxb = _cvxfxb;
+        frax = _frax;
         sfrax = _sfrax;
         fraxlend = _fraxlend;
     }
@@ -129,8 +135,65 @@ contract cvxFXBRateCalc{
         }
     }
 
-    //force update to utilization bounds
+    //helper function to check if updateBalances() should be called
+    function calcBorrowUpdate() public view returns(bool){
+        //check if paused locally
+        if(ICvxFxb(cvxfxb).isPaused()){
+            return false;
+        }
+
+        //check if we have frax or fxb to deposit
+        if(IERC20(frax).balanceOf(cvxfxb) > 0){
+            return true;
+        }
+        if(IERC20(ICvxFxb(cvxfxb).stakingToken()).balanceOf(cvxfxb) > 0){
+            return true;
+        }
+
+        
+        //get max borrow and bounds
+        uint256 maxborrow = ICvxFxb(cvxfxb).maxBorrowable(ICvxFxb(cvxfxb).totalAssets(), ICvxFxb(cvxfxb).utilBound());
+        uint256 bbound = maxborrow * ICvxFxb(cvxfxb).borrowBound() / UTIL_PREC;
+        uint256 rbound = maxborrow * ICvxFxb(cvxfxb).repayBound() / UTIL_PREC;
+
+        //get current borrow amount
+        uint256 borrowshares = IFraxLend(fraxlend).userBorrowShares(cvxfxb);
+        uint256 borrowamount = IFraxLend(fraxlend).toBorrowAmount(borrowshares,true,true);
+        
+        if(borrowamount > rbound){
+            //need to repay/reduce
+            return true;
+        }else if(bbound * 1e18 / borrowamount >= BORROW_MORE_DIFF ){
+
+            //check oracle conditions for borrowing more directly from oracle to keep as a view function
+            //otherwise could call fraxlend.updateExchangeRate() and use isBorrowAllowed
+            IFraxLend.ExchangeRateInfo memory exInfo = IFraxLend(fraxlend).exchangeRateInfo();
+            (,uint256 lowexchangeRate,uint256 highexchangeRate) = IDualOracle(exInfo.oracle).getPrices();
+            uint256 _deviation = (UTIL_PREC *
+                (highexchangeRate - lowexchangeRate)) /
+                highexchangeRate;
+            if (_deviation > exInfo.maxOracleDeviation) {
+                return false;
+            }
+
+            //can borrow more
+            return true;
+        }
+
+        //no need to update now
+        return false;
+    }
+
+    function needsUpdate() external view returns(bool){
+        return 
+        ICvxFxb(cvxfxb).utilBound() != calcUtilBounds() 
+        ||
+        calcBorrowUpdate();
+    }
+
+    //update wrapper
     function update() external{
-        ICvxFxb(cvxfxb).setUtilBounds(calcUtilBounds());
+        //calling update balances will also callback to here for util bounds
+        ICvxFxb(cvxfxb).updateBalances();
     }
 }

@@ -30,6 +30,7 @@ const unlockAccount = async (address) => {
       {
         jsonrpc: "2.0",
         method: "hardhat_impersonateAccount",
+        // method: "anvil_impersonateAccount",
         params: [address],
         id: new Date().getTime(),
       },
@@ -168,19 +169,19 @@ contract("Deploy and test locking", async accounts => {
     var exchange;
     var holderfxb;
     var holderfrax;
-    // if(config.network == "debug"){
-    //   //mainnet debug
-    //   migraterole = multisig;
-    //   fxb = await IERC20.at("0x76237BCfDbe8e06FB774663add96216961df4ff3");
-    //   fraxlend = await IFraxLend.at("0x1c0C222989a37247D974937782cebc8bF4f25733");
-    //   frax = await IERC20.at(chainContracts.frax.frax);
-    //   sfrax = await IERC20.at(chainContracts.frax.sfrax);
-    //   sfraxVault = await IERC4626.at(sfrax.address);
-    //   stakedfrax = await IStakedFrax.at(chainContracts.frax.sfrax);
-    //   exchange = "0xe035e27A8eD6842b478933820f90093D205F7098"; //mainnet
-    //   holderfxb = "0xa3A7B6F88361F48403514059F1F16C8E78d60EeC";
-    //   holderfrax = "0xcE6431D21E3fb1036CE9973a3312368ED96F5CE7";
-    // }else{
+    if(config.network == "debug"){
+      //mainnet debug
+      migraterole = multisig;
+      fxb = await IERC20.at("0x76237BCfDbe8e06FB774663add96216961df4ff3");
+      fraxlend = await IFraxLend.at("0x1c0C222989a37247D974937782cebc8bF4f25733");
+      frax = await IERC20.at(chainContracts.frax.frax);
+      sfrax = await IERC20.at(chainContracts.frax.sfrax);
+      sfraxVault = await IERC4626.at(sfrax.address);
+      stakedfrax = await IStakedFrax.at(chainContracts.frax.sfrax);
+      exchange = "0xe035e27A8eD6842b478933820f90093D205F7098"; //mainnet
+      holderfxb = "0xa3A7B6F88361F48403514059F1F16C8E78d60EeC";
+      holderfrax = "0xcE6431D21E3fb1036CE9973a3312368ED96F5CE7";
+    }else{
       //fraxtal
       migraterole = "0xC4EB45d80DC1F079045E75D5d55de8eD1c1090E6"; //frax comptroller
       fxb = await IERC20.at("0xF1e2b576aF4C6a7eE966b14C810b772391e92153");
@@ -192,7 +193,7 @@ contract("Deploy and test locking", async accounts => {
       exchange = "0xeE454138083b9B9714cac3c7cF12560248d76D6B";
       holderfxb = "0xb29002BF776066BF8d73B3F0597cA8B894E30050";
       holderfrax = "0x00160baF84b3D2014837cc12e838ea399f8b8478";
-    // }
+    }
     await unlockAccount(holderfxb);
     await unlockAccount(holderfrax);
     await unlockAccount(migraterole);
@@ -216,13 +217,18 @@ contract("Deploy and test locking", async accounts => {
     console.log("swapper: " +swapper.address)
     chainContracts.system.cvxfxbSwapper = swapper.address;
 
-    await cvxfxb.setSwapper(swapper.address,web3.utils.toWei("10.0", "ether"),{from:deployer});
+    //current oracle price and market price are quite different and thus need a big slippage setting
+    await swapper.setSlippage(web3.utils.toWei("0.80", "ether"),{from:deployer})
+    console.log("slippage set");
+
+    await cvxfxb.setSwapper(swapper.address,{from:deployer});
+    await cvxfxb.setSwapBuffer(web3.utils.toWei("10.0", "ether"),{from:deployer});
     console.log("swapper set")
 
     await cvxfxb.setFees(chainContracts.system.treasury,10000,{from:deployer});
     console.log("set fees");
 
-    var cvxfxbRates = await cvxFXBRateCalc.new(cvxfxb.address, sfraxVault.address, fraxlend.address, {from:deployer})
+    var cvxfxbRates = await cvxFXBRateCalc.new(cvxfxb.address, frax.address, sfraxVault.address, fraxlend.address, {from:deployer})
     await cvxfxb.setOperator(cvxfxbRates.address,{from:deployer})
     console.log("rates: " +cvxfxbRates.address);
     chainContracts.system.cvxfxbOperator = cvxfxbRates.address;
@@ -258,7 +264,6 @@ contract("Deploy and test locking", async accounts => {
     await fxb.approve(cvxfxb.address, web3.utils.toWei("10000000000.0", "ether"), {from:userA});
     await cvxfxb.deposit(web3.utils.toWei("400000.0", "ether"), userA, {from:userA});
     console.log("deposited");
-    await cvxfxb.migrationTime().then(a=>console.log("x: " +a))
 
     const report = async (secondsElaspse) => {
       console.log("\n --- report ---")
@@ -279,7 +284,8 @@ contract("Deploy and test locking", async accounts => {
       var utilb = await cvxfxb.utilBound();
       console.log("current util bound: " +utilb);
       await cvxfxb.maxBorrowable(cvxfxbassets,utilb).then(a=>console.log("cvxfxb maxBorrowable: " +a));
-      await cvxfxb.needsUpdate().then(a=>console.log("cvxfxb needs update?: " +a));
+      await rates.needsUpdate().then(a=>console.log("cvxfxb needsUpdate?: " +a));
+      await rates.calcBorrowUpdate().then(a=>console.log("cvxfxb calcBorrowUpdate?: " +a));
       await currentfxb.balanceOf(cvxfxb.address).then(a=>console.log("fxb on cvxfxb: " +a))
       await frax.balanceOf(cvxfxb.address).then(a=>console.log("frax on cvxfxb: " +a))
       await sfrax.balanceOf(cvxfxb.address).then(a=>console.log("sfrax on cvxfxb: " +a))
@@ -306,7 +312,7 @@ contract("Deploy and test locking", async accounts => {
     await cvxfxb.setOperator(cvxfxbRates.address,{from:deployer})
 
 
-    // await advanceTime(day * 3);
+    await advanceTime(day * 1);
     await report();
 
     await fraxlend.userCollateralBalance(cvxfxb.address).then(a=>console.log("userCollateralBalance: " +a));
@@ -355,16 +361,18 @@ contract("Deploy and test locking", async accounts => {
 
     await cvxfxb.setMigrationContract(migrator.address,{from:migraterole,gasPrice:0});
     await cvxfxb.migrate({from:migraterole,gasPrice:0}).catch(a=>console.log("too soon: " +a));
-    await advanceTime(7 * day);
+    await advanceTime(8 * day);
     // await stakedfrax.syncRewardsAndDistribution();
     await frax.transfer(cvxfxb.address, web3.utils.toWei("1000.0", "ether"),{from:holderfrax,gasPrice:0})
     // await report();
     console.log("migrating...");
+    await cvxfxb.migrationTime().then(a=>console.log("migration time: " +a))
+    await currentTime().then(console.log);
     await cvxfxb.migrate({from:migraterole,gasPrice:0});
     console.log("migrated")
     var newcvxfxbRates = await cvxFXBRateCalc.new(cvxfxb.address, sfrax.address, newfraxlend.address, {from:deployer})
     await cvxfxb.setOperator(newcvxfxbRates.address,{from:deployer}).catch(a=>console.log("too soon: " +a));
-    await advanceTime(7 * day);
+    await advanceTime(8 * day);
     await cvxfxb.setOperator(newcvxfxbRates.address,{from:deployer})
 
     // await report();
