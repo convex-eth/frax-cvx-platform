@@ -13,6 +13,7 @@ interface ICvxFxb {
     function repayBound() external view returns(uint256);
     function utilBound() external view returns(uint256);
     function isPaused() external view returns(bool);
+    function owner() external view returns(address);
     function updateBalances() external;
     function maxBorrowable(uint256 _collateralAmount, uint256 _utilityBounds) external view returns (uint256);
 }

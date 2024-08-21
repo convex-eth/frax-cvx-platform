@@ -23,6 +23,8 @@ contract cvxFXBRateCalc{
     uint256 public constant REWARDS_CYCLE_LENGTH = 604800;
     uint256 public constant BORROW_MORE_DIFF = 1e18+1e15;
 
+    uint256 public minimumUtil = 90000;
+    event SetMinimumUtil(uint256 _minimum);
 
     constructor(address _cvxfxb, address _frax, address _sfrax, address _fraxlend){
         cvxfxb = _cvxfxb;
@@ -31,12 +33,50 @@ contract cvxFXBRateCalc{
         fraxlend = _fraxlend;
     }
 
-    function fraxlendCurrentUtil() external view returns(uint256 currentUtil){
+    modifier onlyOwner() {
+        require(ICvxFxb(cvxfxb).owner() == msg.sender, "!o_auth");
+        _;
+    }
+
+    //set minimum util
+    function setMinimumUtil(uint256 _minimum) external onlyOwner{
+        minimumUtil = _minimum;
+        emit SetMinimumUtil(_minimum);
+    }
+
+    function fraxlendCurrentUtil() public view returns(uint256 currentUtil){
         uint256 totalassets = IFraxLend(fraxlend).totalAssets();
         (uint256 totalborrow,) = IFraxLend(fraxlend).totalBorrow();
         currentUtil = totalassets == 0
                 ? 0
                 : (UTIL_PREC * totalborrow) / totalassets;
+    }
+
+    function currentRatesPerSupply() external view returns(uint256 currentrates){
+        address rateContract = IFraxLend(fraxlend).rateContract();
+        IFraxLend.CurrentRateInfo memory rateInfo = IFraxLend(fraxlend).currentRateInfo();
+
+        (uint256 lendrate,) = IRateCalculatorV2(rateContract).getNewRate(
+                0,
+                fraxlendCurrentUtil(),
+                rateInfo.fullUtilizationRate
+            );
+
+        currentrates = sfraxRates();
+        currentrates = currentrates > lendrate ? currentrates-lendrate : 0;
+
+        //get current borrow amount
+        uint256 borrowshares = IFraxLend(fraxlend).userBorrowShares(cvxfxb);
+        uint256 borrowamount = IFraxLend(fraxlend).toBorrowAmount(borrowshares,true,true);
+
+        //total rate
+        currentrates *= borrowamount;
+        uint256 supply = IERC20(cvxfxb).totalSupply();
+        if(supply == 0){
+            return 0;
+        }
+
+        currentrates = currentrates / IERC20(cvxfxb).totalSupply();
     }
 
     function sfraxRates() public view returns(uint256 fraxPerSecond){
@@ -132,6 +172,11 @@ contract cvxFXBRateCalc{
             //also check if low is better than current
             //should never be a situation where low is better than high but current isnt
             useUtil = low > current ? lowUtil : currentUtil;
+        }
+
+        //if positive rates, clamp to a minimum util
+        if(useUtil < minimumUtil && current > 0){
+            useUtil = minimumUtil;
         }
     }
 

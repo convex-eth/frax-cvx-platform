@@ -11,9 +11,13 @@ const IConvexSideBooster = artifacts.require("IConvexSideBooster");
 const BridgeReceiver = artifacts.require("BridgeReceiver");
 const RewardDistribution = artifacts.require("RewardDistribution");
 const FraxtalPoolUtilities = artifacts.require("FraxtalPoolUtilities");
+const cvxFXBRateCalc = artifacts.require("cvxFXBRateCalc");
+const cvxFXB = artifacts.require("cvxFXB");
+const IFraxLend = artifacts.require("IFraxLend");
 
 const IERC20 = artifacts.require("IERC20");
 const ERC20 = artifacts.require("ERC20");
+const IERC4626 = artifacts.require("IERC4626");
 
 
 const unlockAccount = async (address) => {
@@ -163,18 +167,23 @@ contract("Deploy simple contracts", async accounts => {
     // chainContracts.system.rewardDistribution = rd.address;
     
     
-    var util = await FraxtalPoolUtilities.new({from:deployer});
-    console.log("util " +util.address);
-    chainContracts.system.poolUtility = util.address;
-    await util.stakedCvxFxsRewardRates().then(a=>console.log(JSON.stringify(a)));
-
-/*
-  35645.068029810893191494
-  0.000134540446621353
+    // var util = await FraxtalPoolUtilities.new({from:deployer});
+    // console.log("util " +util.address);
+    // chainContracts.system.poolUtility = util.address;
+    // await util.stakedCvxFxsRewardRates().then(a=>console.log(JSON.stringify(a)));
 
 
+    //update cvxfxb operator
+    var fraxlend = await IFraxLend.at("0x3e92765eE2B009b104A8A7baf3759B159c19AbA1");
+    var frax = await IERC20.at(chainContracts.frax.frax);
+    var sfraxVault = await IERC4626.at(chainContracts.frax.sfraxVault);
+    var cvxfxb = await cvxFXB.at(chainContracts.system.cvxfxb);
+    var cvxfxbRates = await cvxFXBRateCalc.new(cvxfxb.address, frax.address, sfraxVault.address, fraxlend.address, {from:deployer})
+    await cvxfxb.setOperator(cvxfxbRates.address,{from:deployer})
+    console.log("rates: " +cvxfxbRates.address);
+    chainContracts.system.cvxfxbOperator = cvxfxbRates.address;
 
-*/
+    await cvxfxbRates.currentRatesPerSupply().then(a=>console.log("current rate per supply: " +a))
 
     console.log("\n\n --- deployed ----");
 
