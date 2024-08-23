@@ -168,10 +168,10 @@ contract cvxFXBRateCalc{
         useUtil = highUtil;
 
         //check if current is better than high
-        if(current > high){
+        if(current >= high){
             //also check if low is better than current
             //should never be a situation where low is better than high but current isnt
-            useUtil = low > current ? lowUtil : currentUtil;
+            useUtil = low >= current ? lowUtil : currentUtil;
         }
 
         //if positive rates, clamp to a minimum util
