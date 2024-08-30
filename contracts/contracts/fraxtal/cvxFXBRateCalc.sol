@@ -205,24 +205,32 @@ contract cvxFXBRateCalc{
         uint256 borrowshares = IFraxLend(fraxlend).userBorrowShares(cvxfxb);
         uint256 borrowamount = IFraxLend(fraxlend).toBorrowAmount(borrowshares,true,true);
         
-        if(borrowamount > rbound){
-            //need to repay/reduce
+        if(maxborrow != 0 && borrowshares == 0){
+            //can borrow but currently not
             return true;
-        }else if(bbound * 1e18 / borrowamount >= BORROW_MORE_DIFF ){
+        }
 
-            //check oracle conditions for borrowing more directly from oracle to keep as a view function
-            //otherwise could call fraxlend.updateExchangeRate() and use isBorrowAllowed
-            IFraxLend.ExchangeRateInfo memory exInfo = IFraxLend(fraxlend).exchangeRateInfo();
-            (,uint256 lowexchangeRate,uint256 highexchangeRate) = IDualOracle(exInfo.oracle).getPrices();
-            uint256 _deviation = (UTIL_PREC *
-                (highexchangeRate - lowexchangeRate)) /
-                highexchangeRate;
-            if (_deviation > exInfo.maxOracleDeviation) {
-                return false;
+        //first check if we are borrowing, if so then check if needs update
+        if(borrowamount != 0){
+            if(borrowamount > rbound){
+                //need to repay/reduce
+                return true;
+            }else if(bbound * 1e18 / borrowamount >= BORROW_MORE_DIFF ){
+
+                //check oracle conditions for borrowing more directly from oracle to keep as a view function
+                //otherwise could call fraxlend.updateExchangeRate() and use isBorrowAllowed
+                IFraxLend.ExchangeRateInfo memory exInfo = IFraxLend(fraxlend).exchangeRateInfo();
+                (,uint256 lowexchangeRate,uint256 highexchangeRate) = IDualOracle(exInfo.oracle).getPrices();
+                uint256 _deviation = (UTIL_PREC *
+                    (highexchangeRate - lowexchangeRate)) /
+                    highexchangeRate;
+                if (_deviation > exInfo.maxOracleDeviation) {
+                    return false;
+                }
+
+                //can borrow more
+                return true;
             }
-
-            //can borrow more
-            return true;
         }
 
         //no need to update now

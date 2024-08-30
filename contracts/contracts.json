@@ -80,7 +80,7 @@
             "fpisLockController": "0xC1115C1E030b38416a7B7ab1C20165f67098913B",
             "cvxfxb": "0x8301A2C86615Edf08d8980ECCca8287322423390",
             "cvxfxbSwapper": "0x0160CB9Cbdc22C2e768C45AaB36B5CA647bEEF0F",
-            "cvxfxbOperator": "0xafe07C043eFe0f30EaA23B10C369891B7f87485F"
+            "cvxfxbOperator": "0xc93Ab3c4DDdc488dbca581a0c3459aaF7eBd700A"
         },
         "frax": {
             "frax": "0xFc00000000000000000000000000000000000001",
