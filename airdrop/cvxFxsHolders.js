@@ -409,11 +409,11 @@ const main = async () => {
         var holdersstakers = combine(holders,stakers);
 
         //startblock, lptoken, gauge, convex reward
-        // var lpers1 = await getPoolHolders(snapshotBlock,17532777,"0x6a9014FB802dCC5efE3b97Fd40aAa632585636D0","0x6a9014FB802dCC5efE3b97Fd40aAa632585636D0","0x0c58c509305a8a7fE9a6a60CEaAC6185B96ECBb7","0x19F3C877eA278e61fE1304770dbE5D78521792D2");
-        // var lpers2 = await getPoolHolders(snapshotBlock,14249398,"0xf3a43307dcafa93275993862aae628fcb50dc768","0xd658a338613198204dca1143ac3f01a722b5d94a","0xab1927160ec7414c6fa71763e2a9f3d107c126dd","0xf27AFAD0142393e4b3E5510aBc5fe3743Ad669Cb");
-        // var lpers3 = await getPoolHolders(snapshotBlock,15465253,"0xf57ccad8122b898a147cc8601b1eca88b1662c7e","0x21d158d95c2e150e144c36fc64e3653b8d6c6267","0xc7a770de69479beeeef22b2c9851760bac3630da","0x19eA715F854dB2196C6f45A174541a5Ac884D2f9");
-        // var lpers = combine(combine(lpers1,lpers2),lpers3);
-        // holdersstakers = combine(holdersstakers,lpers);
+        var lpers1 = await getPoolHolders(snapshotBlock,17532777,"0x6a9014FB802dCC5efE3b97Fd40aAa632585636D0","0x6a9014FB802dCC5efE3b97Fd40aAa632585636D0","0x0c58c509305a8a7fE9a6a60CEaAC6185B96ECBb7","0x19F3C877eA278e61fE1304770dbE5D78521792D2");
+        var lpers2 = await getPoolHolders(snapshotBlock,14249398,"0xf3a43307dcafa93275993862aae628fcb50dc768","0xd658a338613198204dca1143ac3f01a722b5d94a","0xab1927160ec7414c6fa71763e2a9f3d107c126dd","0xf27AFAD0142393e4b3E5510aBc5fe3743Ad669Cb");
+        var lpers3 = await getPoolHolders(snapshotBlock,15465253,"0xf57ccad8122b898a147cc8601b1eca88b1662c7e","0x21d158d95c2e150e144c36fc64e3653b8d6c6267","0xc7a770de69479beeeef22b2c9851760bac3630da","0x19eA715F854dB2196C6f45A174541a5Ac884D2f9");
+        var lpers = combine(combine(lpers1,lpers2),lpers3);
+        holdersstakers = combine(holdersstakers,lpers);
         
         cvxfxsHolders.addresses = holdersstakers;
         delete cvxfxsHolders.addresses["0x6a9014FB802dCC5efE3b97Fd40aAa632585636D0"]; //lp 1
