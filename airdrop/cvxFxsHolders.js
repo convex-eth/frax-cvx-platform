@@ -27,6 +27,7 @@ const stkcvxfxsAddress = '0x49b4d1dF40442f0C31b1BbAEA3EDE7c38e37E31a';
 
 
 //fraxtal
+const fraxtalcvxfxsAddress = '0xEFb4B26FC242478c9008274F9e81db89Fa6adAB9';
 const fraxtalstkcvxfxsAddress = '0x8c279F6Bfa31c47F29e5d05a68796f2A6c216892';
 
 
@@ -366,13 +367,25 @@ const getFraxtalcvxFxsStakers = async (snapshotBlock) => {
 
     var filteredHolders = {};
     for (var i in holders) {
-        var bal = await cvxFxsContract.balanceOf(i);
+        var bal = await cvxFxsContract.balanceOf(i, { blockTag: snapshotBlock });
         if(bal > 0){
             filteredHolders[i] = bal.toString();
         }
         // console.log(bal.toString());
     }
     return filteredHolders;
+}
+
+const getTotalSupply = async(snapshotBlock) =>{
+    var cvxFxsContract = new ethers.Contract(cvxfxsAddress, CRV_ABI, provider);
+    var instance = cvxFxsContract.connect(provider);
+    return await instance.totalSupply({ blockTag: snapshotBlock })
+}
+
+const getFraxtalTotalSupply = async(snapshotBlock) =>{
+    var cvxFxsContract = new ethers.Contract(fraxtalcvxfxsAddress, CRV_ABI, fraxtalprovider);
+    var instance = cvxFxsContract.connect(fraxtalprovider);
+    return await cvxFxsContract.totalSupply({ blockTag: snapshotBlock })
 }
 
 const main = async () => {
@@ -383,24 +396,29 @@ const main = async () => {
     var snapshotBlock = 0;
     var airforceFile = "";
     var afxsFile = "";
+    var totalSupply;
 
     if(drop == 1){
         snapshotBlock = 19379573; //fxtl 1 drop
         airforceFile = "./airforce_cvxfxs_1.json";
         afxsFile = "./afxs_cvxfxs_1.json";
         cvxfxsfinal_file = "cvxfxs_final_drop_1.json";
+        totalSupply = await getTotalSupply(snapshotBlock);
     }else if(drop == 2){
         snapshotBlock = 19678626; //fxtl 2 drop (mainnet)
         airforceFile = "./airforce_cvxfxs_2.json";
         afxsFile = "./afxs_cvxfxs_2.json";
         cvxfxsfinal_file = "cvxfxs_final_drop_2_mainnet.json";
+        totalSupply = await getTotalSupply(snapshotBlock);
     }else if(drop == 3){
         snapshotBlock = 3293845; //fxtl 2 drop (fraxtal)
         cvxfxsfinal_file = "cvxfxs_final_drop_2_fraxtal.json";
+        totalSupply = await getFraxtalTotalSupply(snapshotBlock);
     }
 
     console.log("drop " +drop);
     console.log('snapshotBlock block:' + snapshotBlock)
+    console.log("totalSupply: " +totalSupply.toString());
 
     if(drop == 1 || drop == 2){
      	//// cvxfxs holders/stakers
