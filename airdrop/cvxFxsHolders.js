@@ -376,6 +376,117 @@ const getFraxtalcvxFxsStakers = async (snapshotBlock) => {
     return filteredHolders;
 }
 
+// const getFraxtalPoolHolders = async (snapshotBlock, startBlock, lpaddress, pooladdress, gauge, rewardAddress) => {
+const getFraxtalPoolHolders = async (snapshotBlock, startBlock, pooladdress, convexDepositAddress) => {
+    console.log("Getting lp holders");
+    var logCount = 25000;
+    var holders = {};
+
+    var contract = new ethers.Contract(pooladdress, CRV_ABI, fraxtalprovider);
+    var instance = contract.connect(fraxtalprovider);
+
+    var lptotalsupply = await contract.totalSupply({ blockTag: snapshotBlock });
+    console.log("total lp supply: " +lptotalsupply)
+    if(lptotalsupply.toString() == "0"){
+        return holders;
+    }
+
+    //get holders
+    for (var i = startBlock; i <= snapshotBlock;) {
+        var logs = await instance.queryFilter(instance.filters.Transfer(), i, i + logCount)
+        var progress = ((i - startBlock) / (snapshotBlock - startBlock)) * 100;
+        console.log('Current Block: ' + i + ' Progress: ' + progress.toFixed(2) + '%');
+        for (var x = 0; x < logs.length; x++) {
+            //log("log: " +JSON.stringify(logs[x].args));
+            var from = logs[x].args[0];
+            var to = logs[x].args[1];
+            var pool = logs[x].args[1].toString();
+
+            // if(to == gauge) continue;
+            if(to == "0x0000000000000000000000000000000000000000") continue;
+
+            console.log("transfor to: " +to);
+            holders[to] = "0";
+        }
+        if (i==snapshotBlock) {
+            break;
+        }
+        i = i + logCount;
+        if (i > snapshotBlock) {
+            i = snapshotBlock;
+        }
+    }
+
+    // var convexDeposits = new ethers.Contract(convexDepositAddress, CRV_ABI, fraxtalprovider);
+    // var instance = convexDeposits.connect(fraxtalprovider);
+    // //get stakers. cant look at transfer since you can use stakeFor()
+    // for (var i = startBlock; i <= snapshotBlock;) {
+    //     var logs = await instance.queryFilter(instance.filters.Transfer(), i, i + logCount)
+    //     var progress = ((i - startBlock) / (snapshotBlock - startBlock)) * 100;
+    //     console.log('Current Block: ' + i + ' Progress: ' + progress.toFixed(2) + '%');
+    //     for (var x = 0; x < logs.length; x++) {
+    //         //log("log: " +JSON.stringify(logs[x].args));
+    //         var from = logs[x].args[0];
+
+    //         holders[from] = "0";
+    //     }
+    //     if (i==snapshotBlock) {
+    //         break;
+    //     }
+    //     i = i + logCount;
+    //     if (i > snapshotBlock) {
+    //         i = snapshotBlock;
+    //     }
+    // }
+
+    // var filteredHolders = {};
+    // for (var i in holders) {
+    //     // var bal = await convexDeposits.balanceOf(i, { blockTag: snapshotBlock });
+    //     var bal = await contract.balanceOf(i, { blockTag: snapshotBlock });
+    //     if(bal > 0){
+    //         filteredHolders[i] = bal.toString();
+    //     }
+    //     console.log(bal.toString());
+    // }
+    // holders = filteredHolders;
+
+    // console.log("getting vanilla lp balances...");
+    // var plain = await getBalances(lpaddress,holders,snapshotBlock );
+    // console.log("getting staked lp balances...");
+    // var stakers = await getBalances(rewardAddress,holders,snapshotBlock );
+
+    // holders = combine(plain,stakers);
+    // console.log("cnt: " +Object.keys(holders).length);
+    
+    var totallp = new BN(0);
+    for (var i in holders) {
+        var lpbalance = new BN(holders[i]);
+        totallp = totallp.add(lpbalance);
+    }
+    console.log("lp token total: " +totallp.toString());
+    
+    const cvxFxsContract = new ethers.Contract(fraxtalcvxfxsAddress, CRV_ABI, fraxtalprovider);
+
+    //get amount of cvxfxs on lp
+    var lpcvxfxs = await cvxFxsContract.balanceOf(pooladdress, { blockTag: snapshotBlock });
+    console.log("cvxfxs on lp: "+lpcvxfxs.toString())
+   
+    //convert
+    var convertratio = new BN(lpcvxfxs.toString()).multiply(1e18).div(totallp);
+    console.log("convertratio: " +convertratio.toString())
+
+    var balanceCheck = BN(0);
+    for (var i in holders) {
+        var cvxfxsbalance = new BN(convertratio).multiply(new BN(holders[i])).div(1e18);
+        balanceCheck.add(cvxfxsbalance);
+        holders[i] = cvxfxsbalance.toString();
+    }
+    console.log("final cvxfxs balance for all LPers (should be close to balanceOf above (rounding)): " +balanceCheck.toString());
+
+    return holders;
+}
+
+
 const getTotalSupply = async(snapshotBlock) =>{
     var cvxFxsContract = new ethers.Contract(cvxfxsAddress, CRV_ABI, provider);
     var instance = cvxFxsContract.connect(provider);
@@ -501,11 +612,13 @@ const main = async () => {
     }else if(drop == 3){
         //fraxtal
         var stakers = await getFraxtalcvxFxsStakers(snapshotBlock);
-        //todo lp
+        //lp
         // pool 0x3a38e9b0B5cB034De01d5298Fc2Ed2D793C0C36F
         // gauge 0x070EBC9F46d0a6A523D31eb4aE7901C56AD97ae2
+        // convex deposit 
+        var lpers = await getFraxtalPoolHolders(snapshotBlock, 2527850, "0x3a38e9b0B5cB034De01d5298Fc2Ed2D793C0C36F", "0x82DBda13DbE4E460D520Ff60ddF1fEE90c7BD3AF");
 
-        cvxfxsHolders.addresses = stakers;
+        cvxfxsHolders.addresses = combine(stakers, lpers);
         delete cvxfxsHolders.addresses["0x3a38e9b0B5cB034De01d5298Fc2Ed2D793C0C36F"]; //lp
         delete cvxfxsHolders.addresses["fraxtalstkcvxfxsAddress"]; //staked cvxfxs
     }
@@ -518,7 +631,10 @@ const main = async () => {
     console.log("total cvxfxs: " +totalcvxfxs.toString());
 
     cvxfxsHolders.blockHeight = snapshotBlock;
+
+    //these may vary slightly due to rounding and/or removed cvxfxs from things such as l2 bridge
     cvxfxsHolders.totalcvxfxs = totalcvxfxs.toString();
+    cvxfxsHolders.totalSupply = totalSupply.toString();
 
     //sort
     var arr = []
