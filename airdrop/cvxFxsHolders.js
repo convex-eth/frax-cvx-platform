@@ -332,12 +332,19 @@ const getcvxFxsStakers = async (snapshotBlock) => {
 
 const getFraxtalcvxFxsStakers = async (snapshotBlock) => {
     console.log("Getting FRAXTAL cvxFxs stakers");
+    var vanillacvxFxsContract = new ethers.Contract(fraxtalcvxfxsAddress, CRV_ABI, fraxtalprovider);
     var cvxFxsContract = new ethers.Contract(fraxtalstkcvxfxsAddress, CRV_ABI, fraxtalprovider);
     var instance = cvxFxsContract.connect(fraxtalprovider);
     var logCount = 35000;
-    var startBlock = 3001473;
+    var startBlock = 2442287;
     var holders = {};
-    //get holders
+
+    var stakedSupply = await cvxFxsContract.totalSupply({blockTag:snapshotBlock});
+    var vanillaOnStaked = await vanillacvxFxsContract.balanceOf(fraxtalstkcvxfxsAddress, {blockTag:snapshotBlock});
+    console.log("staked supply: " +stakedSupply);
+    console.log("vanillaOnStaked: " +vanillaOnStaked);
+
+    //get stakers
     for (var i = startBlock; i <= snapshotBlock;) {
         var logs = await instance.queryFilter(instance.filters.Transfer(), i, i + logCount)
         var progress = ((i - startBlock) / (snapshotBlock - startBlock)) * 100;
@@ -373,7 +380,52 @@ const getFraxtalcvxFxsStakers = async (snapshotBlock) => {
         }
         // console.log(bal.toString());
     }
-    return filteredHolders;
+
+    //get vanilla holders
+    instance = vanillacvxFxsContract.connect(fraxtalprovider);
+    for (var i = startBlock; i <= snapshotBlock;) {
+        var logs = await instance.queryFilter(instance.filters.Transfer(), i, i + logCount)
+        var progress = ((i - startBlock) / (snapshotBlock - startBlock)) * 100;
+        console.log('Current Block: ' + i + ' Progress: ' + progress.toFixed(2) + '%');
+        for (var x = 0; x < logs.length; x++) {
+            //log("log: " +JSON.stringify(logs[x].args));
+            var from = logs[x].args[0];
+            var to = logs[x].args[1];
+            var pool = logs[x].args[1].toString();
+
+            // if(to == stakeAddress) continue;
+            if(to == "0x0000000000000000000000000000000000000000") continue;
+
+            // console.log("cvxfxs transfor to: " +to);
+            holders[to] = "0";
+        }
+        if (i==snapshotBlock) {
+            break;
+        }
+        i = i + logCount;
+        if (i > snapshotBlock) {
+            i = snapshotBlock;
+        }
+    }
+
+    var vanillafilteredHolders = {};
+    for (var i in holders) {
+        var bal = await vanillacvxFxsContract.balanceOf(i, { blockTag: snapshotBlock });
+        if(bal > 0){
+            vanillafilteredHolders[i] = bal.toString();
+        }
+        // console.log(bal.toString());
+    }
+    var vanilaHolderTotals = new BN(0);
+    for (var i in vanillafilteredHolders) {
+        var hb = new BN(vanillafilteredHolders[i]);
+        vanilaHolderTotals = vanilaHolderTotals.add(hb);
+        // console.log("vanilla holder: " +i +" : " +hb.toString());
+    }
+    console.log("total vanilla cvxfxs holders: " +vanilaHolderTotals.toString());
+
+    holders = combine(filteredHolders, vanillafilteredHolders);
+    return holders;
 }
 
 // const getFraxtalPoolHolders = async (snapshotBlock, startBlock, lpaddress, pooladdress, gauge, rewardAddress) => {
@@ -620,7 +672,7 @@ const main = async () => {
 
         cvxfxsHolders.addresses = combine(stakers, lpers);
         delete cvxfxsHolders.addresses["0x3a38e9b0B5cB034De01d5298Fc2Ed2D793C0C36F"]; //lp
-        delete cvxfxsHolders.addresses["fraxtalstkcvxfxsAddress"]; //staked cvxfxs
+        delete cvxfxsHolders.addresses[fraxtalstkcvxfxsAddress]; //staked cvxfxs
     }
 
 
